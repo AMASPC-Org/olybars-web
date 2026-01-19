@@ -559,7 +559,7 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({ venu
                             <h5 className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] ml-1">Digital Ecosystem</h5>
                             <InputField label="Ticketing Link" name="ticketLink" value={formData.ticketLink} icon={Trophy} placeholder="VRS, Ticketmaster, etc" />
                             <InputField label="Gift Card URL" name="giftCardUrl" value={formData.giftCardUrl} icon={ShoppingBag} placeholder="Online gift card shop" />
-                            <InputField label="Loyalty Signup" name="loyalty_signup_url" value={formData.loyalty_signup_url} icon={Star} placeholder="Points program URL" />
+                            <InputField label="Loyalty Signup" name="loyalty_signup_url" value={formData.loyalty_signup_url} icon={Star} placeholder="Loyalty program URL" />
                         </div>
                     </div>
 

@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
+import { X, Camera, Share2, Info, Loader2, Sparkles, Beer, Users, Flame, MapPin, Gamepad2, Clock, Zap, AlertTriangle, ShieldCheck, Lock, Droplets, Waves } from 'lucide-react';
 import { Venue, VenueStatus, GameStatus } from '../../../types';
 import { getGameTTL } from '../../../config/gameConfig';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
+import { GAMIFICATION_CONFIG } from '../../../config/gamification';
+import { FormatCurrency } from '../../../utils/formatCurrency';
 
 interface VibeCheckModalProps {
     isOpen: boolean;
@@ -14,6 +16,7 @@ interface VibeCheckModalProps {
     onClockInPrompt?: () => void;
     verificationMethod?: 'gps' | 'qr';
     isLoggedIn?: boolean;
+    userRole?: string;
     onLogin?: (mode: 'login' | 'signup') => void;
 }
 
@@ -26,6 +29,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     onClockInPrompt,
     verificationMethod = 'gps',
     isLoggedIn = false,
+    userRole,
     onLogin
 }) => {
     const [selectedStatus, setSelectedStatus] = useState<VenueStatus>(venue.status || 'chill');
@@ -37,6 +41,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     const [isSuccess, setIsSuccess] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [shadowVariant, setShadowVariant] = useState<'success' | 'locked' | null>(null);
+    const [vibeResult, setVibeResult] = useState<{ total?: number; bountyPending?: boolean } | null>(null);
 
     // Initialize with existing status or empty
     const [gameStatus, setGameStatus] = useState<Record<string, GameStatus>>(venue.liveGameStatus || {});
@@ -107,10 +112,15 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         setErrorMessage(null);
 
         try {
-            await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined, soberCheck || undefined);
+            const result = await onConfirm(venue, selectedStatus, allowMarketingUse, capturedPhoto || undefined, verificationMethod, Object.keys(gameStatus).length > 0 ? gameStatus : undefined, soberCheck || undefined);
+
+            setVibeResult({
+                total: (result as any)?.pointsAwarded || (5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)),
+                bountyPending: (result as any)?.bountyPending
+            });
 
             // If success (200), check mode
-            if (!isLoggedIn) {
+            if (!isLoggedIn || userRole === 'guest') {
                 setShadowVariant('success');
             } else {
                 setIsSuccess(true);
@@ -132,25 +142,31 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     };
 
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
-        { status: 'mellow', label: 'Mellow', icon: Clock, color: 'text-emerald-400', desc: 'Private session... only a few nomads here' },
-        { status: 'chill', label: 'Chill', icon: Beer, color: 'text-blue-400', desc: 'Relaxed, plenty of space' },
-        { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-red-500', desc: 'Active, good energy!' },
-        { status: 'packed', label: 'Packed', icon: Zap, color: 'text-pink-500', desc: 'Shoulder to shoulder, wild!' },
+        { status: 'mellow', label: 'Trickle', icon: Droplets, color: 'text-emerald-400', desc: 'Low flow, easy access.' },
+        { status: 'chill', label: 'Flowing', icon: Waves, color: 'text-blue-400', desc: 'Steady stream, good vibes.' },
+        { status: 'buzzing', label: 'Gushing', icon: Flame, color: 'text-orange-500', desc: 'High pressure, active energy!' },
+        { status: 'packed', label: 'Flooded', icon: Zap, color: 'text-red-500', desc: 'Max depth, wall to wall.' },
     ];
 
     if (isSuccess) {
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
-                    <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto animate-bounce">
-                        <Sparkles className="w-10 h-10 text-black" />
+                    <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto animate-bounce border-2 border-cyan-500">
+                        <Droplets className="w-10 h-10 text-cyan-400" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Vibe Submitted!</h2>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Flow Reported!</h2>
                         {isLoggedIn ? (
-                            <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">LEAGUE XP GRANTED</p>
+                            <div className="flex items-center justify-center gap-2 mt-2">
+                                <span className="text-cyan-400 font-black uppercase tracking-widest text-xs">Data Signal Reward:</span>
+                                <FormatCurrency amount={vibeResult?.total || 10} />
+                            </div>
                         ) : (
-                            <p className="text-primary font-black uppercase tracking-widest text-xs mt-1">XP PENDING CLAIM</p>
+                            <p className="text-cyan-400 font-black uppercase tracking-widest text-xs mt-1">DROPS PENDING CLAIM</p>
+                        )}
+                        {isLoggedIn && (
+                            <p className="text-white font-black uppercase tracking-widest text-[10px] mt-2 opacity-60">Total Flow: {vibeResult?.total} {GAMIFICATION_CONFIG.CURRENCY.UNIT}</p>
                         )}
                     </div>
 
@@ -190,6 +206,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
     if (shadowVariant) {
         const isLocked = shadowVariant === 'locked';
+        const isAnonymous = !isLoggedIn; // Careful here: isLoggedIn passed as prop might be effectively false if we don't pass it right, but here we trust the prop or default. 
+
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
@@ -204,10 +222,20 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                         <div className="mt-4 space-y-3">
                             <p className="text-sm text-slate-300 font-medium leading-relaxed">
                                 {isLocked
-                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Vibe Check</span> and earn your first <span className="text-primary font-black">5 Points</span>.</>
-                                    : <>Thanks for the intel! That Vibe Check was worth <span className="text-primary font-black">5 Points</span>. You are in Guest Mode, so you didn't bank them.</>
+                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Vibe Check</span> and earn your first <FormatCurrency amount={5} hideSign />.</>
+                                    : isAnonymous
+                                        ? <>Thanks for the intel! that Vibe Check was worth <FormatCurrency amount={5} hideSign />. You are in Guest Mode, so you didn't bank them.</>
+                                        : <>Vibe Verified! You generated <FormatCurrency amount={5} hideSign />.</>
                                 }
                             </p>
+                            {!isLocked && (
+                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight bg-slate-900 px-3 py-2 rounded-lg border border-white/5">
+                                    {isAnonymous
+                                        ? <>Join the League to <span className="text-cyan-400">claim these drops</span>, or they drain away at midnight.</>
+                                        : <>Activate League Membership to <span className="text-cyan-400">seal your reservoir</span> permanently.</>
+                                    }
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -216,7 +244,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             onClick={() => onLogin?.('signup')}
                             className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-primary/20"
                         >
-                            {isLocked ? 'Create Profile & Publish' : 'Join League to Bank Points'}
+                            {isLocked ? 'Create Profile & Publish' : (isAnonymous ? 'Join League to Bank Points' : 'Activate League Membership')}
                         </button>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 italic">
                             {isLocked ? 'It takes 30 seconds.' : "Don't miss out next time."}
@@ -429,7 +457,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             ) : (
                                 <div className="flex items-center justify-center gap-2">
                                     <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary" />
-                                    <p className="text-[10px] font-black text-slate-300 uppercase italic">Add Vibe Photo (+10 Pts)</p>
+                                    <p className="text-[10px] font-black text-slate-300 uppercase italic">Add Proof of Flow (+10 Drops)</p>
                                 </div>
                             )}
                         </>
@@ -443,7 +471,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                             <Sparkles size={14} className={allowMarketingUse ? 'text-primary' : 'text-slate-600'} />
                             <div>
                                 <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none">Marketing Consent</p>
-                                <p className="text-[8px] text-slate-500 font-bold uppercase italic mt-0.5">Earn +15 Bonus Points!</p>
+                                <p className="text-[8px] text-slate-500 font-bold uppercase italic mt-0.5">Earn +15 Bonus Drops!</p>
                             </div>
                         </div>
                         <button
@@ -463,8 +491,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
                 <div className="pt-2 border-t border-slate-800 flex justify-between items-center mb-2">
                     <span className="text-[10px] font-black text-slate-500 uppercase font-league tracking-widest">League Reward</span>
-                    <span className="text-sm font-black text-primary uppercase font-league">
-                        +{5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)} POINTS
+                    <span className="text-sm font-black text-cyan-400 uppercase font-league">
+                        +{5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)} DROPS
                     </span>
                 </div>
 

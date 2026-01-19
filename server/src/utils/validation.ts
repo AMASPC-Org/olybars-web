@@ -342,3 +342,7 @@ export const VenueSchema = z.object({
         bookingLink: z.string().url().optional().or(z.literal(''))
     })).optional(),
 });
+
+export const BountyReviewSchema = z.object({
+    status: z.enum(['APPROVED', 'REJECTED'])
+});

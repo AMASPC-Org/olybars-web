@@ -39,3 +39,10 @@ All terminal commands MUST follow Windows PowerShell syntax.
 - **Media Embedding**: Use absolute paths with a leading forward slash for images/videos in artifacts (e.g., `![alt](/C:/...)`).
 - **No file:// prefix**: Do not use the `file://` protocol in markdown image paths.
 - **Copy First**: Ensure media is copied to the artifacts directory before embedding.
+
+## 6. Environment Context Boundaries
+- **Localhost != Dev**: 
+  - `Localhost` = Your machine (`npm run dev`). Changes here are instant.
+  - `Dev` = Cloud Run (deployed). Changes here require a full build & deploy pipeline.
+- **Deployment Warning**: If asked to "deploy to fix localhost", STOP. You are confused. Deploying never fixes localhost.
+- **Context Awareness**: Always check `window.location.hostname` or the current URL before assuming which environment is broken.

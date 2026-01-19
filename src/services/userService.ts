@@ -314,3 +314,40 @@ export const fetchUserPointHistory = async () => {
     return [];
   }
 };
+
+/**
+ * Fetch all pending bounty submissions for Admin review.
+ */
+export const fetchPendingBounties = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bounties/pending`, {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch pending bounties');
+    return await response.json();
+  } catch (e) {
+    console.error('Error fetching pending bounties:', e);
+    return [];
+  }
+};
+
+/**
+ * Review a bounty submission (Approve/Reject).
+ */
+export const reviewBountySubmission = async (submissionId: string, status: 'APPROVED' | 'REJECTED') => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bounties/${submissionId}/review`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Review failed');
+    }
+    return await response.json();
+  } catch (e) {
+    console.error('Bounty review error:', e);
+    throw e;
+  }
+};

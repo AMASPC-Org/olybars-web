@@ -25,6 +25,7 @@ export default function ClaimVenuePage() {
     const [venueData, setVenueData] = useState<Partial<Venue> | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPhoneVerifying, setIsPhoneVerifying] = useState(false);
+    const [showPhoneConfirm, setShowPhoneConfirm] = useState(false);
     const [enteredCode, setEnteredCode] = useState('');
     const [isCodeVerified, setIsCodeVerified] = useState(false);
     const [assets, setAssets] = useState<Record<string, boolean>>({});
@@ -54,7 +55,7 @@ export default function ClaimVenuePage() {
                 id: claimStatus.venueId || 'TEMP',
                 name: place.name || '',
                 address: place.formatted_address || '',
-                phone: place.formatted_phone_number || '',
+                phone: place.formatted_phone_number || place.international_phone_number || '',
                 website: place.website || '',
                 googlePlaceId: place.place_id || '',
                 // In a real flow, we'd also get photos here
@@ -517,7 +518,63 @@ export default function ClaimVenuePage() {
                                 <p className="text-slate-400 font-medium">Link your secure identity and confirm business details.</p>
                             </div>
 
-                            {/* [SECTION 1] Identity & Security (Priority) */}
+                            {/* [SECTION 1] Editable Business Details (Moved to Top) */}
+                            <div className="space-y-6 max-w-3xl mx-auto">
+                                <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
+                                    <div className="flex items-center gap-3 text-primary mb-2">
+                                        <Settings2 className="w-5 h-5" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Business Details</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Establishment Name</label>
+                                            <input
+                                                type="text"
+                                                value={venueData?.name || ''}
+                                                onChange={e => setVenueData(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-lg font-black uppercase text-white font-league focus:border-primary outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Address</label>
+                                            <textarea
+                                                value={venueData?.address || ''}
+                                                onChange={e => setVenueData(prev => prev ? ({ ...prev, address: e.target.value }) : null)}
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-medium text-slate-300 focus:border-primary outline-none resize-none min-h-[80px]"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
+                                    <div className="flex items-center gap-3 text-blue-400 mb-2">
+                                        <Globe className="w-5 h-5" />
+                                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Communication</span>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone</label>
+                                            <input
+                                                type="tel"
+                                                value={venueData?.phone || ''}
+                                                onChange={e => setVenueData(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-200 focus:border-primary outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Website</label>
+                                            <input
+                                                type="url"
+                                                value={venueData?.website || ''}
+                                                onChange={e => setVenueData(prev => prev ? ({ ...prev, website: e.target.value }) : null)}
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-200 focus:border-primary outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* [SECTION 2] Identity & Security */}
                             <div className="bg-slate-900/80 border border-emerald-500/20 rounded-3xl p-8 space-y-8 relative overflow-hidden group max-w-3xl mx-auto">
                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <ShieldCheck className="w-32 h-32 text-emerald-500" />
@@ -576,118 +633,94 @@ export default function ClaimVenuePage() {
                                         <ChevronRight className="w-4 h-4 text-slate-700" />
                                     </button>
 
-                                    <button
-                                        onClick={handlePhoneVerifyClick}
-                                        disabled={isCodeVerified || isPhoneVerifying || isProcessing || !auth.currentUser}
-                                        className={`w-full flex items-center justify-between p-4 bg-slate-950/50 border border-white/5 rounded-2xl hover:border-emerald-500/30 transition-all text-left group/opt disabled:cursor-not-allowed ${isCodeVerified ? 'opacity-50 cursor-default border-emerald-500/50' : ''}`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 ${isPhoneVerifying ? 'animate-pulse text-emerald-400' : ''} ${isCodeVerified ? 'text-emerald-500' : 'group-hover/opt:text-emerald-400'} transition-colors`}>
-                                                <Phone className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-black uppercase font-league tracking-tight">Phone Signal</p>
-                                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-                                                    {isCodeVerified ? 'Verified by Voice' : 'Verify via Business Phone'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {isCodeVerified ? <Check className="w-4 h-4 text-emerald-500" /> : <ChevronRight className="w-4 h-4 text-slate-700" />}
-                                    </button>
-
-                                    {isPhoneVerifying && (
-                                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                                            <div className="text-center space-y-2">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-                                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Artie is calling...</p>
+                                    <div className={`bg-slate-950/50 border border-white/5 rounded-2xl overflow-hidden transition-all ${showPhoneConfirm || isPhoneVerifying ? 'border-emerald-500/30' : 'hover:border-emerald-500/30'}`}>
+                                        <button
+                                            onClick={() => setShowPhoneConfirm(!showPhoneConfirm)}
+                                            disabled={isCodeVerified || isPhoneVerifying || isProcessing || !auth.currentUser}
+                                            className={`w-full flex items-center justify-between p-4 text-left group/opt disabled:cursor-not-allowed ${isCodeVerified ? 'opacity-50 cursor-default' : ''}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 ${isPhoneVerifying ? 'animate-pulse text-emerald-400' : ''} ${isCodeVerified ? 'text-emerald-500' : 'group-hover/opt:text-emerald-400'} transition-colors`}>
+                                                    <Phone className="w-5 h-5" />
                                                 </div>
-                                                <p className="text-xs text-slate-400 font-medium italic">Listen for the 4-digit code and enter it below.</p>
+                                                <div>
+                                                    <p className="text-sm font-black uppercase font-league tracking-tight">Phone Signal</p>
+                                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                                                        {isCodeVerified ? 'Verified by Voice' : 'Verify via Business Phone'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-2 justify-center">
-                                                <input
-                                                    type="text"
-                                                    maxLength={4}
-                                                    placeholder="0000"
-                                                    value={enteredCode}
-                                                    onChange={(e) => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
-                                                    className="bg-slate-950 border-2 border-emerald-500/20 rounded-xl px-4 py-3 text-2xl font-black tracking-[0.5em] text-center text-emerald-400 focus:border-emerald-500/50 outline-none w-32"
-                                                />
+                                            {isCodeVerified ? <Check className="w-4 h-4 text-emerald-500" /> : <ChevronRight className={`w-4 h-4 text-slate-700 transition-transform ${showPhoneConfirm ? 'rotate-90' : ''}`} />}
+                                        </button>
+
+                                        {/* Phone Confirmation Panel */}
+                                        {showPhoneConfirm && !isPhoneVerifying && !isCodeVerified && (
+                                            <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
+                                                <div className="bg-slate-900/50 rounded-xl p-4 space-y-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                                            <Phone className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Number to Call</p>
+                                                            <p className="text-lg font-black text-white">{venueData?.phone || 'No Number Entered'}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {venueData?.phone ? (
+                                                        <button
+                                                            onClick={handlePhoneVerifyClick}
+                                                            disabled={isProcessing}
+                                                            className="w-full bg-emerald-500 text-black font-black py-3 rounded-xl uppercase tracking-widest font-league hover:scale-[1.02] active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
+                                                        >
+                                                            <Phone className="w-4 h-4" />
+                                                            Call Now
+                                                        </button>
+                                                    ) : (
+                                                        <div className="text-center p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+                                                            <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Missing Phone Number</p>
+                                                            <p className="text-xs text-slate-400 mt-1">Please enter your business line in the section above.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Verification Code Entry */}
+                                        {isPhoneVerifying && (
+                                            <div className="bg-emerald-500/10 border-t border-emerald-500/20 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                                                <div className="text-center space-y-2">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Artie is calling...</p>
+                                                    </div>
+                                                    <p className="text-xs text-slate-400 font-medium italic">Listen for the 4-digit code and enter it below.</p>
+                                                </div>
+                                                <div className="flex gap-2 justify-center">
+                                                    <input
+                                                        type="text"
+                                                        maxLength={4}
+                                                        placeholder="0000"
+                                                        value={enteredCode}
+                                                        onChange={(e) => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
+                                                        className="bg-slate-950 border-2 border-emerald-500/20 rounded-xl px-4 py-3 text-2xl font-black tracking-[0.5em] text-center text-emerald-400 focus:border-emerald-500/50 outline-none w-32"
+                                                    />
+                                                    <button
+                                                        onClick={handleCodeSubmit}
+                                                        disabled={enteredCode.length !== 4 || isProcessing}
+                                                        className="bg-emerald-500 text-black font-black px-6 rounded-xl uppercase font-league tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                                    >
+                                                        Verify
+                                                    </button>
+                                                </div>
                                                 <button
-                                                    onClick={handleCodeSubmit}
-                                                    disabled={enteredCode.length !== 4 || isProcessing}
-                                                    className="bg-emerald-500 text-black font-black px-6 rounded-xl uppercase font-league tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                                                    onClick={() => setIsPhoneVerifying(false)}
+                                                    className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
                                                 >
-                                                    Verify
+                                                    Cancel Call
                                                 </button>
                                             </div>
-                                            <button
-                                                onClick={() => setIsPhoneVerifying(false)}
-                                                className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
-                                            >
-                                                Cancel Call
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* [SECTION 2] Editable Business Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                                <div className="space-y-6">
-                                    <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
-                                        <div className="flex items-center gap-3 text-primary mb-2">
-                                            <Settings2 className="w-5 h-5" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Business Details</span>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Establishment Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={venueData?.name || ''}
-                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
-                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-lg font-black uppercase text-white font-league focus:border-primary outline-none"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Full Address</label>
-                                                <textarea
-                                                    value={venueData?.address || ''}
-                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, address: e.target.value }) : null)}
-                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-medium text-slate-300 focus:border-primary outline-none resize-none min-h-[80px]"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 space-y-4">
-                                        <div className="flex items-center gap-3 text-blue-400 mb-2">
-                                            <Globe className="w-5 h-5" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Communication</span>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Phone</label>
-                                                <input
-                                                    type="tel"
-                                                    value={venueData?.phone || ''}
-                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
-                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-slate-200 focus:border-primary outline-none"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Website</label>
-                                                <input
-                                                    type="url"
-                                                    value={venueData?.website || ''}
-                                                    onChange={e => setVenueData(prev => prev ? ({ ...prev, website: e.target.value }) : null)}
-                                                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold text-slate-200 focus:border-primary outline-none"
-                                                />
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

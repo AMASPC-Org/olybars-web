@@ -9,6 +9,7 @@ export const ConfigSchema = z.object({
 
     // Internal Communication (Secured via Secret Manager in Prod)
     INTERNAL_HEALTH_TOKEN: z.string().min(1, 'INTERNAL_HEALTH_TOKEN is required for diagnostic endpoints'),
+    MASTER_SETUP_KEY: z.string().optional(), // Used for initial super-admin setup
 
     // AI / Gemini (Private Secrets)
     GOOGLE_GENAI_API_KEY: z.string().optional(), // Optional in prod (uses ADC)

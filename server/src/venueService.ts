@@ -454,21 +454,47 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
     }
 
     // [REMOVED] Signal added earlier above
-    await db.collection('venues').doc(venueId).update({
-        clockIns: (venueData.clockIns || 0) + 1
-    });
+    // Check for Active Events at this venue
+    let eventBonus = 0;
+    try {
+        const eventsSnapshot = await db.collection('events')
+            .where('venueId', '==', venueId)
+            .where('status', '==', 'approved')
+            .get();
 
-    // Invalidate cache
-    venueCache = null;
+        const now = new Date();
+        const currentTimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        const currentDateStr = now.toISOString().split('T')[0];
+
+        eventsSnapshot.forEach(doc => {
+            const event = doc.data();
+            // Simple string comparison for time (assuming "HH:MM" format)
+            // Current OlyBars logic: event happens "now" if it's on this date and time is within window
+            // Since our current Event schema only has 'time' (start time), we'll assume a 3-hour window
+            if (event.date === currentDateStr) {
+                const [eventH, eventM] = event.time.split(':').map(Number);
+                const eventDate = new Date(now);
+                eventDate.setHours(eventH, eventM, 0, 0);
+
+                const windowEnd = new Date(eventDate.getTime() + (3 * 60 * 60 * 1000)); // 3 hour window
+
+                if (now >= eventDate && now <= windowEnd) {
+                    eventBonus = 50;
+                }
+            }
+        });
+    } catch (e) {
+        console.error('[EVENT_BONUS_ERROR] Failed to check for events:', e);
+    }
 
     // Calculate Dynamic Points (The Pioneer Curve - Refactored Jan 2026)
     // Mellow: 100, Chill: 50, Buzzing: 25, Packed: 10
     const basePoints = PULSE_CONFIG.POINTS.VIBE_POINTS[venueData.status as VenueStatus] || PULSE_CONFIG.POINTS.VIBE_POINTS.mellow;
-    let points = basePoints;
+    let points = basePoints + eventBonus;
     const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
     if (isLocalMakerSupporter) {
-        points = Math.round(points * 1.5); // 1.5x Multiplier (15 points)
+        points = Math.round((basePoints * 1.5) + eventBonus);
     }
 
     // Pass calculated points to the activity logger
@@ -480,7 +506,9 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
         points,
         verificationMethod,
         metadata: {
-            multiplier: points / basePoints,
+            basePoints,
+            eventBonus,
+            multiplier: isLocalMakerSupporter ? 1.5 : 1,
             isLocalMakerSupporter,
             vibeAtClockIn: venueData.status || 'mellow'
         }
@@ -523,6 +551,8 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
         success: true,
         message: `Clocked in at ${venueData.name}!`,
         pointsAwarded: points,
+        basePoints,
+        eventBonus,
         isLocalMaker: venueData.isLocalMaker,
         badgesEarned: badgesAwarded
     };
@@ -552,27 +582,38 @@ export const performVibeCheck = async (
     // Photo Bonus: 10.0 (PULSE_CONFIG.POINTS.PHOTO_VIBE)
     // Consent Bonus: 15.0 (PULSE_CONFIG.POINTS.VERIFIED_BONUS)
 
-    let points = 0;
+    let immediatePoints = PULSE_CONFIG.POINTS.VIBE_REPORT; // 5
+    let bountyPoints = 0;
+    let bountyPending = false;
 
-    // Core Vibe Points
-    points += PULSE_CONFIG.POINTS.VIBE_REPORT; // 5
-
-    // Photo Bonus
-    if (photoUrl) {
-        points += PULSE_CONFIG.POINTS.PHOTO_VIBE; // 10
-    }
-
-    // Marketing Consent Bonus
-    if (hasConsent) {
-        points += PULSE_CONFIG.POINTS.VERIFIED_BONUS; // 15
-    }
-
-    // Game Status Bonus (2 pts per game, max 10)
+    // Game Status Bonus (Flat 5 points for any update)
     let gameBonus = 0;
     if (gameStatus && Object.keys(gameStatus).length > 0) {
-        const gameCount = Object.keys(gameStatus).length;
-        gameBonus = Math.min(gameCount * 2, 10);
-        points += gameBonus;
+        gameBonus = 5;
+        immediatePoints += gameBonus;
+    }
+
+    // Photo & Consent Validation (2-Hour Rule)
+    if (photoUrl) {
+        // Enforce 2-hour rule: Must be clocked in at this venue within last 2 hours
+        const twoHoursAgo = now - (2 * 60 * 60 * 1000);
+        const recentClockIn = await db.collection('signals')
+            .where('userId', '==', userId)
+            .where('venueId', '==', venueId)
+            .where('type', '==', 'clock_in')
+            .where('timestamp', '>', twoHoursAgo)
+            .limit(1)
+            .get();
+
+        if (recentClockIn.empty) {
+            throw new Error(`Bounty Error: You must be clocked in at ${venueData.name} within the last 2 hours to submit visual proof.`);
+        }
+
+        bountyPoints += PULSE_CONFIG.POINTS.PHOTO_VIBE; // 10
+        if (hasConsent) {
+            bountyPoints += PULSE_CONFIG.POINTS.VERIFIED_BONUS; // 15
+        }
+        bountyPending = true;
     }
 
     // 2. Create Signal (Important for Buzz)
@@ -591,19 +632,48 @@ export const performVibeCheck = async (
     await db.collection('signals').add(signal);
 
     // 3. Log User Activity (Points & Wallet)
+    // Log Immediate Points (Base Vibe + Games)
     await logUserActivity({
         userId,
         type: 'vibe',
         venueId,
-        points,
+        points: immediatePoints,
         hasConsent,
         verificationMethod,
         metadata: {
             status,
-            photoUrl,
             gameBonus
         }
     });
+
+    // Log Pending Points (Photo + Verified Bonus)
+    let submissionId = '';
+    if (bountyPending) {
+        const submissionRef = await db.collection('bounty_submissions').add({
+            userId,
+            venueId,
+            photoUrl,
+            submissionTime: now,
+            clockInTime: now, // Simplification: we know they are in the window
+            status: 'PENDING',
+            pointsPotential: bountyPoints,
+            createdAt: now
+        });
+        submissionId = submissionRef.id;
+
+        await logUserActivity({
+            userId,
+            type: 'photo',
+            venueId,
+            points: bountyPoints,
+            status: 'PENDING',
+            metadata: {
+                submissionId,
+                photoUrl,
+                bounty: venueData.activeFlashBounty?.title || 'Flash Bounty'
+            }
+        } as any);
+    }
 
     // 4. Update Venue Data (Status, Photos, Games)
     const venueUpdates: any = {
@@ -702,8 +772,12 @@ export const performVibeCheck = async (
 
     return {
         success: true,
-        pointsAwarded: points,
-        message: `Vibe Checked! You earned ${points} Ops.`
+        pointsAwarded: immediatePoints,
+        bountyPending,
+        submissionId: bountyPending ? submissionId : undefined,
+        message: bountyPending
+            ? `Vibe Verified! +${immediatePoints} Ops. Photo sent to Commissioner for ${bountyPoints}pt Bounty review.`
+            : `Vibe Checked! You earned ${immediatePoints} Ops.`
     };
 };
 
@@ -873,19 +947,29 @@ export const logUserActivity = async (data: {
     const userRef = db.collection('users').doc(data.userId);
     const userDoc = await userRef.get();
 
+    // [FLASH_BOUNTY] Skip point increment if status is PENDING
+    const isPending = (data as any).status === 'PENDING';
+
     if (userDoc.exists) {
         const userData = userDoc.data();
-        await userRef.update({
-            'stats.seasonPoints': (userData?.stats?.seasonPoints || 0) + data.points,
+        const updates: any = {
             'stats.lifetimeClockins': (data.type === 'clock_in' || data.type === 'clockin')
                 ? (userData?.stats?.lifetimeClockins || 0) + 1
                 : (userData?.stats?.lifetimeClockins || 0)
-        });
+        };
+
+        if (!isPending) {
+            updates['stats.seasonPoints'] = (userData?.stats?.seasonPoints || 0) + data.points;
+            updates['stats.competitionPoints'] = (userData?.stats?.competitionPoints || 0) + data.points;
+        }
+
+        await userRef.update(updates);
     } else {
         await userRef.set({
             uid: data.userId,
             stats: {
-                seasonPoints: data.points,
+                seasonPoints: isPending ? 0 : data.points,
+                competitionPoints: isPending ? 0 : data.points,
                 lifetimeClockins: (data.type === 'clock_in' || data.type === 'clockin') ? 1 : 0,
                 currentStreak: 0
             },
@@ -1648,4 +1732,80 @@ export const updateVenuePrivateData = async (venueId: string, updates: any) => {
     }, { merge: true });
 
     return { success: true };
+};
+
+/**
+ * reviewBounty: Approve or reject a bounty submission (Commissioner Only)
+ */
+export const reviewBounty = async (submissionId: string, status: 'APPROVED' | 'REJECTED', reviewerId: string) => {
+    const timestamp = Date.now();
+
+    // 1. Verify Reviewer Role
+    const reviewerDoc = await db.collection('users').doc(reviewerId).get();
+    if (!reviewerDoc.exists) throw new Error('Reviewer not found');
+    const reviewerData = reviewerDoc.data();
+
+    if (reviewerData?.role !== 'admin' && reviewerData?.role !== 'super-admin') {
+        throw new Error('Unauthorized: Commissioner credentials required.');
+    }
+
+    const submissionRef = db.collection('bounty_submissions').doc(submissionId);
+    const submissionDoc = await submissionRef.get();
+    if (!submissionDoc.exists) throw new Error('Submission not found');
+    const submissionData = submissionDoc.data()!;
+
+    if (submissionData.status !== 'PENDING') {
+        throw new Error('This submission has already been processed.');
+    }
+
+    // 2. Update Submission Status
+    await submissionRef.update({
+        status,
+        reviewerId,
+        reviewedAt: timestamp
+    });
+
+    // 3. Update related Activity Log
+    const logsSnapshot = await db.collection('activity_logs')
+        .where('metadata.submissionId', '==', submissionId)
+        .limit(1)
+        .get();
+
+    if (!logsSnapshot.empty) {
+        const logDoc = logsSnapshot.docs[0];
+        const logData = logDoc.data();
+
+        await logDoc.ref.update({ status });
+
+        // 4. If APPROVED, award the points to the user's permanent stats
+        if (status === 'APPROVED') {
+            const userRef = db.collection('users').doc(submissionData.userId);
+            const userDoc = await userRef.get();
+            const userData = userDoc.data();
+
+            if (userDoc.exists) {
+                await userRef.update({
+                    'stats.seasonPoints': (userData?.stats?.seasonPoints || 0) + submissionData.pointsPotential,
+                    'stats.competitionPoints': (userData?.stats?.competitionPoints || 0) + submissionData.pointsPotential
+                });
+            }
+        }
+    }
+
+    return { success: true, status };
+};
+
+/**
+ * getPendingBounties: Fetch all pending bounty submissions for admin review
+ */
+export const getPendingBounties = async () => {
+    const snapshot = await db.collection('bounty_submissions')
+        .where('status', '==', 'PENDING')
+        .orderBy('submissionTime', 'asc')
+        .get();
+
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
 };

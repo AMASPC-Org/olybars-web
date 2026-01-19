@@ -703,6 +703,45 @@ v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin',
 });
 
 /**
+ * @route GET /api/admin/bounties/pending
+ * @desc Fetch all pending bounty submissions for review
+ */
+v1Router.get('/admin/bounties/pending', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    try {
+        const { getPendingBounties } = await import('./venueService.js');
+        const bounties = await getPendingBounties();
+        res.json(bounties);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch pending bounties', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/admin/bounties/:id/review
+ * @desc Approve or reject a bounty submission
+ */
+v1Router.post('/admin/bounties/:id/review', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    const { id } = req.params;
+    const { BountyReviewSchema } = await import('./utils/validation.js');
+    const validation = BountyReviewSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid review data', details: validation.error.format() });
+    }
+    const { status } = validation.data;
+    const reviewerId = (req as any).user.uid;
+
+    try {
+        const { reviewBounty } = await import('./venueService.js');
+        const result = await reviewBounty(id, status as 'APPROVED' | 'REJECTED', reviewerId);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Bounty review failed', { submissionId: id, error: error.message });
+        res.status(400).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route GET /api/venues/:id/members
  * @desc Fetch all members of a venue
  */
@@ -779,6 +818,7 @@ v1Router.post('/client-errors', (req, res) => {
 v1Router.get('/config/maps-key', (req, res) => {
     // Only return the browser key (public/restricted)
     const key = config.VITE_GOOGLE_BROWSER_KEY;
+
     if (!key) return res.status(500).json({ error: 'Maps Browser Key not configured' });
 
     res.json({ key });
@@ -1221,6 +1261,21 @@ v1Router.post('/ai/generate-description', async (req, res) => {
         const context = KnowledgeService.getEventContext(date);
         const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.venueType || '', date);
 
+        // 3.5 Extract City for Multi-City Support
+        let city = "Olympia, WA";
+        if (venue?.address) {
+            try {
+                const parts = venue.address.split(',');
+                if (parts.length >= 3) {
+                    const cityPart = parts[1].trim();
+                    const stateZipPart = parts[2].trim().split(' ')[0];
+                    city = `${cityPart}, ${stateZipPart}`;
+                }
+            } catch (e) {
+                // Fallback
+            }
+        }
+
         // 4. Generate with Artie
         const gemini = new GeminiService();
         const description = await gemini.generateEventDescription({
@@ -1229,6 +1284,7 @@ v1Router.post('/ai/generate-description', async (req, res) => {
             eventType: type,
             date,
             time,
+            city,
             weather: context.weatherOutlook,
             holiday: context.holiday ? `${context.holiday}${foodAlignment ? ` (${foodAlignment})` : ''}` : foodAlignment || undefined,
             deals

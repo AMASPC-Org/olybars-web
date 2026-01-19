@@ -14,14 +14,14 @@ export const LeaguePerksScreen: React.FC = () => {
         {
             icon: MapPin,
             title: "Clock-in Points",
-            desc: "Clock in at any league bar to score 10+ points towards the season leaderboard.",
+            desc: "Clock in at any league bar to collect 10+ drops towards the season leaderboard.",
             color: "text-blue-400",
             bg: "bg-blue-400/10"
         },
         {
             icon: Zap,
             title: "Buzz Multipliers",
-            desc: "Score bonus points at 'Buzzing' venues or for being the first to report the vibe.",
+            desc: "Collect bonus drops at 'Buzzing' venues or for being the first to report the vibe.",
             color: "text-amber-500",
             bg: "bg-amber-500/10"
         },
@@ -35,7 +35,7 @@ export const LeaguePerksScreen: React.FC = () => {
         {
             icon: Gift,
             title: "Seasonal Rewards",
-            desc: "Redeem your points for local gift cards, exclusive merch, and 'Artisan' perks.",
+            desc: "Redeem your drops for local gift cards, exclusive merch, and 'Artisan' perks.",
             color: "text-purple-400",
             bg: "bg-purple-400/10"
         },
@@ -113,10 +113,10 @@ export const LeaguePerksScreen: React.FC = () => {
 
                     <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x">
                         {[
-                            { title: "$20 Well 80 Card", pts: "200 PTS", date: "2m ago", img: "bg-gradient-to-br from-blue-600 to-blue-900" },
-                            { title: "League Snapback", pts: "150 PTS", date: "15m ago", img: "bg-gradient-to-br from-slate-700 to-black" },
-                            { title: "$10 Oly Taproom", pts: "100 PTS", date: "1h ago", img: "bg-gradient-to-br from-amber-600 to-amber-900" },
-                            { title: "Early Access Pass", pts: "50 PTS", date: "3h ago", img: "bg-gradient-to-br from-purple-600 to-purple-900" },
+                            { title: "$20 Well 80 Card", pts: "200 DROPS", date: "2m ago", img: "bg-gradient-to-br from-blue-600 to-blue-900" },
+                            { title: "League Snapback", pts: "150 DROPS", date: "15m ago", img: "bg-gradient-to-br from-slate-700 to-black" },
+                            { title: "$10 Oly Taproom", pts: "100 DROPS", date: "1h ago", img: "bg-gradient-to-br from-amber-600 to-amber-900" },
+                            { title: "Early Access Pass", pts: "50 DROPS", date: "3h ago", img: "bg-gradient-to-br from-purple-600 to-purple-900" },
                         ].map((reward, i) => (
                             <div key={i} className="min-w-[160px] snap-center bg-slate-900/80 border border-white/5 rounded-2xl overflow-hidden group hover:border-primary/20 transition-all">
                                 <div className={`h-24 ${reward.img} flex items-center justify-center relative overflow-hidden`}>

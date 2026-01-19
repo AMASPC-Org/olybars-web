@@ -1,5 +1,7 @@
 ---
-trigger: always_on
+trigger:
+  type: model_decision
+  description: "Activate this rule when the user asks about 'Artie' persona, 'Schmidt' logic, or liquor law compliance."
 ---
 
 # Artie's Shield: Compliance & AI Guardrails

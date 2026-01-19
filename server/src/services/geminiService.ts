@@ -81,10 +81,13 @@ export class GeminiService {
         weather?: string;
         holiday?: string;
         deals?: any[];
+        city?: string; // Multi-City Support
     }) {
+        const cityContext = context.city || "Olympia, WA";
         // Uses a specific mini-prompt for descriptions, keeping Artie's voice
         const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
         VENUE: ${context.venueName} (${context.venueType})
+        LOCATION: ${cityContext}
         EVENT: ${context.eventType}
         DATE: ${context.date} @ ${context.time}
         WEATHER: ${context.weather || 'Standard Olympia Vibes'}
@@ -371,7 +374,10 @@ export class GeminiService {
         }
     }
 
-    async analyzeScrapedContent(rawContent: string, currentTime: string, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
+    async analyzeScrapedContent(rawContent: string, currentTime: string, venueContext: { city: string, timezone: string }, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
+        // Default to Olympia if missing (Safety Net)
+        const cityString = venueContext?.city || "Olympia, WA";
+
         let prompt = '';
 
         if (target === 'EVENTS') {
@@ -380,7 +386,7 @@ export class GeminiService {
             
             CONTEXT:
             Current Date Context: ${currentTime} (Use this to resolve relative dates like "Tonight", "This Friday", or "Tomorrow").
-            Venue Location: Olympia, WA (Pacific Time).
+            Venue Location: ${cityString} (Pacific Time).
             
             EXTRACTION RULES:
             1. Extract ALL unique events found in the text.
@@ -411,7 +417,7 @@ export class GeminiService {
             
             CONTEXT:
             Current Date Context: ${currentTime}.
-            Venue Location: Olympia, WA.
+            Venue Location: ${cityString}.
 
             EXTRACTION RULES:
             1. HIGHLIGHTS: Identify 3-5 distinct items that define this place (e.g., "Signature Burger", "Flight of 4", "Taco Tuesday Special").

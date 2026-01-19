@@ -15,7 +15,7 @@ const Tiers = [
         color: 'slate',
         features: [
             'Basic Business Name & Address',
-            'Viewer-Only Access (No Points)',
+            'Viewer-Only Access (No Drops)',
             'Upgrade Anytime'
         ],
         cta: 'CURRENT STATUS',
@@ -32,7 +32,7 @@ const Tiers = [
         color: 'bronze',
         features: [
             'Standard Verified Listing',
-            'Pay-As-You-Go Points System',
+            'Pay-As-You-Go Drops System',
             'Access to Owner Portal',
             'Community Forum Support'
         ],
@@ -50,7 +50,7 @@ const Tiers = [
         color: 'silver',
         isPopular: true,
         features: [
-            '5,000 Monthly Point Allowance',
+            '5,000 Monthly Drop Allowance',
             '"Artie\'s Picks" Feature Rotation',
             'Advanced Analytics Dashboard',
             'Standard Business Support'
@@ -69,7 +69,7 @@ const Tiers = [
         color: 'gold',
         features: [
             'Keystone Local Status',
-            'UNLIMITED Engagement Points',
+            'UNLIMITED Engagement Drops',
             'PRIORITY 24/7 Dedicated Support',
             'Founding Partner Ring on Listing',
             'Quarterly Strategy Review'

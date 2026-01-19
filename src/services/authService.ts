@@ -61,7 +61,7 @@ export const AuthService = {
                 displayName: user.displayName || '',
                 photoURL: user.photoURL || '',
                 handle: `@${user.displayName?.replace(/\s+/g, '').toLowerCase() || 'user_' + user.uid.slice(0, 5)}`,
-                role: 'user',
+                role: 'guest',
                 systemRole: 'guest',
                 venuePermissions: {},
                 createdAt: Date.now(),

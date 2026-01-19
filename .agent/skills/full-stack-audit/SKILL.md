@@ -1,39 +1,43 @@
+---
 name: full-stack-audit
-description: Performs a comprehensive Deployment Integrity check followed by a Real-Time "Vibe" functional test.
+description: comprehensive full-stack audit of the local OlyBars development environment to verify the real-time 'Vibe' propagation logic.
+---
 
-# SECTION 1: DEPLOYMENT INTEGRITY (The "Drift" Check)
-1. **Source Analysis**:
-   - Run a search command to identify all instances of `process.env` in `server/`.
-   - Extract unique variable names (e.g., `GOOGLE_GENAI_KEY`). Ignore `NODE_ENV`, `PORT`.
-2. **Cloud verification**:
-   - Execute: `gcloud run services describe olybars-backend --region us-west1 --format=json`
-   - **CRITICAL:** Parse the JSON output. Collect names from TWO locations:
-     - `spec.template.spec.containers[0].env[].name` (Raw Env Vars).
-     - `spec.template.spec.containers[0].env[].valueFrom` (Secret Manager Mounts - check the key/name).
-3. **Drift Assertion**:
-   - COMPARE: Does every variable found in Step 1 exist in the combined list from Step 2?
-   - IF MISMATCH: Stop. Generate a "Drift Report" listing missing secrets. Do not proceed.
-   - IF MATCH: Proceed to Section 2.
+# Full-Stack Audit: Vibe Propagation
 
-# SECTION 2: FUNCTIONAL VIBE CHECK (The "Real-Time" Test)
-1. **Environment**:
-   - Check if port 3000 is free. If not, kill the process.
-   - Ensure `npm run dev` is running and accessible at localhost:3000.
-2. **Setup Observer (Tab 1)**:
-   - Open Browser to `/venue/the-brotherhood`.
-   - visually confirm the "Vibe Meter" element is visible.
-3. **Setup Actor (Tab 2)**:
-   - Open new tab to `/passport`.
-   - **Auth Check:** Look for "Login" button. If present, log in with test credentials. If "Avatar" is present, proceed.
-   - Override Geolocation to [47.045, -122.905] (The Brotherhood coordinates).
-4. **Execution**:
-   - In Tab 2, Click "Clock In".
-   - Wait for visual confirmation (Toast/Success message) in Tab 2.
-5. **Verification**:
-   - Switch immediately to Tab 1.
-   - **DO NOT RELOAD TAB 1.**
-   - WAIT up to 15 seconds (Allowing for Cold Start latency).
-   - ASSERT: "Vibe Meter" updates (e.g., Color change or Text update "Chill" -> "Lively").
-6. **Reporting**:
-   - Take a screenshot of the updated Tab 1.
-   - Save findings to `audit_results.md`.
+This skill outlines the procedure to audit the 'Clock In' flow and its real-time propagation across the OlyBars UI.
+
+## 1. Environment Setup
+- **Pre-requisite**: Ensure the local development server is running (`npm run dev:all`).
+- **User Role**: League Player (This requires an authenticated state, likely needing a 'Member' persona login or emulation).
+
+## 2. Audit Steps
+
+### Step 1: Baseline Observation
+1.  **Navigate** to a Venue Profile (e.g., `/bars/the-brotherhood`).
+2.  **Observe** the current 'Buzz' level and 'Vibe' report on the Venue Profile.
+3.  **Check** the global 'Buzz Clock' (usually in the header or dashboard).
+
+### Step 2: Action - Clock In
+1.  **Locate** the 'Clock In' button (League Passport area or Venue Profile action bar).
+2.  **Execute** 'Clock In'.
+    *   *Note*: If geolocation is required, you may need to mock the coordinates or use the browser's sensor overrides if available, or ensure the dev environment allows 'Clock In' without strict geo-fencing (often acceptable in typical dev builds, otherwise use `lat_lng` override).
+3.  **Context**: "I am at The Brotherhood and I am clocking in."
+
+### Step 3: Verification (Real-Time)
+**CRITICAL**: Do NOT reload the page.
+1.  **Buzz Clock**: assert that the user's points/status updated immediately (e.g., +10 pts).
+2.  **Venue Profile**: assert that the 'Buzz' meter/indicator for the venue reflects the new activity (e.g., Heat goes up, or "Just Now" activity logs).
+3.  **Map**: (Optional/If visible) Check if the venue pin pulses or changes color.
+
+### Step 4: Latency Check
+-   If the UI updates take > 5 seconds, this is a **FAILURE**.
+-   Open the **Browser Console** and look for:
+    -   Firestore permission errors.
+    -   Network timeouts.
+    -   WebSocket disconnections.
+
+## 3. Reporting
+-   Record a video of the session.
+-   Log start time and end time of the 'Clock In' action to UI update.
+-   Note any discrepancies between expected Vibe logic (System Arch) and observed behavior.

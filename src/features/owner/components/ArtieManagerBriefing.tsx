@@ -97,10 +97,10 @@ export const ArtieManagerBriefing: React.FC<ArtieManagerBriefingProps> = ({ venu
                             <div className="flex items-center gap-6 pt-2">
                                 <div className="flex flex-col">
                                     <span className="text-[8px] font-black text-slate-500 uppercase">Investment</span>
-                                    <span className="text-xs font-black text-primary font-league">{insight.pointCost || 500} POINTS</span>
+                                    <span className="text-xs font-black text-primary font-league">{insight.pointCost || 500} DROPS</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-black text-slate-500 uppercase">Point Bank</span>
+                                    <span className="text-[8px] font-black text-slate-500 uppercase">Reservoir</span>
                                     <span className="text-xs font-black text-white font-league">{venue.pointBank || 5000} AVAIL</span>
                                 </div>
                             </div>

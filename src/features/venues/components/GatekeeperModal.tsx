@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Shield, X, HelpCircle, CheckCircle2 } from 'lucide-react';
 import { Venue } from '../../../types';
 
@@ -17,7 +18,7 @@ export const GatekeeperModal: React.FC<GatekeeperModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
             <div
                 className="relative w-full max-w-md bg-slate-900 border-2 border-primary/30 rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(251,191,36,0.2)] animate-in zoom-in-95 duration-300"
@@ -99,6 +100,7 @@ export const GatekeeperModal: React.FC<GatekeeperModalProps> = ({
                     </p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

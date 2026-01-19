@@ -79,7 +79,7 @@ export const PulseExplainer: React.FC = () => {
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DENSITY VARIABLE</span>
                             </div>
                             <p className="text-[10px] text-slate-500 font-medium leading-normal italic">
-                                Live Occupancy reported by Players impacts the total Buzz Score. The Bar turns "Red/Hot" when it's popping.
+                                Live Occupancy reported by Players impacts the total Buzz Level. The Bar turns "Red/Hot" when it's popping.
                             </p>
                         </div>
                     </div>
@@ -97,23 +97,31 @@ export const PulseExplainer: React.FC = () => {
                         </div>
                         <div>
                             <h3 className="text-[9px] font-black text-yellow-500 uppercase tracking-[0.15em] mb-1">Step 3: The League (Personal)</h3>
-                            <h4 className="text-lg font-black uppercase tracking-tight font-league text-white leading-tight">YOU GET PAID <br />IN POINTS</h4>
+                            <h4 className="text-lg font-black uppercase tracking-tight font-league text-white leading-tight">YOU GET PAID <br />IN DROPS</h4>
                         </div>
                     </div>
 
                     <div className="space-y-4">
                         <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                            Every data signal you provide has a value. Your points earn you Status, Badges, and Weekly Prizes.
+                            Every data signal you provide has a value. Your Drops earn you Status, Badges, and Weekly Prizes.
                         </p>
 
                         <div className="grid grid-cols-2 gap-2">
                             <div className="bg-black/40 p-3 rounded-xl border border-white/5">
                                 <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Clock In</span>
-                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.CLOCK_IN} Pts</span>
+                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.CLOCK_IN} Drops</span>
                             </div>
                             <div className="bg-black/40 p-3 rounded-xl border border-white/5">
                                 <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Vibe Check</span>
-                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.VIBE_REPORT} Pts</span>
+                                <span className="text-sm font-black text-white font-league">+{PULSE_CONFIG.POINTS.VIBE_REPORT} Drops</span>
+                            </div>
+                            <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Flash Bounty</span>
+                                <span className="text-sm font-black text-white font-league">Points Vary</span>
+                            </div>
+                            <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                                <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Game Vibe Check</span>
+                                <span className="text-sm font-black text-white font-league">+1 Drop</span>
                             </div>
                         </div>
                     </div>
@@ -124,7 +132,7 @@ export const PulseExplainer: React.FC = () => {
             <div className="flex items-center gap-3 p-4 bg-blue-900/10 rounded-2xl border border-blue-500/20">
                 <Clock className="w-5 h-5 text-blue-400 shrink-0" />
                 <p className="text-[11px] font-bold text-blue-200 leading-tight">
-                    BUZZ DECAY: High scores require constant movement. Scores drop by 50% every {PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / 3600000} hour if no signals are received.
+                    BUZZ DECAY: High levels require constant movement. Buzz fades by 50% every {PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / 3600000} hour if no signals are received.
                 </p>
             </div>
 

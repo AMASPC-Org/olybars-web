@@ -190,7 +190,35 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                 lastUpdated: v.currentBuzz?.lastUpdated
             }));
 
-        return [...initialPotentialItems, ...backfillItems];
+        const combined = [...initialPotentialItems, ...backfillItems];
+
+        // 4. Hard Force 3 Items (Static Placeholders)
+        const placeholders = [
+            { name: "OlyBars HQ", deal: "System Online", sub: "ACTIVE" },
+            { name: "Quiet City", deal: "Check back later", sub: "ZZZ" },
+            { name: "Schmidt's", deal: "AI Optimized", sub: "BETA" }
+        ];
+
+        while (combined.length < 3) {
+            const idx = combined.length;
+            const p = placeholders[idx % placeholders.length];
+            combined.push({
+                id: `static-${idx}`,
+                name: p.name,
+                isHQ: idx === 0, // First fallback is HQ
+                timeLabel: 'SOON',
+                subLabel: p.sub,
+                deal: p.deal,
+                isLive: true,
+                isBounty: false,
+                urgency: 'blue',
+                clockIns: 0,
+                status: 'mellow',
+                lastUpdated: Date.now()
+            });
+        }
+
+        return combined;
     }, [initialPotentialItems, venues]);
 
     // Implement Rotation: 5-minute shift ensures global fairness
@@ -293,10 +321,10 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                             {/* Right: Urgent Time */}
                             <div className="text-right flex-shrink-0">
                                 <div className={`text-sm font-black font-mono leading-none ${item.urgency === 'red' ? 'text-red-500' :
-                                        item.urgency === 'blue' ? 'text-blue-400' :
-                                            item.urgency === 'amber' ? 'text-[#FFD700]' :
-                                                item.urgency === 'sky' ? 'text-sky-400' :
-                                                    'text-emerald-400'
+                                    item.urgency === 'blue' ? 'text-blue-400' :
+                                        item.urgency === 'amber' ? 'text-[#FFD700]' :
+                                            item.urgency === 'sky' ? 'text-sky-400' :
+                                                'text-emerald-400'
                                     }`}>
                                     {timeValue[0]}<span className="text-[10px] ml-0.5">{timeValue[1]}</span>
                                 </div>

@@ -23,9 +23,12 @@ import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../../../utils/geoUtils';
 import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
 import { GatekeeperModal } from '../components/GatekeeperModal';
+import { TapSourceModal } from '../components/TapSourceModal';
+import { updateUserProfile, logUserActivity } from '../../../services/userService';
 
 interface VenueProfileScreenProps {
-    // Props are now provided via useOutletContext
+    onOpenSips?: () => void;
+    onOpenHomeBase?: (venueId: string, venueName: string) => void;
 }
 
 const VENUE_TYPE_LABELS: Record<string, string> = {
@@ -37,7 +40,7 @@ const VENUE_TYPE_LABELS: Record<string, string> = {
     brewpub: 'Brewpub'
 };
 
-export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
+export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSips, onOpenHomeBase }) => {
     const {
         venues,
         userProfile,
@@ -82,6 +85,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
     const [isGatekeeperOpen, setIsGatekeeperOpen] = useState(false);
     const [isMembershipVerified, setIsMembershipVerified] = useState(false);
 
+    // [NEW] Tap Source (Lead Capture)
+    const [isTapSourceOpen, setIsTapSourceOpen] = useState(false);
+
     useEffect(() => {
         if (venue?.membershipRequired && !isMembershipVerified) {
             setIsGatekeeperOpen(true);
@@ -91,9 +97,36 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
     const onToggleFavorite = (venueId: string) => {
         const isCurrentlyFavorite = userProfile.favorites?.includes(venueId);
         handleToggleFavoriteProp(venueId);
+
+        // If Adding + No Home Base -> Prompt Home Base
         if (!isCurrentlyFavorite) {
-            showToast("You'll now get alerts for this spot! 🌟", "success");
+            if (!userProfile.homeBase && onOpenHomeBase && venue) {
+                onOpenHomeBase(venueId, venue.name);
+            }
+            // Fallback: If Adding + No Phone -> Capture Lead
+            else if (!userProfile.phone) {
+                setIsTapSourceOpen(true);
+            } else {
+                showToast("You'll now get alerts for this spot! 🌟", "success");
+            }
         }
+    };
+
+    const handleTapSourceSubmit = async (phone: string) => {
+        if (!userProfile?.uid || !venue) return;
+
+        // 1. Update Profile (Fire & Forget for UI speed)
+        await updateUserProfile(userProfile.uid, { phone });
+
+        // 2. Award Drops (25)
+        await logUserActivity(userProfile.uid, {
+            type: 'bonus',
+            venueId: venue.id,
+            points: 25,
+            metadata: { source: 'tap_source_modal', action: 'phone_capture' }
+        });
+
+        // Modal handles its own success state/timeout
     };
 
     const timeToMinutes = (timeStr: string) => {
@@ -308,6 +341,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
 
     return (
         <div className="bg-background min-h-screen pb-32 font-body text-slate-100 animate-in fade-in duration-500">
+            {venue && (
+                <TapSourceModal
+                    isOpen={isTapSourceOpen}
+                    onClose={() => setIsTapSourceOpen(false)}
+                    venue={venue}
+                    onSubmit={handleTapSourceSubmit}
+                />
+            )}
             {/* AI SEO: Metadata & JSON-LD */}
             <SEO
                 title={venue.name}
@@ -376,7 +417,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                     <div className="flex justify-between items-end">
                         <div className="max-w-[70%]">
                             <div className="flex items-center gap-2 mb-1">
-                                <h1 className="text-4xl font-black text-white font-league uppercase italic leading-none truncate">
+                                <h1 className="text-4xl font-black text-white font-league uppercase italic leading-[0.9] whitespace-normal break-words py-1">
                                     {venue.name}
                                 </h1>
                                 {venue.isHQ && <Shield className="w-5 h-5 text-primary fill-primary" />}
@@ -512,8 +553,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className={`bg-surface border-[1.5px] p-4 rounded-2xl flex flex-col items-center gap-1 relative overflow-hidden group ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'border-primary shadow-[0_0_15px_rgba(251,191,36,0.15)]' :
-                            venue.status === 'chill' ? 'border-blue-400/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
-                                'border-slate-700 shadow-none'
+                        venue.status === 'chill' ? 'border-blue-400/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
+                            'border-slate-700 shadow-none'
                         }`}>
                         <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'bg-primary/5' : 'bg-white/5'
                             }`} />
@@ -527,10 +568,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
 
                         <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest relative z-10">Energy</span>
                         <span className={`text-sm font-black uppercase font-league relative z-10 ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'text-white' :
-                                venue.status === 'chill' ? 'text-blue-100' :
-                                    'text-slate-400'
+                            venue.status === 'chill' ? 'text-blue-100' :
+                                'text-slate-400'
                             }`}>
-                            {venue.status === 'dead' ? 'MELLOW' : venue.status}
+                            {venue.status === 'dead' ? 'TRICKLE' :
+                                venue.status === 'mellow' ? 'TRICKLE' :
+                                    venue.status === 'chill' ? 'FLOWING' :
+                                        venue.status === 'buzzing' ? 'GUSHING' :
+                                            venue.status === 'packed' ? 'FLOODED' : venue.status}
                         </span>
                     </div>
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
@@ -689,6 +734,13 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = () => {
                                 href={venue.directMenuUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={(e) => {
+                                    const hasSips = userProfile.favoriteDrinks?.length || userProfile.favoriteDrink;
+                                    if (!hasSips && onOpenSips) {
+                                        e.preventDefault();
+                                        onOpenSips();
+                                    }
+                                }}
                                 className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-2xl uppercase tracking-[0.25em] flex items-center justify-center gap-3 shadow-xl border border-white/5 transition-all active:scale-95"
                             >
                                 <Utensils className="w-5 h-5 text-primary" />

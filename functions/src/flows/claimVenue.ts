@@ -16,7 +16,7 @@ const ClaimInput = z.object({
 export const claimVenueFlow = onCall(
     {
         cors: true,
-        secrets: ["GOOGLE_API_KEY", "google-maps-api-key"],
+        secrets: ["GOOGLE_API_KEY", "GOOGLE_MAPS_API_KEY"],
         region: 'us-west1'
     },
     async (request) => {

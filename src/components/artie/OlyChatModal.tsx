@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Mic, MicOff } from 'lucide-react';
 
 /**
@@ -500,7 +501,7 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
     // For now we only show bubbles if they exist in the active hook (ArtieOps doesn't have them yet)
     const activeBubbles = (activeHook as any).currentBubbles || [];
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
 
@@ -789,6 +790,7 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
                     </p>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

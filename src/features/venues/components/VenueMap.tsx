@@ -33,7 +33,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
     const mapRef = useRef<HTMLDivElement>(null);
     const markersRef = useRef<any[]>([]);
     const infoWindowRef = useRef<any>(null);
-    const { status, apiKey } = useGoogleMapsScript();
+    const { status, apiKey, error } = useGoogleMapsScript();
     const { coords } = useGeolocation({ shouldPrompt: false });
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const { mapRegion } = useDiscovery();
@@ -156,6 +156,18 @@ export const VenueMap: React.FC<VenueMapProps> = ({
                     <p className="text-white font-league text-sm uppercase tracking-widest text-center px-6 italic">Synchronizing Buzz Hub...</p>
                 </div>
             )}
+            {status === 'error' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-20 p-6 text-center">
+                    <div className="bg-red-500/10 p-4 rounded-full mb-4">
+                        <MapPin className="w-8 h-8 text-red-500" />
+                    </div>
+                    <p className="text-white font-black uppercase tracking-widest mb-2">Map Module Failed</p>
+                    <p className="text-red-400 text-xs font-mono mb-4 max-w-xs">{error?.message || "Unknown Connection Error"}</p>
+                    <button onClick={() => window.location.reload()} className="px-6 py-2 bg-slate-800 border border-white/10 rounded-lg text-xs font-bold uppercase hover:bg-slate-700 transition-colors">
+                        Reload System
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -194,7 +206,8 @@ const darkMapStyle = [
         stylers: [{ visibility: "off" }]
     },
     {
-        featureType: "geometry",
+        featureType: "all",
+        elementType: "geometry",
         stylers: [{ color: "#0f172a" }]
     },
     {

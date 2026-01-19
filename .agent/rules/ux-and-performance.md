@@ -1,5 +1,7 @@
 ﻿---
-trigger: always_on
+trigger:
+  type: glob
+  pattern: "src/**/*.{tsx,css,tailwind.config.js}"
 ---
 
 # UX, Performance & Observability
@@ -31,3 +33,12 @@ This rule ensures high performance, cost-efficiency, and a personalized user exp
 - **Radar Beacons**: Use gold (#fbbf24) for "Buzzing" venues and pink/magenta (#ec4899) for "Packed" venues.
 - **Cleanup**: Clear all animation intervals on component unmount.
 - **POI Lockdown**: Always set `clickableIcons: false` when initializing Google Maps to prevent user distraction from internal venue markers.
+
+## 6. Modal & Overlay Architecture
+- **Portals Required**: All Modals and Full-Screen Overlays MUST use `React.createPortal(..., document.body)` to escape the `AppShell` stacking context.
+- **Gold Standard**: Refer to `InfoRulesModal.tsx` for the correct implementation pattern.
+- **Clipping Prevention**: Never nest a Modal inside a container with `transform`, `filter`, or `perspective` properties.
+
+## 7. Visual System Constants
+- **Mellow Status**: ALWAYS use `slate-500` (Gray) for "Mellow". NEVER use green/emerald (reserved for "Active/Buzzing").
+- **Money/Currency**: Use `emerald` only for financial transactions or "Drops" gains.

@@ -62,15 +62,15 @@
               },
               {
                 "name": "VITE_GOOGLE_BROWSER_KEY",
-                "value": "AIzaSyBocyAp714K4UdV6_e0vp211dIhppQ_yGw"
+                "value": "{{GOOGLE_BROWSER_KEY}}"
               },
               {
                 "name": "GOOGLE_GENAI_API_KEY",
-                "value": "AIzaSyDKil8g8Tp75UKy0nX35nYZBZhZZcf2wNk"
+                "value": "{{GOOGLE_GENAI_API_KEY}}"
               },
               {
                 "name": "GOOGLE_BACKEND_KEY",
-                "value": "AIzaSyCPVt12CGfySOsFEMnIOH0QQY4z7DOinio"
+                "value": "{{GOOGLE_BACKEND_KEY}}"
               }
             ],
             "image": "us-west1-docker.pkg.dev/ama-ecosystem-prod/cloud-run-source-deploy/olybars-backend@sha256:155c236ffb0a949dc3bcea3702efe3773da9dc8ab47a832291afa90df9816601",

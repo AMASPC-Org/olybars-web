@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
+import { FormatCurrency } from '../../utils/formatCurrency';
+import { GAMIFICATION_CONFIG } from '../../config/gamification';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -90,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {userProfile.displayName || (userProfile.role === 'guest' ? 'Guest Player' : 'Player One')}
                         </span>
                         <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-1">
-                            {userProfile.role === 'guest' ? 'Tap to Sign In' : `${userPoints.toLocaleString()} Pts`}
+                            {userProfile.role === 'guest' ? 'Tap to Sign In' : <FormatCurrency amount={userPoints} variant='default' className='text-black/60' />}
                         </span>
                     </div>
                 </div>
@@ -152,13 +154,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 3. Settings & Legal */}
                 <div className="space-y-2">
-                    <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
-                        <div className="flex items-center gap-4">
-                            <Activity className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">Settings</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
-                    </button>
+                    {userProfile.role !== 'guest' && (
+                        <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                            <div className="flex items-center gap-4">
+                                <Activity className="w-5 h-5 text-slate-400" />
+                                <span className="text-sm font-black uppercase text-white tracking-wide">Settings</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                        </button>
+                    )}
 
                     <button onClick={() => handleNavigation('/meet-artie')} className="w-full bg-slate-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
                         <div className="flex items-center gap-4">

@@ -111,7 +111,8 @@ export class VenueOpsService {
                 endTime: endTime,
                 isActive: true,
                 updatedAt: serverTimestamp(),
-                lastUpdatedBy: 'Artie'
+                lastUpdatedBy: 'Artie',
+                bounty_task_description: bounty.bounty_task_description || ''
             };
 
             await updateDoc(venueRef, {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, History, MapPin, Receipt, Sparkles, Trophy, LogIn, UserPlus, Info } from 'lucide-react';
+import { ArrowLeft, History, MapPin, Receipt, Sparkles, Trophy, LogIn, UserPlus, Info, Clock, X } from 'lucide-react';
 import { fetchUserPointHistory } from '../../../services/userService';
 import { ActivityLog, UserProfile } from '../../../types/user';
 import { format } from 'date-fns';
@@ -48,11 +48,12 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
     };
 
     const getArtieNote = (item: ActivityLog) => {
-        if (item.type === 'clock_in') return "You clocked in and joined the Pulse! 🍻";
-        if (item.type === 'vibe') return "Thanks for the heads-up on the vibe! 🕯️";
-        if (item.type === 'play') return `Game on! Verified at ${item.metadata?.amenityName || 'the venue'}. 🎯`;
-        if (item.type === 'photo') return "Visual proof! Your photo is rocking the feed. 📸";
-        return "Great activity for the League! 🌟";
+        if ((item as any).status === 'PENDING') return "Verification in progress... The Commissioner is reviewing your proof! ??";
+        if (item.type === 'clock_in') return "You clocked in and joined the Pulse! ??";
+        if (item.type === 'vibe') return "Thanks for the heads-up on the vibe! ???";
+        if (item.type === 'play') return `Game on! Verified at ${item.metadata?.amenityName || 'the venue'}. ??`;
+        if (item.type === 'photo') return "Visual proof! Your photo is rocking the feed. ??";
+        return "Great activity for the League! ??";
     };
 
     if (isNonLoggedIn) {
@@ -118,7 +119,7 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
                                 <div className="flex items-center gap-2 pt-2">
                                     <Trophy className="w-6 h-6 text-amber-500" />
                                     <span className="text-3xl font-black text-white font-league">
-                                        {history.reduce((acc, item) => acc + item.points, 0)}
+                                        {history.filter(i => (i as any).status !== 'PENDING').reduce((acc, item) => acc + item.points, 0)}
                                     </span>
                                 </div>
                             </div>
@@ -212,6 +213,18 @@ export const PointHistoryScreen: React.FC<PointHistoryScreenProps> = ({ onBack, 
                                         <div className="pt-4 border-t border-white/5 flex flex-wrap justify-between items-center gap-4">
                                             <span className="text-[9px] text-slate-700 font-mono font-bold tracking-widest">TX_ID: {item.id.slice(0, 12).toUpperCase()}</span>
                                             <div className="flex gap-2">
+                                                {(item as any).status === 'PENDING' && (
+                                                    <div className="px-2 py-1 bg-slate-800 border border-slate-700 rounded text-[8px] text-slate-400 font-black tracking-widest uppercase flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" />
+                                                        Verification Pending
+                                                    </div>
+                                                )}
+                                                {(item as any).status === 'REJECTED' && (
+                                                    <div className="px-2 py-1 bg-red-900/20 border border-red-800/40 rounded text-[8px] text-red-400 font-black tracking-widest uppercase flex items-center gap-1">
+                                                        <X className="w-3 h-3" />
+                                                        Bounty Rejected
+                                                    </div>
+                                                )}
                                                 {item.verificationMethod === 'qr' && (
                                                     <div className="px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded text-[8px] text-amber-500 font-black tracking-widest uppercase flex items-center gap-1">
                                                         <Sparkles className="w-3 h-3" />

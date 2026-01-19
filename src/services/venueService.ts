@@ -133,7 +133,8 @@ export const checkVenueClaim = async (googlePlaceId: string): Promise<{ isClaime
  * Claim a venue and sync with Google
  */
 export const onboardVenue = async (googlePlaceId: string): Promise<{ venueId: string; syncResult: any }> => {
-  const headers = await getAuthHeaders();
+  // Force token refresh for critical onboarding action
+  const headers = await getAuthHeaders(true, true);
   try {
     const response = await fetch(API_ENDPOINTS.PARTNERS.ONBOARD, {
       method: 'POST',

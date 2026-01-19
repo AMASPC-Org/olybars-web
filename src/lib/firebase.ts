@@ -6,7 +6,10 @@ import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAfEWY4NF8WDeh612ctG2VNLjSiIcMCRqk",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (function () {
+    console.warn('⚠️ [FIREBASE] Missing VITE_FIREBASE_API_KEY. Auth will fail.');
+    return "MISSING_API_KEY";
+  })(),
   authDomain: "ama-ecosystem-prod.firebaseapp.com",
   projectId: "ama-ecosystem-prod",
   storageBucket: "ama-ecosystem-prod.firebasestorage.app",
@@ -28,7 +31,10 @@ export const functions = getFunctions(app, 'us-west1');
 // If we are on localhost, connect to the local emulators instead of the cloud.
 // --- EMULATOR WIRING ---
 // If we are on localhost, connect to the local emulators instead of the cloud.
-if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+if (typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+  import.meta.env.VITE_USE_EMULATORS === 'true'
+) {
   console.log('🔧 Connecting to Local Firebase Emulators...');
 
   // Connect Firestore (Database)

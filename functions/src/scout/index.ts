@@ -75,7 +75,8 @@ export const scoutWorker = onMessagePublished({
     topic: TOPIC_NAME,
     timeoutSeconds: 300, // 5 min max
     memory: '2GiB', // Puppeteer needs RAM
-    cpu: 1
+    cpu: 1,
+    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "GOOGLE_MAPS_API_KEY"]
 }, async (event) => {
     const { venueId, url, previousHash, metaPath } = event.data.message.json;
     console.log(`🤖 [Worker] Scout allocated for ${venueId} (${url})`);
@@ -198,8 +199,28 @@ export const scoutWorker = onMessagePublished({
         // Context Injection
         const todayPST = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
 
+        // Multi-City Extraction
+        let city = "Olympia, WA";
+        if (venueData?.address) {
+            // "514 4th Ave E, Olympia, WA 98501" -> "Olympia, WA"
+            // Simple robust parser: split by comma, trim
+            const parts = venueData.address.split(',');
+            if (parts.length >= 3) {
+                // usually [Street, City, State Zip, Country] or [Street, City, State Zip]
+                // Let's try to get City + State
+                const cityPart = parts[1].trim();
+                const stateZipPart = parts[2].trim().split(' ')[0]; // "WA" from "WA 98501"
+                city = `${cityPart}, ${stateZipPart}`;
+            }
+        }
+
+        const venueContext = {
+            city,
+            timezone: 'America/Los_Angeles'
+        };
+
         // Using "EVENTS" logic from our service
-        const events = await gemini.analyzeScrapedContent(rawText, todayPST, 'EVENTS');
+        const events = await gemini.analyzeScrapedContent(rawText, todayPST, venueContext, 'EVENTS');
 
         // Note: TDD asks for Multimodal (Text + Screenshot). 
         // Our current GeminiService.analyzeScrapedContent only takes text.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
 import { Venue } from '../../../types';
@@ -24,14 +24,15 @@ interface UnifiedEvent {
   score?: number;
   is_ritual?: boolean;
 }
-
 export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
   const { id: venueId } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const eventTypeFilter = (searchParams.get('type') as 'all' | 'music' | 'activities') || 'all';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [events, setEvents] = useState<UnifiedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [eventTypeFilter, setEventTypeFilter] = useState<'all' | 'music' | 'activities'>('all');
 
   // --- UNIFIED FEED ENGINE ---
   useEffect(() => {
@@ -119,6 +120,12 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
     if (venues.length > 0) generateFeed();
   }, [venues]);
 
+  const setFilterAndUrl = (type: string) => {
+    setSearchParams(prev => {
+      prev.set('type', type);
+      return prev;
+    });
+  };
 
   const filteredEvents = events.filter(e => {
     // 1. Venue Filter (URL context)
@@ -150,7 +157,6 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search the wire..."
     >
-      {/* Event Type Toggles */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
         {[
           { id: 'all', label: 'All Events', icon: List },
@@ -159,7 +165,7 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
         ].map((type) => (
           <button
             key={type.id}
-            onClick={() => setEventTypeFilter(type.id as any)}
+            onClick={() => setFilterAndUrl(type.id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${eventTypeFilter === type.id
               ? 'bg-primary text-black shadow-[0_0_15px_rgba(251,191,36,0.5)]'
               : 'bg-white/5 text-slate-400 hover:bg-white/10 border border-white/5'
@@ -230,6 +236,6 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
         onClose={() => setShowSubmitModal(false)}
         venues={venues}
       />
-    </ArenaLayout>
+    </ArenaLayout >
   );
 };

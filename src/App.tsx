@@ -45,6 +45,8 @@ const VibeCheckModal = lazy(() => import('./features/venues/components/VibeCheck
 const MakerSurveyModal = lazy(() => import('./features/marketing/components/MakerSurveyModal').then(m => ({ default: m.MakerSurveyModal })));
 const VibeReceiptModal = lazy(() => import('./features/social/components/VibeReceiptModal').then(m => ({ default: m.VibeReceiptModal })));
 const OnboardingModal = lazy(() => import('./components/ui/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const PreferredSipsModal = lazy(() => import('./features/profile/components/PreferredSipsModal').then(m => ({ default: m.PreferredSipsModal })));
+const HomeBaseModal = lazy(() => import('./features/profile/components/HomeBaseModal').then(m => ({ default: m.HomeBaseModal })));
 const FlyerExtractor = lazy(() => import('./pages/admin/FlyerExtractor').then(m => ({ default: m.FlyerExtractor })));
 const AdminDashboardScreen = lazy(() => import('./features/admin/screens/AdminDashboardScreen').then(m => ({ default: m.AdminDashboardScreen })));
 const UserProfileScreen = lazy(() => import('./features/profile/screens/UserProfileScreen')); // Default export
@@ -210,6 +212,11 @@ export default function OlyBarsApp() {
   const [chatInput, setChatInput] = useState('');
   const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(null);
+
+  // Progressive Profiling State
+  const [showPreferredSipsModal, setShowPreferredSipsModal] = useState(false);
+  const [showHomeBaseModal, setShowHomeBaseModal] = useState(false);
+  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{ id: string, name: string } | null>(null);
   // const { showToast } = useToast(); // Moved to top
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
@@ -354,7 +361,6 @@ export default function OlyBarsApp() {
     setVibeVenue(venue);
     setShowVibeCheckModal(true);
   };
-
   const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>, soberFriendlyCheck?: { isGood: boolean; reason?: string }) => {
     const now = Date.now();
 
@@ -375,8 +381,9 @@ export default function OlyBarsApp() {
     }
 
     // Update Venue Status and Photos (Attempt for all, handle guest auth errors)
+    let backendResult: any = null;
     try {
-      await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
+      backendResult = await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
     } catch (err: any) {
       // Honest Gate: Propagate Auth Errors for Guest UI handling
       if (userProfile.uid === 'guest' && (err.status === 401 || err.status === 403)) {
@@ -416,6 +423,8 @@ export default function OlyBarsApp() {
       },
       ...prev
     ]);
+
+    return backendResult;
   };
 
   const handleToggleWeeklyBuzz = async () => {
@@ -457,6 +466,12 @@ export default function OlyBarsApp() {
     } catch (e) {
       showToast('Error updating favorites', 'error');
     }
+  };
+
+  const handleOpenPreferredSips = () => setShowPreferredSipsModal(true);
+  const handleOpenHomeBase = (venueId: string, venueName: string) => {
+    setHomeBaseTargetVenue({ id: venueId, name: venueName });
+    setShowHomeBaseModal(true);
   };
 
   const handleAcceptAgeGate = () => {
@@ -505,7 +520,12 @@ export default function OlyBarsApp() {
 
   return (
     <ErrorBoundary>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <DiscoveryProvider>
           <ScrollToTop />
           <Suspense fallback={<LoadingScreen />}>
@@ -594,7 +614,10 @@ export default function OlyBarsApp() {
                     <Route
                       path="bars/:id"
                       element={
-                        <VenueProfileScreen />
+                        <VenueProfileScreen
+                          onOpenSips={handleOpenPreferredSips}
+                          onOpenHomeBase={handleOpenHomeBase}
+                        />
                       }
                     />
                     <Route
@@ -776,7 +799,27 @@ export default function OlyBarsApp() {
                   }}
                   isLoggedIn={userProfile.uid !== 'guest'}
                   userId={userProfile.uid}
+                  userRole={userProfile.role}
                   onLogin={handleMemberLoginClick}
+                  onJoinLeague={async () => {
+                    setShowClockInModal(false);
+                    if (userProfile.uid !== 'guest' && userProfile.role === 'guest') {
+                      try {
+                        await updateUserProfile(userProfile.uid, { role: 'user' });
+                        setUserProfile(prev => ({ ...prev, role: 'user' }));
+                        showToast("Membership Activated! Points Sealed.", "success");
+                        // Trigger Sips if needed
+                        if (!userProfile.favoriteDrinks || userProfile.favoriteDrinks.length === 0) {
+                          setTimeout(() => setShowPreferredSipsModal(true), 500);
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        showToast("Activation failed. Please try again.", "error");
+                      }
+                    } else {
+                      setShowOnboarding(true);
+                    }
+                  }}
                 />
               )}
 
@@ -793,7 +836,28 @@ export default function OlyBarsApp() {
                     setShowVibeCheckModal(false);
                   }}
                   isLoggedIn={userProfile.uid !== 'guest'}
+                  userRole={userProfile.role}
                   onLogin={handleMemberLoginClick}
+                />
+              )}
+
+              {showPreferredSipsModal && (
+                <PreferredSipsModal
+                  isOpen={showPreferredSipsModal}
+                  onClose={() => setShowPreferredSipsModal(false)}
+                  userProfile={userProfile}
+                  setUserProfile={setUserProfile}
+                />
+              )}
+
+              {showHomeBaseModal && homeBaseTargetVenue && (
+                <HomeBaseModal
+                  isOpen={showHomeBaseModal}
+                  onClose={() => setShowHomeBaseModal(false)}
+                  venueId={homeBaseTargetVenue.id}
+                  venueName={homeBaseTargetVenue.name}
+                  userProfile={userProfile}
+                  setUserProfile={setUserProfile}
                 />
               )}
 

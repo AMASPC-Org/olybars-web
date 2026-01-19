@@ -42,6 +42,7 @@ export interface ActivityLog {
     hasConsent?: boolean;
     metadata?: any;
     verificationMethod?: 'gps' | 'qr';
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface ActivityLogItem {
@@ -51,6 +52,7 @@ export interface ActivityLogItem {
     points: number;
     timestamp: number;
     metadata?: any;
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface UserBadgeProgress {

@@ -33,7 +33,7 @@ import { validateFirebaseIdToken } from './middleware/auth';
 const corsHandler = cors({ origin: [/olybars\.com$/, /firebaseapp\.com$/, /localhost/] });
 
 export const artieChat = onRequest({
-    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "google-maps-api-key", "GOOGLE_MAPS_API_KEY"],
+    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "GOOGLE_MAPS_API_KEY"],
     region: 'us-west1',
     memory: '1GiB'
 }, async (req, res) => {
@@ -89,7 +89,7 @@ export const artieChat = onRequest({
 
 // --- SCHMIDT AI GATEWAY (v2 HTTPS) ---
 export const schmidtChat = onRequest({
-    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "google-maps-api-key", "GOOGLE_MAPS_API_KEY"],
+    secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "GOOGLE_MAPS_API_KEY"],
     region: 'us-west1',
     memory: '1GiB'
 }, async (req, res) => {
@@ -197,3 +197,7 @@ export { scheduledLeaderboardSnapshot } from './triggers/scheduledLeaderboard';
 
 // --- SCOUT AUTOMATION ---
 export { scoutDispatcher, scoutWorker } from './scout/index';
+
+export const smokeTest = onRequest({ region: 'us-west1' }, (req, res) => {
+    res.status(200).send("Smoke test passed");
+});

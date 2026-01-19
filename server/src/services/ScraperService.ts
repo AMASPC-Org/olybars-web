@@ -122,7 +122,27 @@ export class ScraperService {
                     const gemini = new GeminiService();
                     const currentTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
 
-                    const result = await gemini.analyzeScrapedContent(rawContent, currentTime, source.target as any);
+                    // Multi-City Extraction
+                    let city = "Olympia, WA";
+                    if (venue?.address) {
+                        try {
+                            const parts = venue.address.split(',');
+                            if (parts.length >= 3) {
+                                const cityPart = parts[1].trim();
+                                const stateZipPart = parts[2].trim().split(' ')[0];
+                                city = `${cityPart}, ${stateZipPart}`;
+                            }
+                        } catch (e) {
+                            console.warn(`[Scraper] Failed to parse city from address: ${venue.address}, defaulting to Olympia.`);
+                        }
+                    }
+
+                    const venueContext = {
+                        city,
+                        timezone: "America/Los_Angeles"
+                    };
+
+                    const result = await gemini.analyzeScrapedContent(rawContent, currentTime, venueContext, source.target as any);
 
                     // [DATA SINK] Route data based on target
                     if (source.target === 'EVENTS' && Array.isArray(result)) {

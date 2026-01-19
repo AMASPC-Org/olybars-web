@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { FormatCurrency } from '../../../utils/formatCurrency';
 import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle, ShoppingBag, Utensils } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
@@ -76,6 +77,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     const [dealText, setDealText] = useState('');
     const [dealDescription, setDealDescription] = useState('');
+    const [dealTaskDescription, setDealTaskDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
     const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'scraper', 'manual', 'backroom'
@@ -273,10 +275,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 title: dealText,
                 description: dealDescription,
                 duration: dealDuration,
-                isActive: true
+                isActive: true,
+                bounty_task_description: dealTaskDescription
             });
             setDealText('');
             setDealDescription('');
+            setDealTaskDescription('');
             showToast('FLASH BOUNTY BROADCASTED TO NETWORK', 'success');
         } catch (e) {
             showToast('FAILED TO PUBLISH BOUNTY', 'error');
@@ -305,6 +309,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 venueId: myVenue.id,
                 title: dealText,
                 description: dealDescription,
+                bounty_task_description: dealTaskDescription,
                 startTime: start.getTime(),
                 endTime: start.getTime() + (dealDuration * 60 * 1000),
                 durationMinutes: dealDuration,
@@ -317,6 +322,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             showToast('FLASH BOUNTY SCHEDULED SUCCESSFULLY', 'success');
             setDealText('');
             setDealDescription('');
+            setDealTaskDescription('');
             setStaffConfirmed(false);
             fetchScheduledDeals();
         } catch (e: any) {
@@ -833,7 +839,19 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             onChange={(e) => setDealDuration(parseInt(e.target.value))}
                                             className="w-full accent-primary h-1.5 bg-black rounded-lg appearance-none cursor-pointer"
                                         />
-                                        <div className="flex justify-between px-1">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bounty Verification Task</label>
+                                            <input
+                                                type="text"
+                                                value={dealTaskDescription}
+                                                onChange={(e) => setDealTaskDescription(e.target.value)}
+                                                placeholder="e.g. Take a photo of your receipt"
+                                                className="w-full bg-black border border-white/10 rounded-lg p-3 text-white font-bold outline-none placeholder:text-slate-700"
+                                            />
+                                            <p className="text-[8px] text-slate-500 italic ml-1">Fallback: 'Upload a photo of your purchase'</p>
+                                        </div>
+
+                                        <div className="flex justify-between gap-3">
                                             <span className="text-[8px] text-slate-700 font-bold">30M</span>
                                             <span className="text-[8px] text-slate-700 font-bold">3H (CAP)</span>
                                         </div>
@@ -915,7 +933,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         <section className="space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                                 <div>
-                                    <h3 className="text-2xl font-black text-white uppercase font-league leading-none">POINTS ANALYSIS</h3>
+                                    <h3 className="text-2xl font-black text-white uppercase font-league leading-none">DROPS ANALYSIS</h3>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Revenue & Engagement metrics</p>
                                 </div>
                                 <div className="flex bg-black p-1 rounded-lg border border-white/10 w-full sm:w-auto overflow-x-auto no-scrollbar">
@@ -934,11 +952,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Earned</p>
-                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">+{activityStats.earned.toLocaleString()}</p>
+                                    <FormatCurrency amount={activityStats.earned} className="text-xl sm:text-2xl" />
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Redeemed</p>
-                                    <p className="text-xl sm:text-2xl font-black text-red-500 font-league">-{activityStats.redeemed.toLocaleString()}</p>
+                                    <FormatCurrency amount={-activityStats.redeemed} className="text-xl sm:text-2xl" variant="warning" />
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Active</p>
@@ -948,10 +966,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     <div className="absolute top-0 right-0 p-1 opacity-20">
                                         <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
                                     </div>
-                                    <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Point Bank</p>
-                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">
-                                        {((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000)).toLocaleString()}
-                                    </p>
+                                    <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Reservoir</p>
+                                    <FormatCurrency amount={((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000))} className="text-xl sm:text-2xl" hideSign />
                                 </div>
                             </div>
                         </section>
@@ -1147,9 +1163,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             </p>
                                         </div>
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
-                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Points Allocated</p>
+                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Drops Allocated</p>
                                             <p className="text-xl font-black text-amber-500">
-                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.points || 0), 0).toLocaleString()}
+                                                <FormatCurrency amount={(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.points || 0), 0)} />
                                             </p>
                                         </div>
                                     </div>
@@ -1206,8 +1222,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[9px] text-slate-500 uppercase font-black">Bonus Pts</p>
-                                                <p className="text-sm font-black text-amber-500">+{data.points || 0}</p>
+                                                <p className="text-[9px] text-slate-500 uppercase font-black">Bonus Drops</p>
+                                                <FormatCurrency amount={data.points || 0} variant="highlight" />
                                             </div>
                                         </div>
                                     ))}

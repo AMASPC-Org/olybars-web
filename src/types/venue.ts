@@ -49,6 +49,7 @@ export interface FlashBounty {
     termsAccepted?: boolean;
     offerDetails?: string; // [NEW] e.g. "BOGO"
     terms?: string; // [NEW] e.g. "Limit 2"
+    bounty_task_description?: string; // [NEW] e.g. "Upload a photo of your receipt"
 }
 
 export interface ScheduledDeal {
@@ -65,6 +66,7 @@ export interface ScheduledDeal {
     staffBriefingConfirmed: boolean;
     offerDetails?: string;
     terms?: string;
+    bounty_task_description?: string;
     createdAt?: any; // Firestore serverTimestamp
 }
 
