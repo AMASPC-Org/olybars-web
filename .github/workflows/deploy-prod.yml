@@ -1,0 +1,19 @@
+﻿name: Deploy Prod
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  prod-deploy:
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: 'production'
+      project_id: 'ama-ecosystem-prod'
+      region: 'us-west1'
+    secrets:
+      wif_provider: ${{ secrets.PROD_WIF_PROVIDER }}
+      wif_service_account: ${{ secrets.PROD_WIF_SERVICE_ACCOUNT }}
+      vite_key: ${{ secrets.PROD_VITE_GOOGLE_BROWSER_KEY }}

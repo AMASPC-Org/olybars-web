@@ -1,0 +1,95 @@
+﻿name: Atomic Deploy (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      project_id:
+        required: true
+        type: string
+      region:
+        required: false
+        type: string
+        default: 'us-west1'
+      repo_name:
+        required: false
+        type: string
+        default: 'olybars-repo'
+    secrets:
+      wif_provider:
+        required: true
+      wif_service_account:
+        required: true
+      vite_key:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # --- 1. Security & Auth ---
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.wif_provider }}
+          service_account: ${{ secrets.wif_service_account }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ inputs.project_id }}
+
+      # --- 2. Frontend Build (Vite) ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Frontend
+        run: npm run build
+        env:
+          VITE_GOOGLE_BROWSER_KEY: ${{ secrets.vite_key }}
+
+      # --- 3. Backend Build & Deploy (Cloud Run) ---
+      # We build from root (.) so Dockerfile can access package.json if needed
+      - name: Build and Push Container
+        run: |
+          gcloud builds submit . \
+            --tag ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
+            --project ${{ inputs.project_id }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy olybars-backend \
+            --image ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
+            --region ${{ inputs.region }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --project ${{ inputs.project_id }} \
+            --set-env-vars VITE_GOOGLE_BROWSER_KEY=${{ secrets.vite_key }}
+
+      # --- 4. Firebase Deploy (Functions, Firestore, Hosting) ---
+      - name: Install Firebase Tools
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firebase Services
+        run: |
+          firebase deploy \
+            --project ${{ inputs.project_id }} \
+            --only functions,firestore,hosting,storage \
+            --non-interactive
