@@ -38,6 +38,7 @@ interface OwnerDashboardProps {
     userProfile: UserProfile;
     initialVenueId?: string | null;
     initialView?: 'main' | 'marketing' | 'listing';
+    isLoading?: boolean; // [NEW] Loading State
 }
 
 const WEEKLY_STATS = { totalClockIns: 142, newMembers: 18, returnRate: "34%", topNights: "Fri, Sat" };
@@ -53,9 +54,23 @@ const DEAL_PRESETS = ["$1 Off Drafts", "$5 Well Drinks", "Half-Price Apps", "BOG
 
 export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     isOpen, onClose, venues, updateVenue, userProfile,
-    initialVenueId, initialView = 'main'
+    initialVenueId, initialView = 'main', isLoading = false
 }) => {
     const navigate = useNavigate();
+
+    // [DIAGNOSTIC] Debug Auth Logic
+    React.useEffect(() => {
+        if (isOpen) {
+            console.log('[OwnerDashboard] Mounting with:', {
+                venuesCount: venues.length,
+                isLoading,
+                userId: userProfile.uid,
+                isSuperAdmin: isSystemAdmin(userProfile),
+                venuePermissions: userProfile.venuePermissions
+            });
+        }
+    }, [isOpen, venues.length, isLoading, userProfile]);
+
     const accessibleVenues = venues.filter(v => {
         if (isSystemAdmin(userProfile)) return true;
         return isVenueManager(userProfile, v.id);
@@ -257,12 +272,28 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     };
 
     if (!isOpen) return null;
+
+    // [FIX] Handling Loading State
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-[80] bg-background flex flex-col items-center justify-center p-6 animate-in fade-in">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <h2 className="text-xl font-bold uppercase text-white tracking-widest">Loading Venues...</h2>
+            </div>
+        );
+    }
+
     if (!myVenue && accessibleVenues.length === 0) {
         return (
             <div className="fixed inset-0 z-[80] bg-background text-white flex flex-col items-center justify-center p-6">
                 <Shield className="w-16 h-16 text-red-500 mb-4" />
                 <h2 className="text-xl font-bold uppercase">Access Denied</h2>
-                <p className="text-slate-400 text-center mt-2 max-w-xs">Your account does not have management permissions for any active venues.</p>
+                <p className="text-slate-400 text-center mt-2 max-w-xs">
+                    {venues.length === 0 ? "No active venues found in the system." : "Your account does not have management permissions for any active venues."}
+                </p>
+                <div className="mt-4 p-2 bg-slate-900 rounded text-[10px] font-mono text-slate-500">
+                    Debug: {isSystemAdmin(userProfile) ? "SuperAdmin" : "Standard"} / {venues.length} Venues / UID: {userProfile.uid}
+                </div>
                 <button onClick={onClose} className="mt-8 bg-slate-800 px-6 py-2 rounded-md font-bold uppercase">Back to Pulse</button>
             </div>
         );

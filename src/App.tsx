@@ -19,10 +19,9 @@ import {
   toggleFavorite,
   updateUserProfile,
   fetchRecentActivity, // New Export
-  performVibeCheck
+  performVibeCheck,
+  getUserProfile
 } from './services/userService';
-
-// --- MODULAR COMPONENTS ---
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AppShell } from './components/layout/AppShell';
@@ -110,13 +109,15 @@ const InfoPopup = ({ infoContent, setInfoContent }: any) => {
   );
 };
 
-const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile }: any) => {
+const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile, isLoading }: any) => {
   const [searchParams] = useSearchParams();
   const venueIdParam = searchParams.get('venueId');
   const tabParam = searchParams.get('tab');
   const navigate = useNavigate();
 
-  const isAuthorized = isSystemAdmin(userProfile) || (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0);
+  // [FIX] Relax Auth Check: If Loading, we just wait to see what venues come back.
+  // Unless we know for sure they are a GUEST with no permissions.
+  const isAuthorized = isLoading || isSystemAdmin(userProfile) || (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0);
 
   if (!isAuthorized) {
     return <OwnerPortal />;
@@ -142,6 +143,7 @@ const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile }: any) => {
       userProfile={userProfile}
       initialVenueId={defaultVenueId}
       initialView={initialView}
+      isLoading={isLoading} // [pass prop]
     />
   );
 };
@@ -244,6 +246,38 @@ export default function OlyBarsApp() {
   useEffect(() => {
     localStorage.setItem('oly_points', userPoints.toString());
   }, [userPoints]);
+
+  // [HYDRATION] Refresh User Profile from Backend on Load
+  useEffect(() => {
+    const hydrateProfile = async () => {
+      if (userProfile.uid && userProfile.uid !== 'guest') {
+        try {
+          // 1. Fetch fresh data
+          const freshProfile = await getUserProfile(userProfile.uid);
+
+          if (freshProfile) {
+            // 2. [SECURITY] Re-apply Ryan Rule (Hardcoded Super Admin)
+            if (freshProfile.email === 'ryan@amaspc.com') {
+              console.log('[App] Applying Ryan Rule during hydration');
+              freshProfile.role = 'super-admin' as any;
+              freshProfile.systemRole = 'admin' as any;
+            }
+
+            // 3. Update State if different
+            console.log('[App] Hydrated Profile:', freshProfile.uid, freshProfile.role);
+            setUserProfile(prev => ({
+              ...prev,
+              ...freshProfile,
+            }));
+          }
+        } catch (e) {
+          console.error('[App] Failed to hydrate profile:', e);
+        }
+      }
+    };
+
+    hydrateProfile();
+  }, [userProfile.uid]);
 
   useEffect(() => {
     localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory));
@@ -677,7 +711,7 @@ export default function OlyBarsApp() {
                   <Route path="meet-artie" element={<ArtieBioScreen />} />
                   <Route path="artie-bio" element={<ArtieBioScreen />} />
                   <Route path="artie" element={<ArtieBioScreen />} />
-                  <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
+                  <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} isLoading={isLoading} />} />
                   <Route
                     path="vc/:venueId"
                     element={

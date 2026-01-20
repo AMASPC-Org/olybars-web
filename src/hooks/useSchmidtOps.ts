@@ -15,7 +15,7 @@ import * as SchmidtExecution from '../features/Schmidt/execution';
 import * as SchmidtExtraction from '../features/Schmidt/eventExtraction';
 
 // 2. Regulatory Guardrails (LCB Compliance)
-const LCB_FORBIDDEN_TERMS = ['free alcohol', 'free beer', 'free shots', 'free drinks', 'unlimited', 'bottomless', 'complimentary', 'giveaway', '0.00', '$0'];
+const LCB_FORBIDDEN_TERMS = ['free alcohol', 'free beer', 'free shots', 'free drinks', 'unlimited', 'bottomless', 'complimentary', 'giveaway', '0.00', '$0']; // @guardrail-ignore
 const ALCOHOL_TERMS = ['beer', 'wine', 'shots', 'cocktails', 'drinks', 'booze', 'ipa', 'stout', 'pilsner', 'mimosas', 'tequila', 'whiskey', 'vodka', 'gin', 'rum'];
 
 // Helper Interface for building the event step-by-step
@@ -77,11 +77,11 @@ export const useSchmidtOps = () => {
             };
         }
 
-        // Rule: "Unlimited" / "Bottomless"
-        if (lowerText.includes('unlimited') || lowerText.includes('bottomless')) {
+        // Rule: "Unlimited" / "Bottomless" // @guardrail-ignore
+        if (lowerText.includes('unlimited') || lowerText.includes('bottomless')) { // @guardrail-ignore
             return {
                 valid: false,
-                reason: "I can't post that. 'Unlimited' or 'Bottomless' drink offers are prohibited by LCB rules."
+                reason: "I can't post that. 'Unlimited' or 'Bottomless' drink offers are prohibited by LCB rules." // @guardrail-ignore
             };
         }
 

@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div
                     className="flex items-center gap-3 cursor-pointer group relative z-10"
                     onClick={() => {
-                        if (userProfile.role === 'guest') {
+                        if (userProfile.role === 'guest' || userProfile.uid === 'guest') {
                             onLogin('login');
                         } else {
                             onProfileClick();
@@ -89,10 +89,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                     <div className="flex flex-col">
                         <span className="text-xl font-black text-black leading-none uppercase font-league tracking-tight">
-                            {userProfile.displayName || (userProfile.role === 'guest' ? 'Guest Player' : 'Player One')}
+                            {userProfile.displayName || ((userProfile.role === 'guest' || userProfile.uid === 'guest') ? 'Guest Player' : 'Player One')}
                         </span>
                         <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-1">
-                            {userProfile.role === 'guest' ? 'Tap to Sign In' : <FormatCurrency amount={userPoints} variant='default' className='text-black/60' />}
+                            {(userProfile.role === 'guest' || userProfile.uid === 'guest') ? 'Tap to Sign In' : <FormatCurrency amount={userPoints} variant='default' className='text-black/60' />}
                         </span>
                     </div>
                 </div>

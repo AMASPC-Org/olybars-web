@@ -32,7 +32,18 @@
     "deploy:dev": "cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-dev-9ceda npm run artie:sync && npm run build:dev && node scripts/check-env.js development && npm run deploy:backend:dev && firebase deploy -P staging --only hosting:dev,firestore,functions && cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-dev-9ceda npm run seed:dev && npm run smoke:dev",
     "deploy:prod": "cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-prod npm run artie:sync && npm run build:prod && node scripts/check-env.js production && npm run deploy:backend:prod && firebase deploy -P default --only hosting:prod,firestore,functions && cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-prod npm run seed:prod && npm run smoke:prod",
     "dev:all": "node --import tsx scripts/dev-up.ts",
-    "generate-sitemap": "tsx scripts/generate-sitemap.ts"
+    "generate-sitemap": "tsx scripts/generate-sitemap.ts",
+    "guardrail:local": "cross-env SKIP_GUARDRAIL=false tsx scripts/guardrails/verify-env.ts local",
+    "guardrail:dev": "tsx scripts/guardrails/verify-env.ts development",
+    "guardrail:prod": "tsx scripts/guardrails/verify-env.ts production",
+    "guardrail:audit": "tsx scripts/guardrails/audit-compliance.ts",
+    "guardrail:conn:local": "tsx scripts/guardrails/verify-connectivity.ts local",
+    "guardrail:conn:dev": "tsx scripts/guardrails/verify-connectivity.ts development",
+    "guardrail:conn:prod": "tsx scripts/guardrails/verify-connectivity.ts production",
+    "sticky:local": "npm run guardrail:conn:local",
+    "predev": "npm run guardrail:local",
+    "predeploy:dev": "npm run guardrail:dev",
+    "predeploy:prod": "npm run guardrail:prod"
   },
   "dependencies": {
     "@genkit-ai/ai": "^1.27.0",

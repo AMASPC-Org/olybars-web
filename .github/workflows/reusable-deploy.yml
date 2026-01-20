@@ -50,6 +50,11 @@ jobs:
         with:
           project_id: ${{ inputs.project_id }}
 
+      - name: Audit & Compliance Suite
+        run: npm run guardrail:audit
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ inputs.project_id }}
+
       # --- 2. Frontend Build (Vite) ---
       - name: Setup Node.js
         uses: actions/setup-node@v4

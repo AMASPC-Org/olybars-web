@@ -1,10 +1,29 @@
-import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy, limit } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy, limit, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserAlertPreferences, ClockInRecord, UserProfile } from '../types';
 import { getAuthHeaders } from './apiUtils';
 
 // Forcing production URL for now since user is running frontend-only locally
 import { API_BASE_URL } from '../lib/api-config';
+
+/**
+ * Fetch a single user profile by UID.
+ * Used for hydration to ensure permissions are up to date.
+ */
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+  try {
+    const docRef = doc(db, 'users', uid);
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      return { uid: snapshot.id, ...snapshot.data() } as UserProfile;
+    }
+    return null;
+  } catch (e) {
+    console.error('Error fetching user profile:', e);
+    return null;
+  }
+};
+
 
 export const toggleFavorite = async (userId: string, venueId: string, favorites: string[]) => {
   try {

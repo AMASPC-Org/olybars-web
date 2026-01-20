@@ -1,0 +1,24 @@
+[
+    {
+        "id": "maker-whitewood-cider",
+        "name": "Whitewood Cider Co.",
+        "type": "cidery",
+        "ownerId": "ryan-matrix-user-id",
+        "logoUrl": "https://firebasestorage.googleapis.com/v0/b/ama-ecosystem-prod.appspot.com/o/makers%2Fwhitewood.png?alt=media",
+        "website": "https://whitewoodcider.com",
+        "socials": {
+            "instagram": "@whitewoodcider"
+        },
+        "activeSponsorships": []
+    },
+    {
+        "id": "maker-olybars-hq",
+        "name": "OlyBars Official",
+        "type": "other",
+        "ownerId": "ryan-matrix-user-id",
+        "logoUrl": "https://firebasestorage.googleapis.com/v0/b/ama-ecosystem-prod.appspot.com/o/branding%2Folybars_logo.png?alt=media",
+        "website": "https://olybars.com",
+        "bio": "Official OlyBars sponsorship account for house events.",
+        "activeSponsorships": []
+    }
+]

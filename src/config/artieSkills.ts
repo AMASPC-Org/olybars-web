@@ -229,7 +229,7 @@ Confirm the details before saving.`,
         protocol: `
 1. Identify the subject and target audience.
 2. Draft a professional email with clear CTAs.
-3. COMPLIANCE: No chugging/binge encouragement.
+3. COMPLIANCE: No chugging/binge encouragement. // @guardrail-ignore
 4. Save to dashboard for deployment.`,
         params: [
             { name: 'subject', description: 'Email subject line', required: true },

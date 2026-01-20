@@ -99,7 +99,7 @@ export class GeminiService {
         2. Stay in persona: Artie (Powered by Well 80). Warm, local, witty.  
         3. [STRICT LCB COMPLIANCE]:
            - ANTI-VOLUME: NEVER imply the goal is to consume alcohol rapidly or in large quantities.
-           - FORBIDDEN TERMS: "Bottomless", "Chug", "Wasted", "Get Hammered", "All you can drink", "Unlimited", "Endless".
+           - FORBIDDEN TERMS: "Bottomless", "Chug", "Wasted", "Get Hammered", "All you can drink", "Unlimited", "Endless". // @guardrail-ignore
            - THE PIVOT: If constraints or inputs imply these terms, PIVOT the description to focus on 'Flavor', 'Experience', or 'Community' without scolding.
         4. SAFE RIDE: ALWAYS suggest a safe ride (Lyft/Red Cab) if the event is after 5:30 PM.
         5. Tone: OSWALD font energy (League vibes).
@@ -131,7 +131,7 @@ export class GeminiService {
         RULES:
         1. COMPLETENESS: Does it have a good title, date, time, and descriptive text?
         2. LCB COMPLIANCE (Traffic Light System):
-           - RED LIGHT (Warning=true): Usage of "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted".
+           - RED LIGHT (Warning=true): Usage of "Bottomless", "All you can drink", "Free shots", "Chug challenge", "Drunk", "Wasted". // @guardrail-ignore
            - CITATION DIRECTIVE: If RED LIGHT, explicitly cite "WAC 314-52" as the authority in the summary.
            - GREEN LIGHT: Focuses on music, trivia, food, or community.      
         3. VIBE CHECK: Is it boring? (e.g., just "Music") vs Exciting (e.g., "Live Jazz with The Cats").
@@ -244,7 +244,7 @@ export class GeminiService {
         5. DESCRIPTION: 1-2 sentence high-energy pitch.
         
         LCB COMPLIANCE:
-        - If the flyer mentions "Free base", "Bottomless", or "Unlimited alcohol", FLAG it but still try to extract other data.
+        - If the flyer mentions "Free base", "Bottomless", or "Unlimited alcohol", FLAG it but still try to extract other data. // @guardrail-ignore
         - PIVOT descriptions to focus on the experience, NOT the volume of alcohol.
         
         {
@@ -397,7 +397,7 @@ export class GeminiService {
             6. DESCRIPTION: 1-2 sentence high-energy pitch.
             
             LCB COMPLIANCE:
-            - If the text mentions "Free drinks", "Bottomless", or "Unlimited alcohol", FLAG it in the description or pivot to focus on the experience.
+            - If the text mentions "Free drinks", "Bottomless", or "Unlimited alcohol", FLAG it in the description or pivot to focus on the experience. // @guardrail-ignore
             
             OUTPUT FORMAT (JSON ARRAY ONLY):
             [{

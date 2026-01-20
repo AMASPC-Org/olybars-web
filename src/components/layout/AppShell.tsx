@@ -244,7 +244,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 <button
                   onClick={() => {
                     // Force explicit check here to avoid routing issues
-                    if (userProfile?.role === 'guest' && onMemberLoginClick) {
+                    if ((userProfile?.role === 'guest' || userProfile?.uid === 'guest') && onMemberLoginClick) {
                       onMemberLoginClick('login');
                     } else if (onProfileClick) {
                       onProfileClick();
