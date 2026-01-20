@@ -47,15 +47,7 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ inputs.project_id }}
-
-      - name: Audit & Compliance Suite
-        run: npm run guardrail:audit
-        env:
-          GOOGLE_CLOUD_PROJECT: ${{ inputs.project_id }}
-
-      # --- 2. Frontend Build (Vite) ---
+      # --- 2. Build Environment ---
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -64,6 +56,11 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Audit & Compliance Suite
+        run: npm run guardrail:audit
+        env:
+          GOOGLE_CLOUD_PROJECT: ${{ inputs.project_id }}
 
       - name: Build Frontend
         run: npm run build
