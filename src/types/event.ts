@@ -1,3 +1,5 @@
+import { EventSponsorshipPackage } from './sponsorship.js';
+
 export interface EventAnalysis {
     confidenceScore: number; // 0-100
     issues: string[];
@@ -22,6 +24,8 @@ export interface AppEvent {
     updatedAt?: number;
     isLeagueEvent?: boolean;
     analysis?: EventAnalysis;
+    sponsorshipPackages?: EventSponsorshipPackage[];
+    sponsorIds?: string[]; // Array of makerIds who have active sponsorships for this event (for querying)
 
     // Rich Metadata (from Well 80 Quiz Specs)
     host?: string;
