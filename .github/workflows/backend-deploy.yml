@@ -4,6 +4,7 @@ on:
     branches: [ "main" ]
     paths:
       - 'server/**'
+      - 'Dockerfile'
 env:
   PROJECT_ID: ama-ecosystem-prod
   REGION: us-west1
@@ -25,7 +26,7 @@ jobs:
       - name: Configure Docker for GCP
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
       - name: Build and Push Container
-        working-directory: ./server
+        # FIX: Removed working-directory to build from Root
         run: |
           docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
