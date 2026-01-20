@@ -21,8 +21,14 @@ COPY --from=builder /app/server/dist ./server/dist
 # Install ONLY production dependencies for the server
 RUN cd server && npm install --production
 
+# SECURITY FIX: Switch to non-root user (OlyBars Protocol)
+# 1. Grant ownership of the app directory to the puppeteer user
+RUN chown -R pptruser:pptruser /app
+# 2. Switch context to the non-root user
+USER pptruser
+
 ENV PORT 8080
 ENV NODE_ENV production
 
-# Run the compiled JS directly for speed and reliability
+# Run the compiled JS directly
 CMD [ "node", "server/dist/server/src/index.js" ]
