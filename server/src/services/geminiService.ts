@@ -1,6 +1,14 @@
 ﻿import { GoogleGenAI } from '@google/genai';
 import { ARTIE_SYSTEM_INSTRUCTION } from '../appConfig/agents/artie.js';
 import { SCHMIDT_SYSTEM_INSTRUCTION } from '../appConfig/agents/schmidt.js';
+import { genkit } from 'genkit';
+import { vertexAI, imagen3Fast } from '@genkit-ai/vertexai';
+import { StorageService } from './storageService.js';
+
+// Initialize Genkit with Vertex AI
+const ai = genkit({
+    plugins: [vertexAI({ location: 'us-west1' })],
+});
 
 export interface ChatMessage {
     role: 'user' | 'model';
@@ -73,10 +81,13 @@ export class GeminiService {
         weather?: string;
         holiday?: string;
         deals?: any[];
+        city?: string; // Multi-City Support
     }) {
+        const cityContext = context.city || "Olympia, WA";
         // Uses a specific mini-prompt for descriptions, keeping Artie's voice
         const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
         VENUE: ${context.venueName} (${context.venueType})
+        LOCATION: ${cityContext}
         EVENT: ${context.eventType}
         DATE: ${context.date} @ ${context.time}
         WEATHER: ${context.weather || 'Standard Olympia Vibes'}
@@ -188,7 +199,7 @@ export class GeminiService {
            "type": "YIELD_BOOST",
            "message": "Schmidt-style pitch (Direct, business-focused, citing the data)",
            "actionLabel": "Approve Flash Bounty",
-           "actionSkill": "update_flash_deal",
+           "actionSkill": "schedule_flash_deal",
            "actionParams": {
               "summary": "Title of deal",
               "details": "Details including safe ride info",
@@ -315,5 +326,159 @@ export class GeminiService {
         });
 
         return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Event details staged and ready!";
+    }
+
+    async generateImage(prompt: string, venueId: string): Promise<string> {
+        console.log(`🎨 GeminiService: Generating image for ${venueId} with prompt: "${prompt.substring(0, 50)}..."`);
+
+        try {
+            const result = await ai.generate({
+                model: imagen3Fast,
+                prompt: prompt,
+                config: {
+                    aspectRatio: '1:1', // Standard square for social
+                },
+            });
+
+            if (!result || !result.media) {
+                throw new Error("No media returned from Imagen 3");
+            }
+
+            // Imagen returns media with a url (if GCS) or data URI? 
+            // Genkit's GenerateResponse for image models typically puts the image in the message.
+            // Let's inspect the result structure for basic Genkit usage.
+            // Actually, genkit generate returns a GenerateResponse.
+            // For image models, the output is media.
+
+            const media = result.media;
+            if (!media) throw new Error("No media in generation result");
+
+            // If it's a data URI, we need to strip headers and upload
+            // media.url might be a data uri like: data:image/png;base64,....
+            let buffer: Buffer;
+
+            if (media.url.startsWith('data:')) {
+                const base64Data = media.url.split(',')[1];
+                buffer = Buffer.from(base64Data, 'base64');
+            } else {
+                throw new Error("Unexpected media URL format from Genkit (expected data URI)");
+            }
+
+            // Upload to Persistence Layer
+            const publicUrl = await StorageService.uploadImage(buffer, venueId);
+            return publicUrl;
+
+        } catch (error: any) {
+            console.error("❌ GeminiService: Image Generation Failed", error);
+            throw new Error(`Image Generation Failed: ${error.message}`);
+        }
+    }
+
+    async analyzeScrapedContent(rawContent: string, currentTime: string, venueContext: { city: string, timezone: string }, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
+        // Default to Olympia if missing (Safety Net)
+        const cityString = venueContext?.city || "Olympia, WA";
+
+        let prompt = '';
+
+        if (target === 'EVENTS') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Extract all upcoming nightlife events from the provided raw page content.
+            
+            CONTEXT:
+            Current Date Context: ${currentTime} (Use this to resolve relative dates like "Tonight", "This Friday", or "Tomorrow").
+            Venue Location: ${cityString} (Pacific Time).
+            
+            EXTRACTION RULES:
+            1. Extract ALL unique events found in the text.
+            2. TITLE: Catchy, clear. Shorten if it's too long.
+            3. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
+            4. TIME: Convert to 24h format (HH:mm). If only "7 PM" is listed, use "19:00".
+            5. TYPE: One of: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
+            6. DESCRIPTION: 1-2 sentence high-energy pitch.
+            
+            LCB COMPLIANCE:
+            - If the text mentions "Free drinks", "Bottomless", or "Unlimited alcohol", FLAG it in the description or pivot to focus on the experience.
+            
+            OUTPUT FORMAT (JSON ARRAY ONLY):
+            [{
+              "title": "string",
+              "date": "YYYY-MM-DD",
+              "time": "HH:mm",
+              "type": "string",
+              "description": "string",
+              "sourceConfidence": number (0.0 to 1.0)
+            }]
+            
+            Note: If no events are found, return an empty array [].
+            `;
+        } else if (target === 'MENU') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Analyze this menu/webpage and extract "Hero Items" and "Special Deals".
+            
+            CONTEXT:
+            Current Date Context: ${currentTime}.
+            Venue Location: ${cityString}.
+
+            EXTRACTION RULES:
+            1. HIGHLIGHTS: Identify 3-5 distinct items that define this place (e.g., "Signature Burger", "Flight of 4", "Taco Tuesday Special").
+            2. DEALS: Extract any happy hour rules or time-based offers.
+            3. SUMMARY: A 2-sentence vibe check of the menu (e.g., "Pub grub heavy on fryers but great selection of local drafts.").
+
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "highlights": ["string"],
+                "deals": [{ "title": "string", "details": "string" }],
+                "menuSummary": "string",
+                "sourceConfidence": number
+            }
+            `;
+        } else if (target === 'NEWSLETTER') {
+            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+            TASK: Extract key announcements from this text.
+            
+            CONTEXT:
+            Current Date Context: ${currentTime}.
+            
+            EXTRACTION RULES:
+            1. LOOK FOR: Closures, Grand Openings, New Menu Launches, Special Guests.
+            2. IGNORE: Generic marketing fluff ("We create memories").
+            3. OUTPUT: A concise bulleted list of ACTUAL news.
+            
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "newsItems": ["string"],
+                "hasUrgentNews": boolean,
+                "sourceConfidence": number
+            }
+            `;
+        } else {
+            // Default/Fallback
+            prompt = `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
+        }
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { text: `RAW PAGE CONTENT:\n\n${rawContent.substring(0, 20000)}` } // Token clamp
+                ]
+            }],
+            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+            config: { response_mime_type: "application/json" }
+        });
+
+        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!text) return target === 'EVENTS' ? [] : null;
+        text = text.replace(/```json\n?|```/g, '').trim();
+
+        try {
+            const result = JSON.parse(text);
+            return result;
+        } catch (e) {
+            console.error("JSON Parse Error on Scraped Content Analysis:", text);
+            return target === 'EVENTS' ? [] : null;
+        }
     }
 }

@@ -38,7 +38,7 @@ const GlossaryScreen = () => {
                         Welcome to the Manual. Here you'll find the official definitions for everything from
                         <span className="text-primary font-bold"> Buzz</span> to
                         <span className="text-primary font-bold"> Badges</span>.
-                        Detailed knowledge of these terms is key to maximizing your season score.
+                        Detailed knowledge of these terms is key to maximizing your reservoir level.
                     </p>
                 </div>
 

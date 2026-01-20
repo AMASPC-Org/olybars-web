@@ -40,7 +40,7 @@ export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, ha
         // Pass 'qr' as verification method
         handleVibeCheck(v, status, hasConsent, photoUrl, verificationMethod || 'qr', gameStatus, soberCheck);
         setShowModal(false);
-        navigate(`/venues/${v.id}`); // Redirect to venue after
+        navigate(`/bars/${v.id}`); // Redirect to venue after
     };
 
     if (!venue) {

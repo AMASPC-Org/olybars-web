@@ -42,11 +42,14 @@ export const useGeolocation = (options: GeolocationOptions = DEFAULT_OPTIONS) =>
     }, []);
 
     const handleError = useCallback((error: GeolocationPositionError) => {
+        // [CORTEX FIX] Explicitly prioritize the runtime error code over the API status
+        const isDenied = error.code === error.PERMISSION_DENIED;
         setState(s => ({
             ...s,
             error: error.message,
             loading: false,
-            permissionStatus: error.code === error.PERMISSION_DENIED ? 'denied' : s.permissionStatus,
+            // Force 'denied' state if the error code matches, otherwise keep existing or unknown
+            permissionStatus: isDenied ? 'denied' : s.permissionStatus,
         }));
     }, []);
 

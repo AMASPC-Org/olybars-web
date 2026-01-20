@@ -2,12 +2,14 @@ import React, { useState, useMemo } from 'react';
 import {
     Venue,
     MenuItem,
+    HappyHourMenuItem,
     MenuItemType,
     MenuItemStatus,
     MarginTier,
-    MenuSource,
-    MenuItemStats
+    MenuSource
 } from '../../../types/venue';
+import { UserProfile } from '../../../types';
+import { isSystemAdmin } from '../../../types/auth_schema';
 import { VenueOpsService } from '../../../services/VenueOpsService';
 import {
     Beer,
@@ -17,22 +19,23 @@ import {
     Plus,
     Search,
     AlertTriangle,
-    Check,
     Power,
-    Archive,
     Library,
-    ArrowUpRight
+    Trash2,
+    Zap
 } from 'lucide-react';
-
+import { useToast } from '../../../components/ui/BrandedToast';
 
 interface MenuManagementTabProps {
     venue: Venue;
     onUpdate: (venueId: string, updates: Partial<Venue>) => void;
     userId?: string;
+    userProfile: UserProfile;
 }
 
-export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onUpdate, userId }) => {
-    // const { user } = useAuth(); // Removed
+export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onUpdate, userId, userProfile }) => {
+    const { showToast } = useToast();
+    const isActiveAdmin = isSystemAdmin(userProfile);
     const [activeTab, setActiveTab] = useState<'live' | 'library'>('live');
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -40,6 +43,7 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
 
     // Initialize Menu Items
     const [menuItems, setMenuItems] = useState<MenuItem[]>(venue.fullMenu || []);
+    const [happyHourMenu, setHappyHourMenu] = useState<HappyHourMenuItem[]>(venue.happyHourMenu || []);
     const [isLoadingPrivate, setIsLoadingPrivate] = useState(true);
 
     // Fetch Private Data (Margins)
@@ -48,7 +52,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
             try {
                 const privateData = await VenueOpsService.getPrivateData(venue.id);
                 if (privateData && privateData.menuStrategies) {
-                    // Merge margin tiers back into menu items
                     const mergedItems = (venue.fullMenu || []).map(item => ({
                         ...item,
                         margin_tier: privateData.menuStrategies[item.id] || MarginTier.Medium
@@ -79,7 +82,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         const newStatus = item.status === MenuItemStatus.Live ? MenuItemStatus.Library : MenuItemStatus.Live;
         const now = Date.now();
 
-        // 1. Optimistic Update
         const updatedItems = menuItems.map(i =>
             i.id === item.id
                 ? { ...i, status: newStatus, last_toggled_at: now }
@@ -87,56 +89,39 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         );
         setMenuItems(updatedItems);
 
-        // 2. API Call (Silent)
         try {
             await VenueOpsService.updateVenue(venue.id, { fullMenu: updatedItems }, userId);
             onUpdate(venue.id, { fullMenu: updatedItems });
-
-            // Note: status is public, so no need to update private_data here
+            showToast(`Item moved to ${newStatus === MenuItemStatus.Live ? 'Live Taps' : 'Library'}`, 'success');
         } catch (error) {
-            console.error('Failed to toggle item status', error);
-            // Revert on failure
-            setMenuItems(menuItems);
+            console.error('Failed to update status', error);
+            showToast('Sync failed', 'error');
         }
     };
 
     const handleAddItem = async () => {
         if (!newItem.name) return;
         setIsSubmitting(true);
-
-        const itemToAdd: MenuItem = {
-            id: crypto.randomUUID(),
-            name: newItem.name,
-            type: newItem.type || MenuItemType.Other,
-            description: newItem.description || '',
-            stats: newItem.stats || {},
-            margin_tier: newItem.margin_tier || MarginTier.Medium,
-            source: MenuSource.Manual,
-            status: newItem.status || MenuItemStatus.Library,
-            ai_tags: [], // Placeholder for future AI
-            last_toggled_at: Date.now()
-        };
-
-        const updatedItems = [...menuItems, itemToAdd];
-
         try {
-            // 1. Update public venue (menu structure)
-            const publicItemsForDb = updatedItems.map(({ margin_tier, ...rest }) => rest);
-            await VenueOpsService.updateVenue(venue.id, { fullMenu: publicItemsForDb as any }, userId);
+            const addedItem: MenuItem = {
+                id: crypto.randomUUID(),
+                name: newItem.name,
+                type: newItem.type || MenuItemType.Hoppy,
+                description: newItem.description || '',
+                source: MenuSource.Manual,
+                status: MenuItemStatus.Library,
+                margin_tier: newItem.margin_tier || MarginTier.Medium,
+                stats: newItem.stats || {}
+            };
 
-            // 2. Update private venue data (margin tiers)
-            const menuStrategies: Record<string, string> = {};
-            updatedItems.forEach(item => {
-                menuStrategies[item.id] = item.margin_tier;
-            });
-            await VenueOpsService.updatePrivateData(venue.id, { menuStrategies });
-
+            const updatedItems = [...menuItems, addedItem];
             setMenuItems(updatedItems);
+            await VenueOpsService.updateVenue(venue.id, { fullMenu: updatedItems }, userId);
             onUpdate(venue.id, { fullMenu: updatedItems });
+            showToast('Item added to library', 'success');
             setIsAddModalOpen(false);
-            // Reset Form (keep some defaults)
             setNewItem({
-                type: newItem.type,
+                type: MenuItemType.Hoppy,
                 margin_tier: MarginTier.Medium,
                 source: MenuSource.Manual,
                 status: MenuItemStatus.Library,
@@ -149,29 +134,48 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         }
     };
 
+    const handleAddHappyHourItem = () => {
+        const newItem: HappyHourMenuItem = {
+            id: crypto.randomUUID(),
+            name: '',
+            price: '',
+            category: 'drink',
+            description: ''
+        };
+        const updatedMenu = [...happyHourMenu, newItem];
+        setHappyHourMenu(updatedMenu);
+        onUpdate(venue.id, { happyHourMenu: updatedMenu });
+        VenueOpsService.updateVenue(venue.id, { happyHourMenu: updatedMenu }, userId);
+    };
+
+    const handleUpdateHappyHourItem = (idx: number, updates: Partial<HappyHourMenuItem>) => {
+        const updatedMenu = [...happyHourMenu];
+        updatedMenu[idx] = { ...updatedMenu[idx], ...updates };
+        setHappyHourMenu(updatedMenu);
+        onUpdate(venue.id, { happyHourMenu: updatedMenu });
+        VenueOpsService.updateVenue(venue.id, { happyHourMenu: updatedMenu }, userId);
+    };
+
+    const handleRemoveHappyHourItem = (id: string) => {
+        const updatedMenu = happyHourMenu.filter(item => item.id !== id);
+        setHappyHourMenu(updatedMenu);
+        onUpdate(venue.id, { happyHourMenu: updatedMenu });
+        VenueOpsService.updateVenue(venue.id, { happyHourMenu: updatedMenu }, userId);
+    };
+
     // --- Computed ---
 
     const filteredItems = useMemo(() => {
         return menuItems.filter(item => {
             const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesTab = activeTab === 'live'
-                ? item.status === MenuItemStatus.Live
-                : item.status !== MenuItemStatus.Archived; // Show Library + Live in Library view? Or just Library? 
-            // "Full Library" usually implies everything. Let's show everything or just Library?
-            // User requirement: "Switchboard... Toggle... Live vs Library". 
-            // Let's make "Library" view show EVERYTHING for management, and "Live" view show only LIVE.
-
             if (activeTab === 'live') return item.status === MenuItemStatus.Live && matchesSearch;
-            return matchesSearch; // Library shows all
+            return matchesSearch;
         });
     }, [menuItems, activeTab, searchTerm]);
 
-    // Group by Type
     const groupedItems = useMemo(() => {
         const groups: Record<string, MenuItem[]> = {};
-        // Add all types to ensure consistent order
         Object.values(MenuItemType).forEach(type => groups[type] = []);
-
         filteredItems.forEach(item => {
             if (!groups[item.type]) groups[item.type] = [];
             groups[item.type].push(item);
@@ -179,14 +183,11 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
         return groups;
     }, [filteredItems]);
 
-    // Sorting Types Priority
     const typeOrder = [
         MenuItemType.Crisp, MenuItemType.Hoppy, MenuItemType.Malty, MenuItemType.Dark,
         MenuItemType.Sour, MenuItemType.Cider, MenuItemType.Seltzer,
         MenuItemType.Cocktail, MenuItemType.Wine, MenuItemType.Food, MenuItemType.Other
     ];
-
-    // --- Render Components ---
 
     const getTypeIcon = (type: MenuItemType) => {
         switch (type) {
@@ -206,7 +207,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
 
     return (
         <div className="space-y-6">
-            {/* Header & Controls */}
             <div className="flex flex-col gap-4">
                 <div className="flex justify-between items-center">
                     <div>
@@ -222,7 +222,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                     </button>
                 </div>
 
-                {/* Tabs & Search */}
                 <div className="flex gap-4 items-center bg-slate-800/50 p-1 rounded-xl w-full sm:w-auto self-start">
                     <button
                         onClick={() => setActiveTab('live')}
@@ -250,7 +249,82 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                 </div>
             </div>
 
-            {/* Menu List (Accordions) */}
+            <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-2xl p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h3 className="text-lg font-black text-white uppercase italic flex items-center gap-2">
+                            <Zap className="w-5 h-5 text-primary" />
+                            Happy Hour Menu
+                        </h3>
+                        <p className="text-xs text-slate-400">Items only visible during active HH windows.</p>
+                    </div>
+                    <button
+                        onClick={handleAddHappyHourItem}
+                        className="bg-black/40 hover:bg-black/60 border border-white/10 text-primary px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all"
+                    >
+                        <Plus className="w-3 h-3 inline mr-1" /> Add HH Item
+                    </button>
+                </div>
+
+                <div className="space-y-3">
+                    {happyHourMenu.map((item, idx) => (
+                        <div key={item.id} className="bg-black/20 border border-white/5 p-4 rounded-xl flex flex-col gap-3 group transition-all hover:border-white/10">
+                            <div className="flex items-center gap-4">
+                                <span className="text-[10px] font-black text-slate-700 italic">{idx + 1}</span>
+                                <input
+                                    placeholder="HH Item Name"
+                                    value={item.name}
+                                    onChange={(e) => handleUpdateHappyHourItem(idx, { name: e.target.value })}
+                                    className="flex-grow bg-transparent border-none text-sm text-white placeholder:text-slate-800 font-bold focus:ring-0 p-0"
+                                />
+                                <div className="flex items-center gap-2 border-l border-white/5 pl-4">
+                                    <span className="text-xs text-slate-500">$</span>
+                                    <input
+                                        placeholder="0.00"
+                                        value={item.price}
+                                        onChange={(e) => handleUpdateHappyHourItem(idx, { price: e.target.value })}
+                                        className="w-16 bg-transparent border-none text-sm text-primary font-mono font-black placeholder:text-slate-800 text-right focus:ring-0 p-0"
+                                    />
+                                </div>
+                                <div className="flex bg-slate-800 rounded-lg p-1 border border-white/5">
+                                    {(['drink', 'food'] as const).map((cat) => (
+                                        <button
+                                            key={cat}
+                                            onClick={() => handleUpdateHappyHourItem(idx, { category: cat })}
+                                            className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-wider transition-all ${item.category === cat
+                                                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                                                : 'text-slate-500 hover:text-slate-300'
+                                                }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => handleRemoveHappyHourItem(item.id)}
+                                    className="p-1 text-slate-700 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <input
+                                placeholder="Short description (max 60 chars)"
+                                value={item.description || ''}
+                                maxLength={60}
+                                onChange={(e) => handleUpdateHappyHourItem(idx, { description: e.target.value })}
+                                className="w-full bg-transparent border-none text-[11px] text-slate-500 placeholder:text-slate-800 italic focus:ring-0 p-0"
+                            />
+                        </div>
+                    ))}
+
+                    {happyHourMenu.length === 0 && (
+                        <div className="py-8 text-center border-2 border-dashed border-white/5 rounded-xl">
+                            <p className="text-[10px] text-slate-700 font-black uppercase tracking-widest italic">No happy hour specific items yet</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="space-y-4">
                 {typeOrder.map(type => {
                     const items = groupedItems[type];
@@ -283,14 +357,8 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                                                 )}
                                             </div>
                                             <p className="text-sm text-slate-400 line-clamp-1">{item.description || 'No description'}</p>
-                                            <div className="mt-2 flex gap-3 text-xs font-mono text-slate-500">
-                                                {item.stats.price && <span className="text-slate-300">{item.stats.price}</span>}
-                                                {type !== MenuItemType.Food && item.stats.abv && <span>{item.stats.abv}% ABV</span>}
-                                                {item.stats.ibu && <span>{item.stats.ibu} IBU</span>}
-                                            </div>
                                         </div>
 
-                                        {/* Actions */}
                                         <div className="flex items-center gap-4">
                                             <div className="text-right hidden sm:block">
                                                 <span className={`text-xs font-bold px-2 py-1 rounded-full ${item.status === MenuItemStatus.Live
@@ -301,7 +369,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                                                 </span>
                                             </div>
 
-                                            {/* Toggle Switch */}
                                             <button
                                                 onClick={() => handleToggleStatus(item)}
                                                 className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 flex items-center ${item.status === MenuItemStatus.Live ? 'bg-primary' : 'bg-slate-700'
@@ -321,7 +388,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                 })}
             </div>
 
-            {/* Empty State */}
             {filteredItems.length === 0 && (
                 <div className="p-12 text-center text-slate-500 bg-slate-900/50 rounded-2xl border border-dashed border-slate-800">
                     <Library size={48} className="mx-auto mb-4 opacity-50" />
@@ -330,7 +396,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                 </div>
             )}
 
-            {/* Add Modal */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
@@ -341,7 +406,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                             </div>
 
                             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                                {/* Basics */}
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 mb-1 block">NAME</label>
                                     <input
@@ -388,7 +452,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                                     />
                                 </div>
 
-                                {/* Stats */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 mb-1 block">ABV %</label>
@@ -412,7 +475,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                                     </div>
                                 </div>
 
-                                {/* Ops Fields */}
                                 <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-800">
                                     <label className="text-xs font-bold text-blue-400 mb-3 block flex items-center gap-2">
                                         <Search size={12} /> OPS INTELLIGENCE
@@ -435,7 +497,6 @@ export const MenuManagementTab: React.FC<MenuManagementTabProps> = ({ venue, onU
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
 
                             <div className="mt-6 flex gap-3">

@@ -83,7 +83,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     deal: v.deal,
                     isLive: true,
                     isBounty: false,
-                    urgency: 'green',
+                    urgency: 'amber',
                     clockIns: v.clockIns,
                     status: v.status,
                     lastUpdated: v.currentBuzz?.lastUpdated
@@ -156,7 +156,70 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             uniqueItemsMap.set(item.id, item);
         }
     });
-    const totalPotentialItems = Array.from(uniqueItemsMap.values());
+    const initialPotentialItems = Array.from(uniqueItemsMap.values());
+
+    // 3. Backfill to at least 3 items if needed
+    const totalPotentialItems = React.useMemo(() => {
+        if (initialPotentialItems.length >= 3) return initialPotentialItems;
+
+        const existingIds = new Set(initialPotentialItems.map(i => i.id));
+        const backfillItems = venues
+            .filter(v => !existingIds.has(v.id))
+            .sort((a, b) => {
+                // Priority 1: HQ status
+                if (a.isHQ && !b.isHQ) return -1;
+                if (!a.isHQ && b.isHQ) return 1;
+                // Priority 2: Most activity/buzz score
+                const buzzA = a.currentBuzz?.score || 0;
+                const buzzB = b.currentBuzz?.score || 0;
+                return buzzB - buzzA;
+            })
+            .slice(0, 3 - initialPotentialItems.length)
+            .map(v => ({
+                id: v.id,
+                name: v.name,
+                isHQ: v.isHQ,
+                timeLabel: 'LIVE',
+                subLabel: 'VIBE',
+                deal: v.vibe || v.insiderVibe,
+                isLive: true,
+                isBounty: false,
+                urgency: 'sky',
+                clockIns: v.clockIns,
+                status: v.status,
+                lastUpdated: v.currentBuzz?.lastUpdated
+            }));
+
+        const combined = [...initialPotentialItems, ...backfillItems];
+
+        // 4. Hard Force 3 Items (Static Placeholders)
+        const placeholders = [
+            { name: "OlyBars HQ", deal: "System Online", sub: "ACTIVE" },
+            { name: "Quiet City", deal: "Check back later", sub: "ZZZ" },
+            { name: "Schmidt's", deal: "AI Optimized", sub: "BETA" }
+        ];
+
+        while (combined.length < 3) {
+            const idx = combined.length;
+            const p = placeholders[idx % placeholders.length];
+            combined.push({
+                id: `static-${idx}`,
+                name: p.name,
+                isHQ: idx === 0, // First fallback is HQ
+                timeLabel: 'SOON',
+                subLabel: p.sub,
+                deal: p.deal,
+                isLive: true,
+                isBounty: false,
+                urgency: 'blue',
+                clockIns: 0,
+                status: 'mellow',
+                lastUpdated: Date.now()
+            });
+        }
+
+        return combined;
+    }, [initialPotentialItems, venues]);
 
     // Implement Rotation: 5-minute shift ensures global fairness
     const displayItems = React.useMemo(() => {
@@ -179,10 +242,11 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
     const getStatusDisplay = (status?: string) => {
         if (!status) return null;
         const s = status.toLowerCase();
-        if (s === 'dead') return { text: 'DEAD', color: 'text-slate-500', bg: 'bg-slate-500' };
-        if (s === 'chill') return { text: 'CHILL', color: 'text-blue-300', bg: 'bg-blue-400' };
+        // Project Toast: Mellow is now a soft indigo/slate to differentiate from Green "Active" deals
+        if (s === 'dead' || s === 'mellow') return { text: 'MELLOW', color: 'text-slate-400', bg: 'bg-slate-500' };
+        if (s === 'chill') return { text: 'CHILL', color: 'text-sky-300', bg: 'bg-sky-400' };
         if (s === 'buzzing') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
-        if (s === 'packed') return { text: 'PACKED', color: 'text-red-400', bg: 'bg-red-500' };
+        if (s === 'packed') return { text: 'PACKED', color: 'text-rose-400', bg: 'bg-rose-500' };
         return null;
     };
 
@@ -224,19 +288,24 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     return (
                         <div
                             key={item.id}
-                            onClick={() => navigate(`/venues/${item.id}`)}
+                            onClick={() => navigate(`/bars/${item.id}`)}
                             className="px-4 py-2.5 flex justify-between items-center hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer group"
                         >
                             {/* Left: Two-Line Vibe + Deal */}
                             <div className="flex-1 min-w-0 pr-4">
                                 <div className="flex items-center gap-1.5 mb-1.5">
-                                    <h3 className="text-sm font-black text-white uppercase tracking-tight truncate group-hover:text-[#FFD700] transition-colors font-league">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-tight truncate group-hover:text-[#FFD700] transition-colors font-league leading-none mb-1">
                                         {item.name}
                                     </h3>
                                     {item.isHQ && (
                                         <span className="text-[8px] bg-primary text-black font-black px-1 rounded-[2px] transform -skew-x-12">HQ</span>
                                     )}
                                 </div>
+                                {item.deal && (
+                                    <p className="text-[10px] text-primary font-bold italic truncate mb-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                                        {item.deal}
+                                    </p>
+                                )}
                                 <div className="flex items-center gap-2">
                                     {statusConfig && (
                                         <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${statusConfig.bg} bg-opacity-20 ${statusConfig.color} border border-white/5 uppercase tracking-wider`}>
@@ -253,7 +322,9 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                             <div className="text-right flex-shrink-0">
                                 <div className={`text-sm font-black font-mono leading-none ${item.urgency === 'red' ? 'text-red-500' :
                                     item.urgency === 'blue' ? 'text-blue-400' :
-                                        'text-green-400'
+                                        item.urgency === 'amber' ? 'text-[#FFD700]' :
+                                            item.urgency === 'sky' ? 'text-sky-400' :
+                                                'text-emerald-400'
                                     }`}>
                                     {timeValue[0]}<span className="text-[10px] ml-0.5">{timeValue[1]}</span>
                                 </div>

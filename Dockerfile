@@ -1,30 +1,28 @@
-# Use the official Node.js 22 image.
-# Using Node 22 to match the local environment.
-FROM node:22-slim
-
-# Create and change to the app directory.
-WORKDIR /usr/src/app
-
-# Copy application dependency manifests to the container image.
-# A wildcard is used to ensure both package.json AND package-lock.json are copied.
-# Copying this first prevents re-running npm install on every code change.
+# STAGE 1: Builder
+FROM node:22-slim AS builder
+WORKDIR /app
 COPY package*.json ./
-
-# Install production dependencies.
-RUN npm install --only=production
-
-# Copy local code
+COPY server/package*.json ./server/
+RUN npm install --include=dev
+RUN cd server && npm install --include=dev
 COPY . .
+RUN npm run build:server
 
-# Build the server code
-RUN npm run build --prefix server
+# STAGE 2: Runner
+FROM ghcr.io/puppeteer/puppeteer:latest
+WORKDIR /app
+USER root
 
-# Service must listen to $PORT environment variable.
-# This variable is set by Cloud Run.
+# Copy built server and production manifests
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/server/package*.json ./server/
+COPY --from=builder /app/server/dist ./server/dist
+
+# Install ONLY production dependencies for the server
+RUN cd server && npm install --production
+
 ENV PORT 8080
 ENV NODE_ENV production
 
-# Run the web service on container startup.
-# We run the compiled JS directly for speed and reliability.
-# Mirrored structure due to outside inclusions: dist/server/src/index.js
+# Run the compiled JS directly for speed and reliability
 CMD [ "node", "server/dist/server/src/index.js" ]

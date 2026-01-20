@@ -149,7 +149,7 @@ export const HistoryArticleScreen: React.FC<HistoryArticleScreenProps> = ({ venu
                         if (block.type === 'venue_card') {
                             const venue = venues.find(v => v.id === block.content);
                             if (!venue) return null;
-                            return <VenueCard key={index} venue={venue} onClick={() => navigate(`/venues/${venue.id}`)} />;
+                            return <VenueCard key={index} venue={venue} onClick={() => navigate(`/bars/${venue.id}`)} />;
                         }
                         if (block.type === 'hidden_fact') {
                             return (

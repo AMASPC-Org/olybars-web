@@ -1,12 +1,28 @@
-export type VibeLevel = 'dead' | 'chill' | 'buzzing' | 'packed';
+export type VibeLevel = 'dead' | 'mellow' | 'chill' | 'buzzing' | 'packed';
 
 export const PULSE_CONFIG = {
     // Scoring Weights
     POINTS: {
-        CLOCK_IN: 10.0,
+        CLOCK_IN: 10.0, // Base points
         VIBE_REPORT: 5.0,
         PHOTO_VIBE: 10.0,
-        VERIFIED_BONUS: 15.0 // For verified QR/GPS consent
+        VERIFIED_BONUS: 15.0, // For verified QR/GPS consent
+
+        // [NEW] The Pioneer Curve (Dynamic Clock-in Points)
+        VIBE_POINTS: {
+            mellow: 100,
+            chill: 50,
+            buzzing: 25,
+            packed: 10,
+            dead: 100 // Legacy backward compatibility
+        }
+    },
+
+    // NEW: Venue Physics (Density Calculation)
+    PHYSICS: {
+        DEFAULT_CAPACITY: 50, // Fallback if venue.capacity is undefined
+        HEADCOUNT_WEIGHT: 1.0, // Multiplier for raw bodies
+        ACTION_WEIGHT: 0.5,    // Multiplier for vibe checks/photos (virtual density)
     },
 
     // Time Windows (in milliseconds)
@@ -26,12 +42,13 @@ export const PULSE_CONFIG = {
         GEOFENCE_RADIUS: 22 // 22 Meters (approx. 75ft) to prevent crosstalk
     },
 
-    // Status Thresholds
+    // REFACTORED: Status based on % Saturation (0.0 to 1.0+)
     THRESHOLDS: {
-        PACKED: 90,    // > 90 = Packed (Triggers SMS)
-        BUZZING: 60,   // > 60 = Buzzing (Busy but no SMS)
-        CHILL: 20,     // > 20 = Chill
-        DEAD: 0,       // > 0 = Dead (Base state)
+        PACKED: 0.85,   // > 85% Capacity
+        BUZZING: 0.50,  // > 50% Capacity
+        CHILL: 0.15,    // > 15% Capacity
+        MELLOW: 0,      // < 15% Capacity
+        DEAD: 0,        // [DEPRECATED]
         FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
     },
@@ -47,10 +64,11 @@ export const PULSE_CONFIG = {
     // Display Strings (User/Owner Facing)
     DESCRIPTIONS: {
         LIVE_MEANING: "Unique people checked in within the last 60 minutes.",
-        DEAD_MEANING: "Quiet. Quick service. < 20% cap.",
-        CHILL_MEANING: "Easy conversation. Date night vibes.",
-        BUZZING_MEANING: "High energy. Tables full.",
-        PACKED_MEANING: "Standing room only. The party is here.",
+        MELLOW_MEANING: "Quiet & intimate. Bounty active. < 15% cap.",
+        CHILL_MEANING: "Social hum. Date night vibes. 15-50% cap.",
+        BUZZING_MEANING: "High energy. Social peak. 51-90% cap.",
+        PACKED_MEANING: "Physical peak. Party is here. > 90% cap.",
+        DEAD_MEANING: "[DEPRECATED] See Mellow.",
         FLASH_BOUNTY_MEANING: "Ending soon! High urgency."
     }
 };

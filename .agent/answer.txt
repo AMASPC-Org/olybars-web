@@ -1,0 +1,8 @@
+YES. The "Scorched Earth" approach is the correct way to guarantee a clean break from legacy protocols.
+
+I have updated the `implementation_plan.md` and `task.md` to include **Phase 0: Sanitization**.
+
+I will now proceed to:
+1.  Create the `_archive/` quarantine.
+2.  Update `GEMINI.md` with the "Amnesia" logic ("Ignore everything outside .agent/skills").
+3.  Audit `src/skills` for code dependencies before moving.

@@ -41,7 +41,7 @@ export const GlobalDiscoveryLoop: React.FC<GlobalDiscoveryLoopProps> = ({
                                     </h3>
                                 </div>
                                 <p className="text-sm text-slate-300 font-medium mb-6 leading-relaxed">
-                                    Join the League to earn points on every Clock In. Turn your night out into sanctioned progress.
+                                    Join the League to earn Drops on every Clock In. Turn your night out into sanctioned progress.
                                 </p>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <button
@@ -67,7 +67,7 @@ export const GlobalDiscoveryLoop: React.FC<GlobalDiscoveryLoopProps> = ({
                                         <Trophy size={24} />
                                     </div>
                                     <h3 className="text-xl font-black text-white uppercase tracking-tighter leading-none font-league">
-                                        Found the spot? Get the points.
+                                        Found the spot? Get the Drops.
                                     </h3>
                                 </div>
                                 <p className="text-sm text-slate-300 font-medium mb-6 leading-relaxed">

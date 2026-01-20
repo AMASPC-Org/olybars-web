@@ -11,16 +11,16 @@ import { shareAchievement } from '../../social/ShareService';
 import {
     updatePassword,
     updateEmail,
-    multiFactor,
-    PhoneAuthProvider,
-    PhoneMultiFactorGenerator,
     RecaptchaVerifier
 } from 'firebase/auth';
 import { auth } from '../../../lib/firebase';
-import { updateUserProfile } from '../../../services/userService';
+import { updateUserProfile, fetchUserPointHistory } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { Link, useNavigate } from 'react-router-dom';
 import { isSystemAdmin } from '../../../types/auth_schema';
+import { MfaService } from '../../../services/mfaService';
+import { FormatCurrency } from '../../../utils/formatCurrency';
+import { GAMIFICATION_CONFIG } from '../../../config/gamification';
 
 interface UserProfileScreenProps {
     userProfile: UserProfile;
@@ -57,10 +57,21 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     const [verificationId, setVerificationId] = useState('');
     const [enrolledFactors, setEnrolledFactors] = useState<any[]>([]);
     const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
+    const [pendingPoints, setPendingPoints] = useState(0);
 
     useEffect(() => {
         if (auth.currentUser) {
-            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+            setEnrolledFactors(MfaService.getEnrolledFactors(auth.currentUser));
+
+            // Fetch point history to calculate pending points
+            const getPending = async () => {
+                const history = await fetchUserPointHistory();
+                const pending = history
+                    .filter((h: any) => h.status === 'PENDING')
+                    .reduce((sum: number, h: any) => sum + (h.points || 0), 0);
+                setPendingPoints(pending);
+            };
+            getPending();
         }
     }, [userProfile.uid]);
 
@@ -189,27 +200,12 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     };
 
     const handleStartMfaEnrollment = async () => {
-        if (!auth.currentUser) return;
-        if (!mfaPhone.startsWith('+')) {
-            showToast("Phone must start with + (e.g. +1360...)", "error");
-            return;
-        }
-
+        if (!auth.currentUser || !mfaPhone) return;
         setIsLoading(true);
         try {
-            // Initialize Recaptcha if not already done
-            const verifier = new RecaptchaVerifier(auth, 'recaptcha-enroll-container', {
-                'size': 'invisible'
-            });
+            const verifier = MfaService.createRecaptchaVerifier('recaptcha-enroll-container');
             setRecaptchaVerifier(verifier);
-
-            const session = await multiFactor(auth.currentUser).getSession();
-            const phoneInfoOptions = {
-                phoneNumber: mfaPhone,
-                session: session
-            };
-            const phoneAuthProvider = new PhoneAuthProvider(auth);
-            const vId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, verifier);
+            const vId = await MfaService.startEnrollment(auth.currentUser, mfaPhone, verifier);
             setVerificationId(vId);
             setMfaStep('code');
             showToast("Verification code sent!", "success");
@@ -229,11 +225,9 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
         if (!auth.currentUser || !verificationId || !mfaCode) return;
         setIsLoading(true);
         try {
-            const cred = PhoneAuthProvider.credential(verificationId, mfaCode);
-            const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
-            await multiFactor(auth.currentUser).enroll(multiFactorAssertion, "Primary Phone");
+            await MfaService.finishEnrollment(auth.currentUser, verificationId, mfaCode);
 
-            setEnrolledFactors(multiFactor(auth.currentUser).enrolledFactors);
+            setEnrolledFactors(MfaService.getEnrolledFactors(auth.currentUser));
             setMfaStep('none');
             showToast("MFA ENROLLED SUCCESSFULLY", "success");
 
@@ -241,9 +235,43 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
             if (mfaPhone !== userProfile.phone) {
                 autoSaveUpdates({ phone: mfaPhone });
             }
+
+            // Cleanup recaptcha
+            if (recaptchaVerifier) {
+                recaptchaVerifier.clear();
+                setRecaptchaVerifier(null);
+            }
         } catch (error: any) {
             console.error("MFA Verify Error:", error);
             showToast("Invalid code or enrollment failed", "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUnenrollMfa = async () => {
+        if (!auth.currentUser) return;
+
+        const isVenuePartner = MfaService.isPartner(userProfile);
+        if (isVenuePartner) {
+            if (!window.confirm("WARNING: DISABLING MFA AS A PARTNER WILL REVOKE YOUR SESSION FOR SECURITY. YOU MUST RE-LOGIN TO RE-ENABLE. PROCEED?")) {
+                return;
+            }
+        }
+
+        setIsLoading(true);
+        try {
+            await MfaService.unenroll(auth.currentUser);
+            setEnrolledFactors([]);
+            showToast("MFA DISABLED", "info");
+
+            if (isVenuePartner) {
+                await MfaService.revokeSession();
+                navigate('/auth');
+            }
+        } catch (error: any) {
+            console.error("MFA Unenroll Error:", error);
+            showToast("FAILED TO DISABLE MFA. RE-LOGIN MAY BE REQUIRED.", "error");
         } finally {
             setIsLoading(false);
         }
@@ -286,7 +314,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                 competitionPoints: newPoints
                             }
                         }));
-                        showToast("+5 SOCIAL BOUNTY AWARDED!", "success");
+                        showToast("+5 DROPS AWARDED!", "success");
                     }
                 } catch (e) {
                     console.error("Social bounty update failed:", e);
@@ -319,6 +347,20 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                 <Trophy className="w-2.5 h-2.5" />
                                 {userProfile.role.toUpperCase()}
                             </div>
+                            {userProfile.role === 'guest' && (
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await updateUserProfile(userProfile.uid, { role: 'user' });
+                                            setUserProfile(prev => ({ ...prev, role: 'user' }));
+                                            showToast("Welcome to the League!", "success");
+                                        } catch (e) { showToast("Upgrade failed", "error"); }
+                                    }}
+                                    className="px-3 py-1 bg-slate-800 text-primary border border-primary text-[9px] font-black uppercase tracking-widest rounded-lg shadow-lg hover:bg-slate-700 transition-colors"
+                                >
+                                    ACTIVATE
+                                </button>
+                            )}
                         </div>
                         <div className="flex items-center gap-4 mt-1 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                             <div className="flex items-center gap-1.5">
@@ -389,10 +431,15 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Vibe Checks</p>
                             <p className="text-2xl font-black font-league">{userProfile.stats?.vibeCheckCount || 0}</p>
                         </div>
-                        <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl">
+                        <div className="bg-surface p-4 rounded-2xl border border-white/5 shadow-xl relative overflow-hidden group">
                             <Trophy className="w-5 h-5 text-primary mb-3" />
-                            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">League XP</p>
-                            <p className="text-2xl font-black font-league">{userProfile.stats?.competitionPoints || 0}</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Well Depth</p>
+                            <div className="flex items-baseline gap-1.5">
+                                <FormatCurrency amount={userProfile.stats?.competitionPoints || 0} showLabel={true} className="text-2xl" />
+                                {pendingPoints > 0 && (
+                                    <p className="text-sm font-black text-slate-500 font-league animate-pulse">(+{pendingPoints})</p>
+                                )}
+                            </div>
                         </div>
 
                         {/* [NEW] SUPER-ADMIN QUICK ACCESS */}
@@ -438,7 +485,7 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                             <p className="text-[9px] text-amber-200/50 uppercase font-bold mt-2 text-right">
                                 {userProfile.makersTrailProgress && userProfile.makersTrailProgress >= 5
                                     ? 'TRAIL COMPLETE - LEGEND STATUS'
-                                    : 'Visit High-Score Venues to Advance'}
+                                    : 'Visit High-Traffic Venues to Advance'}
                             </p>
 
                             {/* [NEW] REDEEM GEAR BUTTON */}
@@ -738,7 +785,12 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
                                                     <p className="text-xs font-bold text-slate-300">Identity protected via SMS</p>
                                                 </div>
                                             </div>
-                                            <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">ENABLED</span>
+                                            <button
+                                                onClick={handleUnenrollMfa}
+                                                className="text-[9px] font-black text-slate-500 hover:text-red-500 transition-colors uppercase tracking-widest"
+                                            >
+                                                DISABLE
+                                            </button>
                                         </div>
                                     ) : (
                                         <div className="bg-amber-500/10 border border-amber-500/20 p-5 rounded-2xl space-y-4">

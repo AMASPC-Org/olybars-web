@@ -18,6 +18,7 @@ export function loadLocalEnv() {
 
     // Deterministic order: .env.local (primary overrides) > .env (base defaults/example)
     const files = [
+        'secrets/development.env',
         '.env.local',
         '.env'
     ];
@@ -27,7 +28,7 @@ export function loadLocalEnv() {
         const fullPath = path.resolve(REPO_ROOT, file);
         if (fs.existsSync(fullPath)) {
             console.log(`📡 [CONFIG] Loading local environment: ${file} (Root-Anchored)`);
-            dotenv.config({ path: fullPath, override: true });
+            dotenv.config({ path: fullPath });
             filesLoaded++;
         }
     });

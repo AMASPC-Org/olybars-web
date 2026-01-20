@@ -14,10 +14,9 @@ import { API_ENDPOINTS } from '../lib/api-config';
  */
 export const fetchVenues = async (brief = false): Promise<Venue[]> => {
   try {
-    const timestamp = Date.now();
     const url = brief
-      ? `${API_ENDPOINTS.VENUES.LIST}?brief=true&_t=${timestamp}`
-      : `${API_ENDPOINTS.VENUES.LIST}?_t=${timestamp}`;
+      ? `${API_ENDPOINTS.VENUES.LIST}?brief=true`
+      : API_ENDPOINTS.VENUES.LIST;
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);
@@ -134,7 +133,8 @@ export const checkVenueClaim = async (googlePlaceId: string): Promise<{ isClaime
  * Claim a venue and sync with Google
  */
 export const onboardVenue = async (googlePlaceId: string): Promise<{ venueId: string; syncResult: any }> => {
-  const headers = await getAuthHeaders();
+  // Force token refresh for critical onboarding action
+  const headers = await getAuthHeaders(true, true);
   try {
     const response = await fetch(API_ENDPOINTS.PARTNERS.ONBOARD, {
       method: 'POST',

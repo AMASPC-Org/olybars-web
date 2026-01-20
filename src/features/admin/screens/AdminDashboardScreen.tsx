@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { FormatCurrency } from '../../../utils/formatCurrency';
 import {
     Shield, Users, BarChart3, Settings,
     Search, Filter, ExternalLink, Activity,
@@ -14,7 +15,8 @@ import { AiAccessTab } from '../components/AiAccessTab';
 import { PhotoApprovalCard } from '../components/PhotoApprovalCard';
 import { PinCalibrationMap } from '../components/PinCalibrationMap';
 import { RefineryQueue } from '../components/RefineryQueue';
-import { Camera, MapPin } from 'lucide-react';
+import { Camera, MapPin, Trophy } from 'lucide-react';
+import { BountyReviewQueue } from '../components/BountyReviewQueue';
 
 interface AdminDashboardScreenProps {
     userProfile: any;
@@ -22,7 +24,7 @@ interface AdminDashboardScreenProps {
 
 export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ userProfile }) => {
     const queryClient = useQueryClient();
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai' | 'photos' | 'refinery'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'venues' | 'league' | 'system' | 'ai' | 'photos' | 'refinery' | 'bounties'>('overview');
     const [systemStats, setSystemStats] = useState({ totalUsers: 0, activeUsers: 0, totalPoints: 0 });
     const [leagueUsers, setLeagueUsers] = useState<UserProfile[]>([]);
     const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
@@ -66,7 +68,11 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
         .sort((a, b) => (b.stats?.seasonPoints || 0) - (a.stats?.seasonPoints || 0));
 
     const filteredVenues = venues
-        .filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.id.includes(searchTerm))
+        .filter(v =>
+            v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            v.id.includes(searchTerm) ||
+            v.scraper_config?.some(s => s.url.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
         .filter(v => {
             if (venueFilter === 'visible') return v.isVisible !== false && v.isActive !== false;
             if (venueFilter === 'ghost') return v.isVisible === false && v.isActive !== false;
@@ -213,7 +219,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6 bg-black/40 p-1 rounded-xl overflow-x-auto">
-                {(['overview', 'users', 'venues', 'photos', 'refinery', 'league', 'system', 'ai'] as const).map((tab) => (
+                {(['overview', 'users', 'venues', 'bounties', 'photos', 'refinery', 'league', 'system', 'ai'] as const).map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -309,8 +315,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3">Venue Name</th>
                                         <th className="p-3">ID</th>
                                         <th className="p-3 text-center">Paid Member</th>
-                                        <th className="p-3 text-center">Game Vibe</th>
                                         <th className="p-3 text-center">Ghost Mode</th>
+                                        <th className="p-3 text-center">Sync</th>
                                         <th className="p-3 text-center">Map</th>
                                         <th className="p-3 text-right">Status</th>
                                     </tr>
@@ -345,6 +351,17 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                 >
                                                     {venue.isVisible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
                                                 </button>
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <div className="flex items-center justify-center gap-1" title="Active Scraper Sources">
+                                                    {venue.scraper_config?.some(s => s.status === 'error') ? (
+                                                        <AlertTriangle className="w-4 h-4 text-red-500" />
+                                                    ) : (
+                                                        <span className={`text-[10px] font-black font-mono ${venue.is_scraping_enabled && (venue.scraper_config?.length || 0) > 0 ? 'text-green-400' : 'text-slate-700'}`}>
+                                                            {venue.scraper_config?.filter(s => s.isEnabled).length || 0}/{venue.scraper_config?.length || 0}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-3 text-center">
                                                 <button
@@ -398,7 +415,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                         <th className="p-3">User</th>
                                         <th className="p-3">UID</th>
                                         <th className="p-3 text-right">Role</th>
-                                        <th className="p-3 text-right">Points</th>
+                                        <th className="p-3 text-right">Drops</th>
                                         <th className="p-3 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -468,7 +485,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                     <tr className="text-[9px] text-slate-500 uppercase tracking-widest border-b border-white/10">
                                         <th className="p-3">Rank</th>
                                         <th className="p-3">Handle</th>
-                                        <th className="p-3 text-right">Points</th>
+                                        <th className="p-3 text-right">Drops</th>
                                         <th className="p-3 text-right">Role</th>
                                         <th className="p-3 text-center">Status</th>
                                     </tr>
@@ -553,6 +570,8 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                 {activeTab === 'refinery' && <RefineryQueue venues={venues} />}
 
                 {activeTab === 'ai' && <AiAccessTab />}
+
+                {activeTab === 'bounties' && <BountyReviewQueue />}
             </div>
 
             {/* Calibration Modal */}

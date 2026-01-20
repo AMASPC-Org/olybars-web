@@ -1,4 +1,9 @@
-export type VenueStatus = 'dead' | 'chill' | 'buzzing' | 'packed';
+/**
+ * VenueStatus: Current energy/capacity level of a venue.
+ * 'dead' is deprecated in favor of 'mellow'.
+ */
+export type VenueStatus = 'dead' | 'mellow' | 'chill' | 'buzzing' | 'packed';
+
 
 export enum PartnerTier {
     LOCAL = 'local',
@@ -44,6 +49,7 @@ export interface FlashBounty {
     termsAccepted?: boolean;
     offerDetails?: string; // [NEW] e.g. "BOGO"
     terms?: string; // [NEW] e.g. "Limit 2"
+    bounty_task_description?: string; // [NEW] e.g. "Upload a photo of your receipt"
 }
 
 export interface ScheduledDeal {
@@ -60,10 +66,34 @@ export interface ScheduledDeal {
     staffBriefingConfirmed: boolean;
     offerDetails?: string;
     terms?: string;
+    bounty_task_description?: string;
     createdAt?: any; // Firestore serverTimestamp
 }
 
 export type VenueType = 'bar_pub' | 'restaurant_bar' | 'brewery_taproom' | 'lounge_club' | 'arcade_bar' | 'brewpub' | 'private_club' | 'winery_tasting';
+
+export type ScrapeTarget = 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' | 'WEBSITE';
+
+export interface ScraperSource {
+    id: string; // UUID
+    url: string;
+    target: ScrapeTarget;
+    isEnabled: boolean;
+    lastScraped?: number;
+    status: 'active' | 'error' | 'pending';
+    errorMsg?: string;
+    consecutiveFailures?: number; // [NEW] For backoff logic
+}
+
+export interface SocialPostDraft {
+    id: string; // UUID
+    venueId: string;
+    sourceType: 'NEWSLETTER' | 'EVENTS_DIGEST' | 'MENU_PROMO';
+    content: string; // The AI generated text
+    sourceUrl?: string; // Citation
+    status: 'DRAFT' | 'APPROVED' | 'POSTED';
+    createdAt: number;
+}
 
 // [PHASE 1] Menu Module Schema
 export enum MenuItemType {
@@ -144,6 +174,7 @@ export type SceneTag =
     | 'tiki_theme'
     | 'wine_focus'
     | 'cocktail_focus'
+    | 'martini_bar'
     | 'lgbtq'
     | 'patio_garden';
 
@@ -180,10 +211,13 @@ export interface LeagueEvent {
     venueId: string;
     title: string;
     description?: string;
-    type: 'trivia' | 'karaoke' | 'live_music' | 'dj' | 'bingo' | 'other';
+    type: 'trivia' | 'karaoke' | 'live_music' | 'dj' | 'bingo' | 'sports' | 'comedy' | 'happy_hour' | 'other';
     startTime: number; // UTC timestamp
+    date: string; // [NEW] ISO YYYY-MM-DD
+    time?: string; // [NEW] HH:mm
     pointsAwarded: number; // Default 25
     sourceUrl?: string;
+    source: 'google_calendar' | 'facebook' | 'manual' | 'automation'; // [NEW] Added automation
     sourceConfidence: number; // 0.0 - 1.0 (from AI)
     lastScraped?: number;
     distributeToMedia?: boolean; // [NEW] For MediaDistributionService
@@ -386,12 +420,15 @@ export interface Venue {
     privateSpaces?: PrivateSpace[];
     reservations?: string;
     reservationUrl?: string;
+    reservationPolicy?: string;
     openingTime?: string;
     services?: string[];
 
     // [BETA BATTALION] Scraper & Consensus Metadata
     partner_tier: PartnerTier;
+    /** @deprecated Use scraper_config instead */
     scrape_source_url?: string;
+    scraper_config?: ScraperSource[];
     last_scrape_timestamp?: number;
     is_scraping_enabled: boolean;
     isConsensusPacked?: boolean; // Tracked internally for alert debouncing
@@ -399,6 +436,8 @@ export interface Venue {
     // [NEW] Social Engine
     social_auto_sync: boolean;
     auto_sync_sources?: ('facebook' | 'instagram' | 'website')[];
+    wifiPassword?: string;
+    posKey?: string;
 
     // [NEW] AI Refinery Draft
     ai_draft_profile?: {

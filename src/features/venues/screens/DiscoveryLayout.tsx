@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useOutletContext, useLocation } from 'react-router
 import { StickyHeader } from '../../../components/layout/StickyHeader';
 import { DiscoveryControls } from '../components/DiscoveryControls';
 import { DiscoveryProvider, useDiscovery } from '../contexts/DiscoveryContext';
-import { UserProfile, Venue } from '../../../types';
+import { UserProfile, Venue, ClockInRecord, VibeCheckRecord } from '../../../types';
 import { BuzzClock } from '../../../components/ui/BuzzClock';
 import { format } from 'date-fns';
 
@@ -20,7 +20,9 @@ export const DiscoveryLayout: React.FC = () => {
         onToggleFavorite,
         onEditVenue,
         isLoading,
-        onToggleWeeklyBuzz
+        onToggleWeeklyBuzz,
+        clockInHistory,
+        vibeCheckHistory
     } = useOutletContext<{
         venues: Venue[],
         userProfile: UserProfile,
@@ -32,7 +34,9 @@ export const DiscoveryLayout: React.FC = () => {
         onToggleFavorite: (venueId: string) => void,
         onEditVenue: (venueId: string) => void,
         isLoading: boolean,
-        onToggleWeeklyBuzz: () => void
+        onToggleWeeklyBuzz: () => void,
+        clockInHistory?: ClockInRecord[],
+        vibeCheckHistory?: VibeCheckRecord[]
     }>();
 
     return (
@@ -48,6 +52,8 @@ export const DiscoveryLayout: React.FC = () => {
             onEditVenue={onEditVenue}
             isLoading={isLoading}
             onToggleWeeklyBuzz={onToggleWeeklyBuzz}
+            clockInHistory={clockInHistory}
+            vibeCheckHistory={vibeCheckHistory}
         />
     );
 };
@@ -63,7 +69,9 @@ const DiscoveryLayoutContent: React.FC<{
     onToggleFavorite: (venueId: string) => void,
     onEditVenue: (venueId: string) => void,
     isLoading: boolean,
-    onToggleWeeklyBuzz: () => void
+    onToggleWeeklyBuzz: () => void,
+    clockInHistory?: ClockInRecord[],
+    vibeCheckHistory?: VibeCheckRecord[]
 }> = ({
     venues,
     userProfile,
@@ -75,12 +83,14 @@ const DiscoveryLayoutContent: React.FC<{
     onToggleFavorite,
     onEditVenue,
     isLoading,
-    onToggleWeeklyBuzz
+    onToggleWeeklyBuzz,
+    clockInHistory,
+    vibeCheckHistory
 }) => {
         const navigate = useNavigate();
         const location = useLocation();
         const { isToday, searchQuery, selectedDate } = useDiscovery();
-        const isVenueProfile = location.pathname.includes('/venues/');
+        const isVenueProfile = location.pathname.includes('/bars/');
         const isBackRoom = location.pathname === '/back-room';
         const isClaimPage = location.pathname.startsWith('/partners/claim');
 
@@ -124,7 +134,9 @@ const DiscoveryLayoutContent: React.FC<{
                             onToggleFavorite,
                             onEditVenue,
                             isLoading,
-                            onToggleWeeklyBuzz
+                            onToggleWeeklyBuzz,
+                            clockInHistory,
+                            vibeCheckHistory
                         }} />
                     </div>
                 </div>

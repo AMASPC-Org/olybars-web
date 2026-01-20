@@ -106,7 +106,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                 </div>
 
                 {/* Bottom Row: Filter Chips */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide no-scrollbar">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1">
                     <button
                         onClick={() => {
                             handleInteraction();
@@ -171,17 +171,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                         </button>
                     </div>
 
-                    {/* MAKERS */}
-                    <button
-                        onClick={() => {
-                            handleInteraction();
-                            setFilterKind('makers');
-                            setShowVibeMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
-                        }}
-                        className={`${baseChipClasses} ${filterKind === 'makers' ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
-                    >
-                        <Hammer className="w-3 h-3" /> Makers
-                    </button>
+
 
                     {/* SCENE */}
                     <div className="relative">
@@ -208,6 +198,18 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                             <LayoutGrid className="w-3 h-3" /> Features <ChevronRight className={`w-3 h-3 transition-transform ${showFeatureMenu ? 'rotate-90' : ''}`} />
                         </button>
                     </div>
+
+                    {/* MAKERS */}
+                    <button
+                        onClick={() => {
+                            handleInteraction();
+                            setFilterKind('makers');
+                            setShowVibeMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
+                        }}
+                        className={`${baseChipClasses} ${filterKind === 'makers' ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
+                    >
+                        <Hammer className="w-3 h-3" /> Makers
+                    </button>
                 </div>
 
                 {/* Active Menu Sub-Row */}
@@ -219,7 +221,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                                 { id: 'packed', label: 'Packed', icon: Zap },
                                 { id: 'buzzing', label: 'Buzzing', icon: Flame },
                                 { id: 'chill', label: 'Chill', icon: Beer },
-                                { id: 'dead', label: 'Dead', icon: Clock }
+                                { id: 'mellow', label: 'Mellow', icon: Clock }
                             ].map(option => (
                                 <button
                                     key={option.id}

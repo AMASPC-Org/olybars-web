@@ -2,16 +2,20 @@ import admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// In CommonJS, __filename and __dirname are already available globally.
 
 // Safety: Clear emulator variables if running locally
 delete process.env.FIRESTORE_EMULATOR_HOST;
 delete process.env.FIREBASE_AUTH_EMULATOR_HOST;
 
-const projectId = 'ama-ecosystem-prod';
+const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+
+if (!projectId) {
+    console.error("❌ CRTICAL ERROR: GOOGLE_CLOUD_PROJECT is not set.");
+    console.error("   To prevent accidental production data wipes, this script requires an explicit target.");
+    console.error("   Usage: cross-env GOOGLE_CLOUD_PROJECT=your-project-id npm run artie:sync");
+    process.exit(1);
+}
 
 if (admin.apps.length === 0) {
     console.log(`📡 [CLOUD] TARGETING REMOTE PROJECT: ${projectId}`);

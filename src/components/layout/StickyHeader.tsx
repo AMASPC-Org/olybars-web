@@ -1,6 +1,8 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, User, Trophy, Crown } from 'lucide-react';
+import { Menu, User, Trophy, Crown, Info } from 'lucide-react';
+import { InfoRulesModal } from '../ui/InfoRulesModal';
 import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
 import { UserProfile } from '../../types';
 
@@ -20,6 +22,7 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
     isScrolled = false
 }) => {
     const navigate = useNavigate();
+    const [showInfo, setShowInfo] = useState(false);
     const isGuest = userProfile?.role === 'guest' || !userProfile;
 
     // Dynamic Icon based on rank/status
@@ -57,6 +60,14 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
                     </button>
 
                     <button
+                        onClick={() => setShowInfo(true)}
+                        className="p-2 text-slate-400 hover:text-primary transition-all active:scale-95"
+                        title="Rules & Prizes"
+                    >
+                        <Info size={20} strokeWidth={2.5} />
+                    </button>
+
+                    <button
                         onClick={onMenuClick}
                         className="p-2 text-white hover:text-primary transition-colors active:scale-95"
                     >
@@ -64,6 +75,10 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
                     </button>
                 </div>
             </div>
+            <InfoRulesModal
+                isOpen={showInfo}
+                onClose={() => setShowInfo(false)}
+            />
         </div>
     );
 };

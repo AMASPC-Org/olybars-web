@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../lib/firebase';
-import { multiFactor } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle } from 'lucide-react';
+import { FormatCurrency } from '../../../utils/formatCurrency';
+import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle, ShoppingBag, Utensils } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -22,9 +22,13 @@ import { VenueInsight } from '../../../types';
 import { PhotoApprovalCard } from '../../admin/components/PhotoApprovalCard';
 import { Camera } from 'lucide-react';
 import { MenuManagementTab } from '../components/MenuManagementTab';
+import { ScraperManagementTab } from '../components/ScraperManagementTab';
 import { PartnerManualTab } from '../components/PartnerManualTab';
 import { BackRoomManagementTab } from '../components/BackRoomManagementTab';
-import { Book } from 'lucide-react';
+import { Book, ShieldCheck, Globe } from 'lucide-react';
+import { MfaService } from '../../../services/mfaService';
+import { BrewHouse } from '../../../components/dashboard/BrewHouse';
+
 
 interface OwnerDashboardProps {
     isOpen: boolean;
@@ -43,17 +47,9 @@ const TOP_PLAYERS = [
 ];
 const DEAL_PRESETS = ["$1 Off Drafts", "$5 Well Drinks", "Half-Price Apps", "BOGO Burgers", "Industry Night"];
 
-const calculatePulseScore = (venue: Venue): number => {
-    let score = 50;
-    switch (venue.status) {
-        case 'buzzing': score += 30; break;
-        case 'chill': score += 15; break;
-    }
-    if (venue.deal) score += 10;
-    if (venue.leagueEvent) score += 10;
-    score += (venue.clockIns || 0) * 1.5;
-    return Math.min(Math.round(score), 100);
-};
+// [REMOVED] Obsolete Client-Side Score Calculation
+// The Vibe Engine (server/src/venueService.ts) now handles all scoring via Density Physics.
+// Do not attempt to replicate 0-100 logic here.
 
 export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     isOpen, onClose, venues, updateVenue, userProfile,
@@ -81,9 +77,10 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
     const [dealText, setDealText] = useState('');
     const [dealDescription, setDealDescription] = useState('');
+    const [dealTaskDescription, setDealTaskDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'manual', 'backroom'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'scraper', 'manual', 'backroom'
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -98,7 +95,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const { showToast } = useToast();
 
     // [SECURITY] MFA Enforcement Check for Partners
-    const isMfaEnrolled = auth.currentUser && multiFactor(auth.currentUser).enrolledFactors.length > 0;
+    const isMfaEnrolled = MfaService.isEnrolled(auth.currentUser);
     const isSuperAdmin = isSystemAdmin(userProfile);
 
     if (!isMfaEnrolled && !isSuperAdmin) {
@@ -278,10 +275,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 title: dealText,
                 description: dealDescription,
                 duration: dealDuration,
-                isActive: true
+                isActive: true,
+                bounty_task_description: dealTaskDescription
             });
             setDealText('');
             setDealDescription('');
+            setDealTaskDescription('');
             showToast('FLASH BOUNTY BROADCASTED TO NETWORK', 'success');
         } catch (e) {
             showToast('FAILED TO PUBLISH BOUNTY', 'error');
@@ -310,6 +309,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 venueId: myVenue.id,
                 title: dealText,
                 description: dealDescription,
+                bounty_task_description: dealTaskDescription,
                 startTime: start.getTime(),
                 endTime: start.getTime() + (dealDuration * 60 * 1000),
                 durationMinutes: dealDuration,
@@ -322,6 +322,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
             showToast('FLASH BOUNTY SCHEDULED SUCCESSFULLY', 'success');
             setDealText('');
             setDealDescription('');
+            setDealTaskDescription('');
             setStaffConfirmed(false);
             fetchScheduledDeals();
         } catch (e: any) {
@@ -506,7 +507,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
 
             {/* Navigation Tabs */}
             {/* Navigation Tabs - Mobile Optimized Scrollable Bar */}
-            <div className="flex items-center overflow-x-auto whitespace-nowrap bg-black border-b border-white/5 no-scrollbar scroll-smooth">
+            <div className="flex items-center overflow-x-auto whitespace-nowrap bg-black border-b border-white/5 scroll-smooth">
                 <button
                     onClick={() => setDashboardView('main')}
                     className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'main' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
@@ -536,6 +537,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'menu' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
                 >
                     THE MENU
+                </button>
+                <button
+                    onClick={() => setDashboardView('scraper')}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === 'scraper' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
+                >
+                    Scrapers
                 </button>
                 <button
                     onClick={() => setDashboardView('events')}
@@ -591,7 +598,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 )}
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24 scrollbar-hide">
+            <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24">
                 {myVenue && dashboardView === 'main' && (
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -599,29 +606,12 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <p className="text-[10px] uppercase font-black text-slate-500 mb-1 font-league">Live Clock-ins</p>
                                 <p className="text-4xl font-black text-white font-league">{myVenue.clockIns || 0}</p>
                             </div>
-                            <div className="bg-surface p-4 border border-white/10 rounded-lg shadow-xl">
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex flex-col">
-                                        <p className="text-[10px] uppercase font-black text-slate-500 font-league">Vibe Override (Suggested)</p>
-                                        <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest">SMS Alerts trigger on user consensus only</p>
-                                    </div>
-                                    {myVenue.manualStatusExpiresAt && Date.now() < myVenue.manualStatusExpiresAt && (
-                                        <span className="text-[8px] font-black text-primary uppercase animate-pulse">
-                                            Active {Math.ceil((myVenue.manualStatusExpiresAt - Date.now()) / 60000)}m
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-4 sm:grid-cols-4 gap-1">
-                                    {['dead', 'chill', 'buzzing', 'packed'].map((s) => (
-                                        <button
-                                            key={s}
-                                            onClick={() => setManualVibe(s)}
-                                            className={`py-3 sm:py-2 text-[9px] sm:text-[8px] font-black uppercase rounded border transition-all ${myVenue.status === s ? 'bg-primary border-primary text-black' : 'bg-black border-white/5 text-slate-500'}`}
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
+                            <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-xl">
+                                <BrewHouse
+                                    currentStatus={myVenue.status || 'mellow'}
+                                    onStatusChange={setManualVibe}
+                                    isLoading={isLoadingPrivate}
+                                />
                             </div>
                         </div>
 
@@ -649,6 +639,56 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                             <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-1 transition-transform" />
                         </button>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <button
+                                onClick={() => {
+                                    setDashboardView('listing');
+                                    setTimeout(() => {
+                                        const element = document.getElementById('hours-section');
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }, 100);
+                                }}
+                                className="w-full bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 rounded-lg p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <div className="p-2 bg-blue-500/20 rounded text-blue-400">
+                                        <Clock className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-widest text-white">UPDATE HOURS</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Manage standard & seasonal operating hours</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setDashboardView('listing');
+                                    setTimeout(() => {
+                                        const element = document.getElementById('fulfillment-section');
+                                        if (element) {
+                                            element.scrollIntoView({ behavior: 'smooth' });
+                                        }
+                                    }, 100);
+                                }}
+                                className="w-full bg-gradient-to-r from-green-500/10 to-transparent border border-green-500/20 rounded-lg p-4 flex items-center justify-between group active:scale-[0.98] transition-all"
+                            >
+                                <div className="flex items-center gap-3 text-left">
+                                    <div className="p-2 bg-green-500/20 rounded text-green-400">
+                                        <ShoppingBag className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-widest text-white">LINKS & FULFILLMENT</p>
+                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Reservations, Ticketing, & External URLs</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-green-400 group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
 
                         {/* Live Game Status Management */}
                         {myVenue.hasGameVibeCheckEnabled && (
@@ -714,7 +754,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center justify-between max-w-xs mx-auto">
+                            <div className="flex items-center justify-between max-w-xs mx-auto mb-6">
                                 <button onClick={() => adjustClockIns(-1)} className="w-16 h-16 flex items-center justify-center bg-black border border-white/10 text-white rounded-xl active:scale-95 transition-transform">
                                     <Minus className="w-8 h-8" />
                                 </button>
@@ -722,6 +762,23 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                 <button onClick={() => adjustClockIns(1)} className="w-16 h-16 flex items-center justify-center bg-primary text-black rounded-xl active:scale-95 transition-transform">
                                     <Plus className="w-8 h-8" />
                                 </button>
+                            </div>
+
+                            {/* [NEW] Capacity Configuration */}
+                            <div className="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-league">Venue Capacity</p>
+                                    <p className="text-[9px] text-slate-600 font-bold">Denominator for Density Physics</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={myVenue.capacity || 50}
+                                        onChange={(e) => updateVenue(myVenue.id, { capacity: parseInt(e.target.value) || 50 })}
+                                        className="w-16 bg-slate-900 border border-slate-700 text-white font-bold text-center rounded py-1 outline-none focus:border-primary"
+                                    />
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">MAX</span>
+                                </div>
                             </div>
                         </div>
 
@@ -782,7 +839,19 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             onChange={(e) => setDealDuration(parseInt(e.target.value))}
                                             className="w-full accent-primary h-1.5 bg-black rounded-lg appearance-none cursor-pointer"
                                         />
-                                        <div className="flex justify-between px-1">
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bounty Verification Task</label>
+                                            <input
+                                                type="text"
+                                                value={dealTaskDescription}
+                                                onChange={(e) => setDealTaskDescription(e.target.value)}
+                                                placeholder="e.g. Take a photo of your receipt"
+                                                className="w-full bg-black border border-white/10 rounded-lg p-3 text-white font-bold outline-none placeholder:text-slate-700"
+                                            />
+                                            <p className="text-[8px] text-slate-500 italic ml-1">Fallback: 'Upload a photo of your purchase'</p>
+                                        </div>
+
+                                        <div className="flex justify-between gap-3">
                                             <span className="text-[8px] text-slate-700 font-bold">30M</span>
                                             <span className="text-[8px] text-slate-700 font-bold">3H (CAP)</span>
                                         </div>
@@ -864,7 +933,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         <section className="space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                                 <div>
-                                    <h3 className="text-2xl font-black text-white uppercase font-league leading-none">POINTS ANALYSIS</h3>
+                                    <h3 className="text-2xl font-black text-white uppercase font-league leading-none">DROPS ANALYSIS</h3>
                                     <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Revenue & Engagement metrics</p>
                                 </div>
                                 <div className="flex bg-black p-1 rounded-lg border border-white/10 w-full sm:w-auto overflow-x-auto no-scrollbar">
@@ -883,11 +952,11 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Earned</p>
-                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">+{activityStats.earned.toLocaleString()}</p>
+                                    <FormatCurrency amount={activityStats.earned} className="text-xl sm:text-2xl" />
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Redeemed</p>
-                                    <p className="text-xl sm:text-2xl font-black text-red-500 font-league">-{activityStats.redeemed.toLocaleString()}</p>
+                                    <FormatCurrency amount={-activityStats.redeemed} className="text-xl sm:text-2xl" variant="warning" />
                                 </div>
                                 <div className="bg-surface p-4 border border-white/10 rounded-xl">
                                     <p className="text-[9px] font-black text-slate-500 uppercase font-league mb-1">Active</p>
@@ -897,10 +966,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                     <div className="absolute top-0 right-0 p-1 opacity-20">
                                         <Zap className="w-8 h-8 sm:w-12 sm:h-12 text-primary" />
                                     </div>
-                                    <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Point Bank</p>
-                                    <p className="text-xl sm:text-2xl font-black text-primary font-league">
-                                        {((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000)).toLocaleString()}
-                                    </p>
+                                    <p className="text-[9px] font-black text-primary uppercase font-league mb-1">Reservoir</p>
+                                    <FormatCurrency amount={((privateData?.pointBank !== undefined) ? privateData.pointBank : (myVenue.pointBank || 5000))} className="text-xl sm:text-2xl" hideSign />
                                 </div>
                             </div>
                         </section>
@@ -993,6 +1060,15 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         venue={myVenue}
                         onUpdate={(id, updates) => updateVenue(id, updates)}
                         userId={userProfile.uid}
+                        userProfile={userProfile}
+                    />
+                )}
+
+                {myVenue && dashboardView === 'scraper' && (
+                    <ScraperManagementTab
+                        venue={myVenue}
+                        onUpdate={(id, updates) => updateVenue(id, updates)}
+                        userProfile={userProfile}
                     />
                 )}
 
@@ -1087,9 +1163,9 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             </p>
                                         </div>
                                         <div className="p-3 bg-black/40 rounded-xl border border-white/5">
-                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Points Allocated</p>
+                                            <p className="text-[9px] text-slate-500 uppercase font-black mb-1">Drops Allocated</p>
                                             <p className="text-xl font-black text-amber-500">
-                                                {(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.points || 0), 0).toLocaleString()}
+                                                <FormatCurrency amount={(Object.values(hourlyReport.hourly) as any[]).reduce((acc: number, h: any) => acc + (h.points || 0), 0)} />
                                             </p>
                                         </div>
                                     </div>
@@ -1146,8 +1222,8 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[9px] text-slate-500 uppercase font-black">Bonus Pts</p>
-                                                <p className="text-sm font-black text-amber-500">+{data.points || 0}</p>
+                                                <p className="text-[9px] text-slate-500 uppercase font-black">Bonus Drops</p>
+                                                <FormatCurrency amount={data.points || 0} variant="highlight" />
                                             </div>
                                         </div>
                                     ))}

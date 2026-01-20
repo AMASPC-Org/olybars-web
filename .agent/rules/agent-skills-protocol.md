@@ -1,9 +1,18 @@
-# Agent Skills Protocol
+# OlyBars Skill Protocol: Logic Separation
 
-**Logic Separation:** If a Skill's logic exceeds 20 lines of code, you MUST extract it to a helper function in a separate file (e.g., `src/skills/Schmidt/logic.ts`) to prevent `useArtieOps.ts` bloat.
+This rule governs the development of the "Nightlife Operating System" skills, enforcing modularity and preventing hook bloat.
 
-**State Transitions:** State Transitions MUST be explicit. If a Skill Action > 20 lines, it MUST be extracted to `src/skills/Schmidt/`. 
+## 1. Core hook (useSchmidtOps)
+- **Role**: Pure State Management & Routing.
+- **Limit**: The `processAction` switch should ideally only contain single-line delegations to skill handlers.
+- **Constraint**: No business logic (API calls, data transformations) should live inside the hook.
 
-**Intent Parsing:** Do NOT use Regex for complex intent. Use the LLM/Service layer for semantic extraction.
+## 2. Skill Handlers (src/features/Schmidt/*)
+- **Role**: Domain-specific Logic & Context.
+- **Constraint**: No single handler function shall exceed **50 lines**. 
+- **Pattern**: Extract sub-functions (e.g., `calculateTiming`, `formatCopy`) if a flow becomes complex.
+- **State Transitions**: Handlers must return or set `opsState` explicitly. 
 
-**Naming Convention:** Use 'Schmidt' instead of 'Artie'. Use 'Bounty' instead of 'Deal'.
+## 3. The context Rule
+- All handlers must accept `SkillContext` or `EventSkillContext` to interact with the core hook's state.
+- Handlers should NOT have their own internal state; they must operate on the provided `draftData`.

@@ -9,61 +9,61 @@ export const PartnerManualTab: React.FC = () => {
         {
             title: "Hours of Operation",
             icon: Clock,
-            artie: "Ask Artie: \"Artie, update our hours for tonight to close at 2 AM.\"",
+            artie: "Ask Coach: \"Coach, update our hours for tonight to close at 2 AM.\"",
             manual: "Manual: Go to the 'Listing' tab and update the 'Hours of Operation' field."
         },
         {
             title: "Happy Hour Scheduling",
             icon: Zap,
-            artie: "Ask Artie: \"Artie, schedule a Happy Hour for Monday, 3-6 PM, $1 off drafts.\"",
+            artie: "Ask Coach: \"Coach, schedule a Happy Hour for Monday, 3-6 PM, $1 off drafts.\"",
             manual: "Manual: Go to the 'Listing' tab and scroll to the 'Recurring Happy Hour' manager at the bottom."
         },
         {
             title: "Adding Events",
             icon: Calendar,
-            artie: "Ask Artie: \"Artie, add Karaoke every Thursday at 9 PM starting next week.\"",
+            artie: "Ask Coach: \"Coach, add Karaoke every Thursday at 9 PM starting next week.\"",
             manual: "Manual: Use the 'Events' tab to create, edit, or remove calendar listings."
         },
         {
             title: "Flash Bounties",
             icon: Zap,
-            artie: "Ask Artie: \"Artie, run a $5 Burger Flash Bounty for the next 90 minutes.\"",
+            artie: "Ask Coach: \"Coach, run a $5 Burger Flash Bounty for the next 90 minutes.\"",
             manual: "Manual: Use the 'Operations' tab to instantly broadcast or schedule a Flash Bounty."
         },
         {
             title: "Listing & Profile Updates",
             icon: Layout,
-            artie: "Ask Artie: \"Artie, update our website link and Instagram handle.\"",
+            artie: "Ask Coach: \"Coach, update our website link and Instagram handle.\"",
             manual: "Manual: Use the 'Listing' tab for website, social links, and venue descriptions."
         },
         {
             "title": "Occupancy & Capacity",
             "icon": Users,
-            "artie": "Ask Artie: \"Artie, set our maximum occupancy to 75.\"",
+            "artie": "Ask Coach: \"Coach, set our maximum occupancy to 75.\"",
             "manual": "Manual: Go to the 'Listing' tab and update the 'Venue Capacity' field."
         },
         {
             "title": "Status Integrity (Crowdsourced)",
             "icon": AlertTriangle,
-            "artie": "Ask Artie: \"Artie, tell everyone we are PACKED!\"",
+            "artie": "Ask Coach: \"Coach, tell everyone we are PACKED!\"",
             "manual": "NEW: 'Packed' status alerts are now Crowdsourced. While you can mark your status as 'Packed' in the dashboard, the official Pulse Alert (SMS to followers) only triggers when 3 unique users check in or 2 users report 'Packed' via Vibe Check within 15 minutes. Your dashboard control acts as your 'suggested' status."
         },
         {
             title: "Instagram & Content Sync",
             icon: Globe,
-            artie: "Ask Artie: \"Artie, sync my latest Instagram posts.\"",
-            manual: "Manual: In the 'Listing' tab, click 'Connect Instagram Business' to link your account. Once connected, Artie will automatically scan your feed for events and drafts them for your approval."
+            artie: "Ask Coach: \"Coach, sync my latest Instagram posts.\"",
+            manual: "Manual: In the 'Listing' tab, click 'Connect Instagram Business' to link your account. Once connected, Coach will automatically scan your feed for events and drafts them for your approval."
         },
         {
             title: "Marketing & Distribution Suite",
             icon: Smartphone,
-            artie: "Ask Artie: \"Artie, draft a newsletter email about our new mural and Saturday trivia session.\"",
-            manual: "NEW: Artie is now a Multimodal Co-Pilot. Use the chat to draft Social Posts, Emails, Community Calendar entries, and Website updates. You can even generate AI image prompts for your social assets. All drafts are saved to your dashboard for final review."
+            artie: "Ask Coach: \"Coach, draft a newsletter email about our new mural and Saturday trivia session.\"",
+            manual: "NEW: Coach is now a Multimodal Co-Pilot. Use the chat to draft Social Posts, Emails, Community Calendar entries, and Website updates. You can even generate AI image prompts for your social assets. All drafts are saved to your dashboard for final review."
         },
         {
             title: "Conversion Tools (Double Dip)",
             icon: Smartphone,
-            artie: "Ask Artie: \"Artie, set our loyalty signup link to 'toasttab.com/ourvenue' and our hero item to the 'Artesian Burger'.\"",
+            artie: "Ask Coach: \"Coach, set our loyalty signup link to 'toasttab.com/ourvenue' and our hero item to the 'Artesian Burger'.\"",
             manual: "NEW: Drive direct ROI by setting your 'Loyalty Signup URL' and 'Hero Item' in the Listing tab. These trigger a 'Double Dip' CTA for users after they Clock In, stacking OlyBars points with your own venue rewards or nudging them toward your highest-margin food items."
         }
     ];
@@ -78,7 +78,7 @@ export const PartnerManualTab: React.FC = () => {
                     <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league leading-none">THE PARTNER MANUAL</h2>
                     <div className="flex items-center gap-4 mt-2">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
-                            Master your presence on OlyBars. Choose your path: <span className="text-primary italic">The Artie Way</span> or <span className="text-white italic">The Manual Way</span>.
+                            Master your presence on OlyBars. Choose your path: <span className="text-primary italic">The Coach Way</span> or <span className="text-white italic">The Manual Way</span>.
                         </p>
                         <button
                             onClick={() => window.open('/faq', '_blank')}
@@ -107,7 +107,7 @@ export const PartnerManualTab: React.FC = () => {
                                 <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl relative group/artie">
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest font-league italic">The Artie Way</span>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest font-league italic">The Coach Way</span>
                                     </div>
                                     <p className="text-xs text-slate-300 font-medium leading-relaxed italic">
                                         {section.artie}
@@ -142,7 +142,7 @@ export const PartnerManualTab: React.FC = () => {
                         <h3 className="text-2xl font-black text-white uppercase font-league tracking-tighter mb-2 italic">Pro-Tip: Hands-Free Ops</h3>
                         <p className="text-xs text-slate-400 font-medium leading-relaxed max-w-xl">
                             Busy at the bar? You don't need to open the Brew House to update your vibe or deals.
-                            Just open the <span className="text-primary font-bold">Artie Voice Interface</span> on your phone and speak your command.
+                            Just open the <span className="text-primary font-bold">Coach Voice Interface</span> on your phone and speak your command.
                             Our AI will draft the update and all you have to do is tap "Confirm" when you see the notification.
                         </p>
                     </div>
@@ -170,7 +170,7 @@ export const PartnerManualTab: React.FC = () => {
                                     <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                                     <span className="text-[10px] font-black text-primary uppercase tracking-widest font-league italic">Authorized Skill Matrix</span>
                                 </div>
-                                <h3 className="text-3xl font-black text-white uppercase font-league tracking-tighter leading-none">ARTIE COMMAND REPERTOIRE</h3>
+                                <h3 className="text-3xl font-black text-white uppercase font-league tracking-tighter leading-none">COACH COMMAND REPERTOIRE</h3>
                             </div>
                             <button
                                 onClick={() => setShowSkills(false)}

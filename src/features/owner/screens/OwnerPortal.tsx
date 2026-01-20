@@ -83,13 +83,13 @@ const OwnerPortal: React.FC = () => {
             <section className="max-w-5xl mx-auto px-6 py-24 text-center">
                 <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-1.5 rounded-full mb-8">
                     <Sparkles className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Powered by Artie AI</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Powered by Coach AI</span>
                 </div>
                 <h2 className="text-4xl font-black uppercase tracking-tight font-league mb-6">
                     Marketing on <span className="text-primary italic underline decoration-2 underline-offset-8">Autopilot</span>
                 </h2>
                 <p className="text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed font-body">
-                    Artie isn't just a mascot. He's your 24/7 digital concierge that drafts social posts, suggests Flash Bounties during slow hours, and keeps your venue at the top of the feed.
+                    Coach Schmidt isn't just a mascot. He's your 24/7 digital operations manager that drafts social posts, suggests Flash Bounties during slow hours, and keeps your venue at the top of the feed.
                 </p>
                 <div className="mt-12 p-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent rounded-full" />
             </section>

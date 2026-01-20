@@ -1,5 +1,5 @@
-import { ConfigSchema } from '../server/src/config/schema';
-import { loadLocalEnv } from '../server/src/config/localEnv';
+import { ConfigSchema } from '../server/src/appConfig/schema';
+import { loadLocalEnv } from '../server/src/appConfig/localEnv';
 
 async function verifySecurity() {
     console.log('--- 1. Verification of Production Env Blocking ---');

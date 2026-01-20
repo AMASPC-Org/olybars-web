@@ -66,6 +66,11 @@ export const ChatRequestSchema = z.object({
     _hp_id: z.string().optional(), // Honeypot
 });
 
+export const GenerateImageSchema = z.object({
+    prompt: z.string().min(1).max(2000),
+    venueId: z.string().min(1),
+});
+
 export const VenueUpdateSchema = z.object({
     name: z.string().optional(),
     nicknames: z.array(z.string()).optional(),
@@ -204,6 +209,17 @@ export const VenueUpdateSchema = z.object({
         description: z.string(),
         bookingLink: z.string().url().optional().or(z.literal(''))
     })).optional(),
+    scraper_config: z.array(z.object({
+        id: z.string(),
+        url: z.string(),
+        target: z.enum(['EVENTS', 'MENU', 'NEWSLETTER', 'SOCIAL_FEED', 'WEBSITE']),
+        isEnabled: z.boolean(),
+        status: z.enum(['pending', 'active', 'failed', 'partial']),
+        lastScraped: z.number().optional(),
+        error: z.string().optional()
+    })).optional(),
+    is_scraping_enabled: z.boolean().optional(),
+    scrape_source_url: z.string().optional(),
 });
 
 export const VenueOnboardSchema = z.object({
@@ -325,4 +341,8 @@ export const VenueSchema = z.object({
         description: z.string(),
         bookingLink: z.string().url().optional().or(z.literal(''))
     })).optional(),
+});
+
+export const BountyReviewSchema = z.object({
+    status: z.enum(['APPROVED', 'REJECTED'])
 });

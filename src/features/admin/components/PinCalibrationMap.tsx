@@ -13,7 +13,7 @@ export const PinCalibrationMap: React.FC<PinCalibrationMapProps> = ({ venue, onS
     const mapRef = useRef<HTMLDivElement>(null);
     const { status } = useGoogleMapsScript();
     const [map, setMap] = useState<google.maps.Map | null>(null);
-    const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(null);
+    const [marker, setMarker] = useState<google.maps.Marker | null>(null);
     const [currentCoords, setCurrentCoords] = useState({
         lat: venue.location?.lat || 47.0425,
         lng: venue.location?.lng || -122.9007
@@ -24,32 +24,32 @@ export const PinCalibrationMap: React.FC<PinCalibrationMapProps> = ({ venue, onS
             const initialMap = new (window as any).google.maps.Map(mapRef.current, {
                 center: currentCoords,
                 zoom: 18,
-                mapId: '6b4fa3a2419c825a',
+                // mapId removed to fix InvalidKeyMapError
                 disableDefaultUI: false,
                 zoomControl: true,
                 mapTypeControl: false,
                 streetViewControl: true,
             });
 
-            const advMarker = new (window as any).google.maps.marker.AdvancedMarkerElement({
+            const legacyMarker = new (window as any).google.maps.Marker({
                 map: initialMap,
                 position: currentCoords,
                 title: `Drag to calibrate: ${venue.name}`,
-                gmpDraggable: true,
+                draggable: true, // Legacy property is 'draggable' not 'gmpDraggable'
             });
 
-            advMarker.addListener('dragend', (event: any) => {
-                const position = advMarker.position;
+            legacyMarker.addListener('dragend', () => {
+                const position = legacyMarker.getPosition();
                 if (position) {
                     setCurrentCoords({
-                        lat: typeof position.lat === 'function' ? position.lat() : position.lat,
-                        lng: typeof position.lng === 'function' ? position.lng() : position.lng
+                        lat: position.lat(),
+                        lng: position.lng()
                     });
                 }
             });
 
             setMap(initialMap);
-            setMarker(advMarker);
+            setMarker(legacyMarker);
         }
     }, [status, venue]);
 

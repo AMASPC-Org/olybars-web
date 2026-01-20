@@ -1,6 +1,7 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "functions": [
     {
@@ -28,6 +29,14 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/api/artieChat",
+          "function": "artieChat"
+        },
+        {
+          "source": "/api/client-errors",
+          "function": "logClientError"
+        },
         {
           "source": "/api/**",
           "run": {
@@ -70,6 +79,14 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        {
+          "source": "/api/artieChat",
+          "function": "artieChat"
+        },
+        {
+          "source": "/api/client-errors",
+          "function": "logClientError"
+        },
         {
           "source": "/api/**",
           "run": {

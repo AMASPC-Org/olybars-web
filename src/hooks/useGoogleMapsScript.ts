@@ -12,6 +12,7 @@ export const useGoogleMapsScript = () => {
     });
     const [apiKey, setApiKey] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
+    const [error, setError] = useState<Error | null>(null);
 
     const retry = () => {
         setRetryCount(prev => prev + 1);
@@ -28,23 +29,14 @@ export const useGoogleMapsScript = () => {
                 const data = await response.json();
 
                 if (data.key && data.key.startsWith('AIza') && data.key.length > 20) {
-                    console.log('📡 [MAPS] Key successfully fetched from Artie backend');
                     setApiKey(data.key);
                 } else {
                     throw new Error('Backend returned invalid key format');
                 }
             } catch (err) {
-                console.error('[MAPS_KEY_FETCH_ERROR] Initial fetch failed, checking fallback:', err);
-
-                // Fallback to build-time environment variable if backend fetch fails
-                const fallback = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_BROWSER_KEY;
-                if (fallback && fallback.startsWith('AIza') && fallback.length > 20) {
-                    console.log('📡 [MAPS] Using build-time restricted key (Fallback)');
-                    setApiKey(fallback);
-                } else {
-                    console.error('[MAPS_CRITICAL] No valid API key found in backend or build-time environment.');
-                    setStatus('error');
-                }
+                console.error('[MAPS_KEY_FETCH_ERROR] Backend fetch failed:', err);
+                setStatus('error');
+                setError(err instanceof Error ? err : new Error('Failed to fetch API key'));
             }
         };
 
@@ -77,9 +69,10 @@ export const useGoogleMapsScript = () => {
             .catch((err) => {
                 console.error('[MAPS_LOADER_ERROR]', err);
                 setStatus('error');
+                setError(err instanceof Error ? err : new Error('Google Maps Loader Failed'));
             });
 
     }, [apiKey, retryCount]);
 
-    return { status, retry, apiKey };
+    return { status, retry, apiKey, error };
 };

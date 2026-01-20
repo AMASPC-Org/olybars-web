@@ -28,6 +28,7 @@ interface DiscoveryContextType {
     isToday: boolean;
     mapRegion: string;
     setMapRegion: (r: string) => void;
+    searchParams: URLSearchParams;
 }
 
 const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
@@ -120,11 +121,12 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         clearAllFilters,
         isToday,
         mapRegion,
-        setMapRegion
+        setMapRegion,
+        searchParams
     }), [
         searchQuery, setSearchQuery, filterKind, statusFilter, sceneFilter,
         playFilter, featureFilter, eventFilter, selectedDate, handleSetSelectedDate,
-        viewMode, setViewMode, clearAllFilters, isToday, mapRegion
+        viewMode, setViewMode, clearAllFilters, isToday, mapRegion, searchParams
     ]);
 
     return (

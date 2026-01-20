@@ -19,7 +19,8 @@ async function heal() {
     // 1. Clear Environmental Poison
     // We force development mode for this process and any children
     process.env.NODE_ENV = 'development';
-    console.log('✅ Environment sanitized to: development');
+    process.env.PORT = '3001';
+    console.log('✅ Environment sanitized to: development (PORT: 3001)');
 
     // 2. Targeted Port Clearance
     // Instead of killing ALL node processes, we only kill those on our dev ports
@@ -64,8 +65,7 @@ async function heal() {
             stdio: 'inherit',
             env: {
                 ...process.env,
-                NODE_ENV: 'development',
-                FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080'
+                NODE_ENV: 'development'
             }
         });
     } catch (e) {
@@ -93,9 +93,7 @@ function startService(name: string, command: string) {
         stdio: 'ignore',
         env: {
             ...process.env,
-            NODE_ENV: 'development',
-            FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080',
-            FIREBASE_AUTH_EMULATOR_HOST: '127.0.0.1:9099'
+            NODE_ENV: 'development'
         }
     });
 

@@ -1,7 +1,7 @@
 {
   "projects": {
     "default": "ama-ecosystem-prod",
-    "dev": "ama-ecosystem-prod"
+    "staging": "ama-ecosystem-dev-9ceda"
   },
   "targets": {
     "ama-ecosystem-prod": {
@@ -11,6 +11,13 @@
         ],
         "prod": [
           "olybars"
+        ]
+      }
+    },
+    "ama-ecosystem-dev-9ceda": {
+      "hosting": {
+        "dev": [
+          "ama-ecosystem-dev-9ceda"
         ]
       }
     }

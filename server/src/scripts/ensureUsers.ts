@@ -1,6 +1,6 @@
 
 import { auth, db } from '../firebaseAdmin';
-import { config } from '../config';
+import { config } from '../appConfig/config';
 
 const USERS = [
     {

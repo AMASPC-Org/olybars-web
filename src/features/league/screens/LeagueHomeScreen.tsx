@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Crown, Trophy, Calendar, List, Info, ChevronRight, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { GAMIFICATION_CONFIG } from '../../../config/gamification';
 
 type LeagueTab = 'overview' | 'schedule' | 'standings' | 'rules';
 
@@ -14,18 +15,22 @@ export const LeagueHomeScreen: React.FC = () => {
         return (
           <div className="space-y-4">
             <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
-              <h3 className="text-primary font-black text-sm uppercase mb-2 font-league">The Pulse of the City</h3>
-              <p className="text-sm text-slate-300 leading-relaxed font-body">The OlyBars League is where local nightlife meets competition. Earn points by being where the vibe is. Support local bars, hit the stage, and climb the ranks.</p>
+              <h3 className="text-primary font-black text-sm uppercase mb-2 font-league">The Pulse of the Well</h3>
+              <p className="text-sm text-slate-300 leading-relaxed font-body">The OlyBars League is where local nightlife meets competition. Earn {GAMIFICATION_CONFIG.CURRENCY.UNIT} by being where the vibe is. Tap the source, hit the stage, and deepen your well.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
-                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">CLOCK IN</span>
-                <span className="text-white text-xs font-bold font-body">+10 PTS</span>
+                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">TAP THE SOURCE</span>
+                <span className="text-white text-xs font-bold font-body">CHECK IN & FLOW</span>
               </div>
               <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
-                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">MARKETING BONUS</span>
-                <span className="text-white text-xs font-bold font-body">+15 PTS</span>
+                <span className="text-primary font-black text-[10px] uppercase block mb-1 font-league">EVENT MULTIPLIER</span>
+                <span className="text-white text-xs font-bold font-body">+50 {GAMIFICATION_CONFIG.CURRENCY.UNIT} BONUS</span>
               </div>
+            </div>
+            <div className="bg-amber-950/20 border border-amber-900/30 p-4 rounded-xl">
+              <span className="text-amber-500 font-black text-[10px] uppercase block mb-1 font-league">FLASH BOUNTIES ACTIVE</span>
+              <p className="text-[10px] text-amber-200/70 font-bold font-body italic">Check bar listings for photo challenges and big rewards.</p>
             </div>
           </div>
         );
@@ -33,9 +38,9 @@ export const LeagueHomeScreen: React.FC = () => {
         return (
           <div className="space-y-3">
             {[
-              { event: "KARAOKE CHAMPS", venue: "HANNAH'S", time: "TONIGHT 9PM", pts: "+50" },
-              { event: "TRIVIA BLOCK", venue: "WELL 80", time: "SUN 7PM", pts: "+100" },
-              { event: "POOL TOURNEY", venue: "EASTSIDE", time: "FRI 7PM", pts: "+20" }
+              { event: "KARAOKE CHAMPS", venue: "HANNAH'S", time: "TONIGHT 9PM", pts: "+50 Drops" },
+              { event: "TRIVIA BLOCK", venue: "WELL 80", time: "SUN 7PM", pts: "+100 Drops" },
+              { event: "POOL TOURNEY", venue: "EASTSIDE", time: "FRI 7PM", pts: "+20 Drops" }
             ].map((item, i) => (
               <div key={i} className="bg-surface/50 border border-white/5 p-4 flex justify-between items-center rounded-xl group hover:border-primary transition-colors cursor-pointer">
                 <div>
@@ -51,10 +56,10 @@ export const LeagueHomeScreen: React.FC = () => {
         return (
           <div className="bg-surface/50 border border-white/5 rounded-xl overflow-hidden divide-y divide-white/5">
             {[
-              { name: "BARFLY_99", pts: "4,520", rank: 1 },
-              { name: "IPA_LOVER", pts: "3,890", rank: 2 },
-              { name: "TRIVIAKING", pts: "3,650", rank: 3 },
-              { name: "YOU", pts: "1,250", rank: 42, isUser: true }
+              { name: "BARFLY_99", pts: "4,520 ft", rank: 1 },
+              { name: "IPA_LOVER", pts: "3,890 ft", rank: 2 },
+              { name: "TRIVIAKING", pts: "3,650 ft", rank: 3 },
+              { name: "YOU", pts: "1,250 ft", rank: 42, isUser: true }
             ].map((player, i) => (
               <div key={i} className={`p-4 flex justify-between items-center ${player.isUser ? 'bg-primary/10' : ''}`}>
                 <div className="flex items-center gap-4">
@@ -74,8 +79,12 @@ export const LeagueHomeScreen: React.FC = () => {
               <p className="text-xs text-red-200/70 font-bold font-body">Harassment or disrespecting staff is an immediate lifetime ban from the League. We keep it chill.</p>
             </div>
             <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
+              <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">THE PIONEER CURVE</h3>
+              <p className="text-xs text-slate-400 font-bold font-body">Earn more for tapping the source first (Mellow: 100 Drops). Flow reduces as crowds arrive (Packed: 10 Drops).</p>
+            </div>
+            <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
               <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">CLOCK-IN LIMIT</h3>
-              <p className="text-xs text-slate-400 font-bold font-body">Max 2 clock-ins per 12-hour window. This is for vibes, not over-consumption.</p>
+              <p className="text-xs text-slate-400 font-bold font-body">1 verified arrival per venue per 12-hour window. Max 2 globally per 12 hours.</p>
             </div>
           </div>
         );
@@ -104,8 +113,8 @@ export const LeagueHomeScreen: React.FC = () => {
         </div>
         <div className="bg-surface rounded-2xl border border-white/5 p-5 shadow-[4px_4px_0px_0px_#000] relative group overflow-hidden">
           <Star className="absolute -right-2 -bottom-2 w-16 h-16 text-primary opacity-5 group-hover:scale-110 transition-transform" />
-          <span className="text-[10px] text-primary font-black uppercase tracking-wider block mb-1 font-league">TOTAL POINTS</span>
-          <span className="text-3xl font-black text-white italic font-league">1,250</span>
+          <span className="text-[10px] text-primary font-black uppercase tracking-wider block mb-1 font-league">TOTAL DEPTH</span>
+          <span className="text-3xl font-black text-white italic font-league">1,250 ft</span>
         </div>
       </div>
 

@@ -92,7 +92,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
       title="The Arcade & Play"
       subtitle="Olympia's Activity Engine"
       activeCategory="play"
-      artieTip="Static clock-ins at darts or pool tables earn 5 points toward the season leaderboard. Go get 'em."
+      artieTip="Static clock-ins at darts or pool tables earn 5 drops toward the season leaderboard. Go get 'em."
       onSearchChange={setSearchQuery}
       searchPlaceholder="Search Darts, Pool, Pinball..."
     >
@@ -179,7 +179,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({ venues, userProfile 
               <div>
                 <p className="text-white font-black uppercase font-league tracking-wide">Enter the Directory</p>
                 <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 leading-relaxed px-4">
-                  Search for an activity above to see where the tables are open and where to score League points.
+                  Search for an activity above to see where the tables are open and where to collect League drops.
                 </p>
               </div>
             </div>

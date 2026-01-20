@@ -37,6 +37,17 @@ spec:
               name: google-maps-api-key
               key: latest
         - name: VITE_GOOGLE_BROWSER_KEY
-          value: "AIzaSyBocyAp714K4UdV6_e0vp211dIhppQ_yGw"
+          valueFrom:
+            secretKeyRef:
+              name: GOOGLE_BROWSER_KEY
+              key: latest
         - name: INTERNAL_HEALTH_TOKEN
-          value: "hardened-diagnostic-2025"
+          valueFrom:
+            secretKeyRef:
+              name: INTERNAL_HEALTH_TOKEN
+              key: latest
+        - name: MASTER_SETUP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: MASTER_SETUP_KEY
+              key: latest

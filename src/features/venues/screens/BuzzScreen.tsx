@@ -6,9 +6,9 @@ import { DateContextSelector } from '../../../components/features/search/DateCon
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
-  Bot, Clock, Zap, Gamepad2, ShieldCheck, List, Map as MapIcon
+  Bot, Clock, Zap, Gamepad2, ShieldCheck, List, Map as MapIcon, Sparkles
 } from 'lucide-react';
-import { Venue, VenueStatus, UserProfile } from '../../../types';
+import { Venue, VenueStatus, UserProfile, ClockInRecord, VibeCheckRecord } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus, getEffectiveRules, timeToMinutes } from '../../../utils/venueUtils';
@@ -37,10 +37,10 @@ const SkeletonCard = () => (
 );
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
-  if (status === 'dead') {
+  if (status === 'dead' || status === 'mellow') {
     return (
-      <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">
-        <Clock className="w-3 h-3" /> Dead
+      <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/30 text-slate-400 text-xs font-bold border border-slate-800">
+        <Clock className="w-3 h-3" /> Mellow
       </span>
     );
   }
@@ -75,7 +75,8 @@ const STATUS_ORDER: Record<VenueStatus, number> = {
   packed: 0,
   buzzing: 1,
   chill: 2,
-  dead: 3,
+  mellow: 3,
+  dead: 4,
 };
 
 const EventCard = ({ event, onClick }: { event: any, onClick: () => void }) => {
@@ -129,9 +130,10 @@ export const BuzzScreen: React.FC = () => {
     onToggleMenu,
     onClockIn: handleClockIn,
     clockedInVenue,
-    onVibeCheck: handleVibeCheck,
-    isLoading = false,
-    onToggleWeeklyBuzz
+    isLoading,
+    onToggleWeeklyBuzz,
+    clockInHistory = [],
+    vibeCheckHistory = []
   } = useOutletContext<{
     venues: Venue[];
     userProfile: UserProfile;
@@ -141,6 +143,8 @@ export const BuzzScreen: React.FC = () => {
     onVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
     isLoading?: boolean;
     onToggleWeeklyBuzz?: () => void;
+    clockInHistory?: ClockInRecord[];
+    vibeCheckHistory?: VibeCheckRecord[];
   }>();
 
   const userPoints = userProfile.stats?.seasonPoints || 0;
@@ -157,8 +161,11 @@ export const BuzzScreen: React.FC = () => {
     selectedDate, setSelectedDate,
     viewMode, setViewMode,
     isToday, clearAllFilters,
-    mapRegion // Get mapRegion here
+    mapRegion, // Get mapRegion here
+    searchParams
   } = useDiscovery();
+
+  const isNextStopMode = searchParams.get('mode') === 'next-stop';
   const [showPulseMenu, setShowPulseMenu] = useState(false);
   const [showSceneMenu, setShowSceneMenu] = useState(false);
   const [showPlayMenu, setShowPlayMenu] = useState(false);
@@ -330,13 +337,28 @@ export const BuzzScreen: React.FC = () => {
     // Global Visibility Check
     if (v.tier_config?.is_directory_listed === false || v.isActive === false) return false;
 
+    // NEXT STOP EXCLUSION LOGIC
+    if (isNextStopMode) {
+      // 1. Hide current clocked in venue
+      if (clockedInVenue === v.id) return false;
+
+      // 2. Hide venues visited/vibe-checked in the compliance window
+      const windowMs = (PULSE_CONFIG.WINDOWS.LCB_WINDOW || 12) * 60 * 60 * 1000;
+      const twelveHoursAgo = Date.now() - windowMs;
+
+      const wasClockedInRecently = clockInHistory.some(h => h.venueId === v.id && h.timestamp > twelveHoursAgo);
+      const wasVibeCheckedRecently = vibeCheckHistory.some(h => h.venueId === v.id && h.timestamp > twelveHoursAgo);
+
+      if (wasClockedInRecently || wasVibeCheckedRecently) return false;
+    }
+
     // Home Pulse Specific: Hide closed bars unless part of the league or has flash bounty (List view only)
     const open = isVenueOpen(v);
     const hasActiveBounty = !!(v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > Date.now());
     if (viewMode !== 'map' && !open && !v.isPaidLeagueMember && !hasActiveBounty) return false;
 
     return true;
-  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, selectedDate, mapRegion]);
+  }, [searchQuery, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, selectedDate, mapRegion, isNextStopMode, clockedInVenue, clockInHistory]);
 
   const venuesWithDistance = React.useMemo(() => venues.map(v => ({
     ...v,
@@ -458,8 +480,16 @@ export const BuzzScreen: React.FC = () => {
       if (a.hourStatus === 'last_call' && b.hourStatus === 'closed') return -1;
       if (a.hourStatus === 'closed' && b.hourStatus === 'last_call') return 1;
 
+      // Next Stop Sort: Bounty > Loaded > Distance
+      if (isNextStopMode) {
+        if (aBounty !== bBounty) return aBounty ? -1 : 1;
+        const statusOrder: Record<string, number> = { packed: 0, buzzing: 1, chill: 2, mellow: 3 };
+        const statusDiff = (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+        if (statusDiff !== 0) return statusDiff;
+      }
+
       return (STATUS_ORDER[a.status] || 99) - (STATUS_ORDER[b.status] || 99);
-    }), [venuesWithDistance, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, applyFilter, rotationOffset, searchQuery]);
+    }), [venuesWithDistance, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter, applyFilter, rotationOffset, searchQuery, isNextStopMode]);
 
   const flashBountyVenues = venues.filter(v => {
     const hasFlatDeal = !!v.deal && (v.dealEndsIn || 0) > 0;
@@ -555,7 +585,27 @@ export const BuzzScreen: React.FC = () => {
 
       <div className="space-y-6">
         <div className="relative group/list px-4">
-          {!isLoading && isGuest && !searchQuery && (
+          {isNextStopMode && (
+            <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">
+              <div className="bg-gradient-to-br from-primary/20 via-background to-background border-2 border-primary/30 p-6 rounded-3xl relative overflow-hidden shadow-[0_0_30px_rgba(251,191,36,0.1)]">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Artesian Flight Plan</span>
+                  </div>
+                  <h2 className="text-3xl font-black text-white font-league uppercase italic leading-tight mb-2">
+                    Your Next <span className="text-primary text-4xl">Stop</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed max-w-[280px]">
+                    We've filtered {clockedInVenue ? 'your current spot and ' : ''}recent stops to keep your run moving.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && isGuest && !searchQuery && !isNextStopMode && (
             <div className="mb-6 px-1">
               <button
                 onClick={() => navigate('/league')}
@@ -593,7 +643,7 @@ export const BuzzScreen: React.FC = () => {
                       <EventCard
                         key={`${item.venue.id}-${item.id || item.title}`}
                         event={item}
-                        onClick={() => navigate(`/venues/${item.venue.id}`)}
+                        onClick={() => navigate(`/bars/${item.venue.id}`)}
                       />
                     );
                   }
@@ -605,7 +655,7 @@ export const BuzzScreen: React.FC = () => {
                   return (
                     <div
                       key={venue.id}
-                      onClick={() => navigate(`/venues/${venue.id}`)}
+                      onClick={() => navigate(`/bars/${venue.id}`)}
                       className={`p-4 rounded-2xl flex gap-4 transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-4 duration-500 border ${hasActiveBounty
                         ? 'bg-red-950/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] hover:bg-red-950/30'
                         : 'bg-surface/50 border-white/5 hover:bg-surface'
@@ -660,10 +710,21 @@ export const BuzzScreen: React.FC = () => {
                   );
                 })
               ) : (
-                <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-white/5">
+                <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-white/5 mx-4">
                   <Flame className="w-12 h-12 text-slate-800 mx-auto mb-4" />
-                  <p className="text-slate-500 font-bold uppercase tracking-widest italic">No Venues Found</p>
-                  <button onClick={clearAllFilters} className="mt-4 text-primary text-xs font-black uppercase hover:underline">Clear Filters</button>
+                  <p className="text-slate-500 font-bold uppercase tracking-widest italic">
+                    {isNextStopMode ? "Run Complete! You've cleared the list." : "No Spots Found"}
+                  </p>
+                  {isNextStopMode ? (
+                    <button
+                      onClick={() => navigate('/')}
+                      className="mt-4 text-primary text-xs font-black uppercase hover:underline"
+                    >
+                      Return to Full Feed
+                    </button>
+                  ) : (
+                    <button onClick={clearAllFilters} className="mt-4 text-primary text-xs font-black uppercase hover:underline">Clear Filters</button>
+                  )}
                 </div>
               )}
             </div>

@@ -1,38 +1,24 @@
-﻿---
-trigger: always_on
----
+﻿# Deployment & Release Master
 
-# Deployment & Release Master
+This rule serves as the "Constitution" for deployment governance. It mandates the use of specific Antigravity Workflows for all release operations.
 
-This rule governs the release process, environment security, and infrastructure safety.
-
-## 1. Release Gating
-- **DEV First**: All changes must be verified on `olybars-dev` before PROD.
-- **PROD Requirements**:
-    1. `npm run build` passes.
-    2. Backend health check returns 200.
-    3. User explicitly approves `deploy to prod`.
+## 1. Governance Policy
+- **Manual Commands Forbidden**: Do NOT run raw `npm run deploy` commands manually.
+- **Mandatory Workflows**:
+    - **DEV Deployment**: MUST use `/deploy-dev` (or the `deploy-dev.md` workflow).
+    - **PROD Deployment**: MUST use `/deploy-prod` (or the `deploy-prod.md` workflow).
+- **Enforcement**: These workflows automatically enforce the "Drift Guardrails" and "Secret Checks" defined in `olybars-deploy-and-secrets-guardrails.md`.
 
 ## 2. Environment Strategy
-- **Standard Regions**: All GCP resources MUST be in `us-west1`.
-- **Hosting Targets**:
-    - DEV: `firebase deploy --only hosting:dev`
-    - PROD: `firebase deploy --only hosting:prod`
-- **Database Sync**: Deployments to DEV/PROD should typically include `npm run seed:dev` or `seed:prod` to maintain configuration parity.
-- **Cloud Run**: Do not change traffic splits or IAM roles without explicit approval.
+- **Region/Project**: Governed by [olybars-operating-system.md](file:///c:/Users/USER1/olybars/.agent/rules/olybars-operating-system.md).
+- **Isolation**: Workflows strictly isolate `ama-ecosystem-dev-9ceda` (DEV) and `ama-ecosystem-prod` (PROD).
 
-## 3. Secret & Backend Hygiene
-- **No Secrets**: Never output or hardcode API keys. Use Secret Manager references.
-- **API URL**: Identify the source of the `VITE_API_URL` (env, config) before modifying backend behavior.
-- **Dependency Check**: Cross-check API changes against `src/types/` and `seed.ts`.
+## 3. Atomic Promotion
+- **Principle**: We do not deploy "frontend only" or "functions only" to PROD without a clear reason. The `/deploy-prod` workflow promotes the entire stack to ensure version consistency.
 
-## 4. Build Safety
-- **Functions Build**: Always run `npm run build --prefix functions` before Firebase deployment to catch TypeScript errors.
-- **Halt on Failure**: Abort deployment immediately if ANY build step fails.
+## 4. PROD Protection
+- **Approval**: PROD deployments differ from DEV in that they require explicit user confirmation (built into the agent's release protocol).
+- **No Data Wipes**: Database seeding in PROD (`seed:prod`) is restricted and effectively gated by the workflow's "Drift Guardrail".
 
-## 5. Caching & Verification
-- **Verification**: If changes don't reflect, check `Cache-Control`, `ETag`, and require an incognito refresh.
-- **Domains**: Never change custom domain mappings unless explicitly requested.
-
-## 6. PROD Protection
-- **No Direct Seeding**: Never run `npm run seed:prod` or manual database wipes on production without an explicit, multi-turn confirmation from the user.
+## 5. Compliance Checks
+- Before any major feature release, the agent MUST consult [audit-and-compliance.md](file:///c:/Users/USER1/olybars/.agent/workflows/audit-and-compliance.md) for WSLCB and Privacy verification.

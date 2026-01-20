@@ -29,8 +29,8 @@ const getApiBaseUrl = () => {
         return builtInUrl.replace(/\/api\/?$/, '') + '/api';
     }
 
-    // 3. Absolute fallback (Legacy/Hard-coded)
-    return 'https://olybars-backend-26629455103.us-west1.run.app/api';
+    // 3. Absolute fallback (Fail-safe)
+    return '/api'; // Standardize on relative path
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -67,6 +67,7 @@ export const API_ENDPOINTS = {
     },
     AI: {
         GEN_COPY: `${API_BASE_URL}/ai/generate-event-copy`,
+        GEN_IMAGE: `${API_BASE_URL}/ai/generate-image`,
     },
     PHOTO: {
         STATUS: (venueId: string, photoId: string) => `${API_BASE_URL}/venues/${venueId}/photos/${photoId}`,

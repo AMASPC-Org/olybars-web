@@ -25,9 +25,9 @@ export const VibeTag: React.FC<{ label: string }> = ({ label }) => (
   </span>
 );
 
-export const HeatIndicator: React.FC<{ level: 'dead' | 'chill' | 'buzzing' | 'packed' }> = ({ level }) => {
+export const HeatIndicator: React.FC<{ level: 'mellow' | 'chill' | 'buzzing' | 'packed' }> = ({ level }) => {
   const config = {
-    'dead': { icon: '🌑', text: 'Dead', color: 'bg-slate-700 text-white' },
+    'mellow': { icon: '🍵', text: 'Mellow', color: 'bg-slate-900/30 text-slate-400' },
     'chill': { icon: '🧊', text: 'Chill', color: 'bg-blue-200 text-black' },
     'buzzing': { icon: '🔥', text: 'Buzzing', color: 'bg-red-500 text-white animate-pulse' },
     'packed': { icon: '⚡', text: 'Packed', color: 'bg-pink-500 text-white animate-pulse' }

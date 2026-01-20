@@ -35,7 +35,7 @@ export const ArtieHoverIcon: React.FC<ArtieHoverIconProps> = ({ onClick, userPro
             {/* Tooltip / Speech Bubble */}
             <div className={`absolute bottom-full right-0 mb-3 whitespace-nowrap bg-oly-navy text-oly-gold px-3 py-1.5 rounded-xl border-2 border-oly-gold shadow-2xl transition-all duration-300 transform ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
                 <p className="text-xs font-black uppercase tracking-widest font-league">
-                    {isOpsMode ? "Coach is Online" : "Artie is Online"}
+                    {isOpsMode ? "Coach Check-In" : "Ask Artie"}
                 </p>
             </div>
 

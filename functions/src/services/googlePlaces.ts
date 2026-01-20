@@ -3,7 +3,7 @@
  * Used for venue discovery, hydration of photos, and metadata during onboarding.
  */
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_API_KEY;
+const GOOGLE_MAPS_API_KEY = process.env['google-maps-api-key'] || process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_API_KEY;
 
 export interface GooglePlaceResult {
     googlePlaceId: string;

@@ -1,4 +1,4 @@
-import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs, getCountFromServer, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserAlertPreferences, ClockInRecord, UserProfile } from '../types';
 import { getAuthHeaders } from './apiUtils';
@@ -221,8 +221,9 @@ export const updateUserProfile = async (uid: string, updates: Partial<UserProfil
  */
 export const fetchUserRank = async (points: number): Promise<number> => {
   try {
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('stats.seasonPoints', '>', points));
+    const publicRef = collection(db, 'public_profiles');
+    // We use the same stats field path as in syncUserProfile function
+    const q = query(publicRef, where('league_stats.points', '>', points));
     const snapshot = await getCountFromServer(q);
     return snapshot.data().count + 1;
   } catch (e) {
@@ -234,13 +235,13 @@ export const fetchUserRank = async (points: number): Promise<number> => {
 /**
  * Fetch all users for Admin Dashboard.
  */
-export const fetchAllUsers = async (): Promise<UserProfile[]> => {
+export const fetchAllUsers = async (): Promise<any[]> => {
   try {
-    const usersRef = collection(db, 'users');
+    const publicRef = collection(db, 'public_profiles');
     // Order by points descending for leaderboard view
-    const q = query(usersRef, orderBy('stats.seasonPoints', 'desc'));
+    const q = query(publicRef, orderBy('league_stats.points', 'desc'), limit(50));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserProfile));
+    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
   } catch (e) {
     console.error('Error fetching all users:', e);
     return [];
@@ -252,8 +253,8 @@ export const fetchAllUsers = async (): Promise<UserProfile[]> => {
  */
 export const fetchSystemStats = async () => {
   try {
-    const usersRef = collection(db, 'users');
-    const totalUsersSnap = await getCountFromServer(usersRef);
+    const publicRef = collection(db, 'public_profiles');
+    const totalUsersSnap = await getCountFromServer(publicRef);
     const totalUsers = totalUsersSnap.data().count;
 
     return {
@@ -311,5 +312,42 @@ export const fetchUserPointHistory = async () => {
   } catch (e) {
     console.error('Error fetching point history:', e);
     return [];
+  }
+};
+
+/**
+ * Fetch all pending bounty submissions for Admin review.
+ */
+export const fetchPendingBounties = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bounties/pending`, {
+      headers: await getAuthHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch pending bounties');
+    return await response.json();
+  } catch (e) {
+    console.error('Error fetching pending bounties:', e);
+    return [];
+  }
+};
+
+/**
+ * Review a bounty submission (Approve/Reject).
+ */
+export const reviewBountySubmission = async (submissionId: string, status: 'APPROVED' | 'REJECTED') => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/bounties/${submissionId}/review`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Review failed');
+    }
+    return await response.json();
+  } catch (e) {
+    console.error('Bounty review error:', e);
+    throw e;
   }
 };

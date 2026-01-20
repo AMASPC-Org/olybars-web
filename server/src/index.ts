@@ -1,11 +1,15 @@
-﻿import express from 'express';
+﻿console.log('🔄 [DEBUG] Server process starting...');
+import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import { rateLimit } from 'express-rate-limit';
 import { config } from './appConfig/config.js';
 import { fetchVenues, clockIn, getVenueById } from './venueService.js';
 import { isAiBot, getBotName } from './utils/botDetector.js';
 import { verifyToken, requireRole, requireVenueAccess, verifyAppCheck, identifyUser } from './middleware/authMiddleware.js';
+import { vibeNormalizer } from './middleware/vibeNormalizer.js';
+
 import {
     ClockInSchema,
     PlayClockInSchema,
@@ -14,7 +18,8 @@ import {
     ChatRequestSchema,
     VenueUpdateSchema,
     VenueOnboardSchema,
-    AppEventSchema
+    AppEventSchema,
+    GenerateImageSchema
 } from './utils/validation.js';
 
 const app = express();
@@ -25,6 +30,7 @@ const port = config.PORT;
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+app.use(compression());
 
 /**
  * Global Rate Limiter
@@ -72,6 +78,7 @@ const allowedOrigins = [
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
+    'https://ama-ecosystem-dev-9ceda.web.app',
     'https://olybars-dev.web.app',
     'https://olybars.web.app',
     'https://olybars.com',
@@ -185,7 +192,7 @@ app.get('/', (req, res) => {
     res.send(`
     <body style="background: #0f172a; color: #fbbf24; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0;">
       <h1 style="font-size: 3rem; margin-bottom: 0;">OLYBARS BACKEND</h1>
-      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! ðŸ»</p>
+      <p style="color: #94a3b8; font-size: 1.2rem;">Artie Relay is Online! 🍺</p>
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="margin-top: 2rem; padding: 1rem 2rem; background: #fbbf24; color: #000; text-decoration: none; font-weight: bold; border-radius: 0.5rem;">Launch Frontend</a>
     </body>
   `);
@@ -208,6 +215,16 @@ app.get('/health', (req, res) => {
  * @route GET /api/health/artie
  * @desc Artie Health Check (Authenticated)
  */
+v1Router.get('/health', (req, res) => {
+    res.json({
+        status: 'popping',
+        timestamp: Date.now(),
+        env: config.NODE_ENV,
+        version: '1.0.0-hardened',
+        router: 'v1'
+    });
+});
+
 v1Router.get('/health/artie', async (req, res) => {
     const internalToken = req.header('X-Internal-Token');
     const expectedToken = config.INTERNAL_HEALTH_TOKEN;
@@ -241,7 +258,8 @@ v1Router.get('/venues', async (req, res) => {
     try {
         const brief = req.query.brief === 'true';
         const venues = await fetchVenues(brief);
-        res.setHeader('Cache-Control', 'public, max-age=30'); // Cache for 30s
+        // Optimize for CDN: 30s fresh, 60s stale-while-revalidate for instant loads
+        res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=60');
         res.json(venues);
     } catch (error: any) {
         log('ERROR', 'CRITICAL ERROR fetching venues', {
@@ -293,7 +311,7 @@ v1Router.post('/clock-in', verifyAppCheck, verifyToken, async (req, res) => {
  * @route POST /api/vibe-check
  * @desc Submit a vibe check (Signal + Points)
  */
-v1Router.post('/vibe-check', verifyToken, async (req, res) => {
+v1Router.post('/vibe-check', verifyToken, vibeNormalizer, async (req, res) => {
     const { VibeCheckSchema } = await import('./utils/validation.js'); // Dynamic import to ensure schema is loaded
     const validation = VibeCheckSchema.safeParse(req.body);
 
@@ -454,7 +472,7 @@ v1Router.get('/users/me/history', verifyToken, async (req, res) => {
  * @route PATCH /api/venues/:id
  * @desc Update general venue information (Listing management)
  */
-v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+v1Router.patch('/venues/:id', verifyToken, requireVenueAccess('manager'), vibeNormalizer, async (req, res) => {
     const { id } = req.params;
     const validation = VenueUpdateSchema.safeParse(req.body.updates);
     if (!validation.success) {
@@ -579,23 +597,6 @@ v1Router.patch('/venues/:id/private', verifyToken, requireVenueAccess('manager')
     }
 });
 
-/**
- * @route GET /api/venues/check-claim
- * @desc Check if a venue is already claimed by Google Place ID
- */
-v1Router.get('/venues/check-claim', async (req, res) => {
-    const { googlePlaceId } = req.query;
-    if (!googlePlaceId) return res.status(400).json({ error: 'Missing googlePlaceId' });
-
-    try {
-        const { checkVenueClaimStatus } = await import('./venueService.js');
-        const status = await checkVenueClaimStatus(googlePlaceId as string);
-        res.json(status);
-    } catch (error: any) {
-        log('ERROR', 'Failed to check venue claim status', { googlePlaceId, error: error.message });
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
 
 /**
  * @route POST /api/partners/onboard
@@ -702,6 +703,45 @@ v1Router.patch('/venues/:id/photos/:photoId', verifyToken, requireRole(['admin',
 });
 
 /**
+ * @route GET /api/admin/bounties/pending
+ * @desc Fetch all pending bounty submissions for review
+ */
+v1Router.get('/admin/bounties/pending', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    try {
+        const { getPendingBounties } = await import('./venueService.js');
+        const bounties = await getPendingBounties();
+        res.json(bounties);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch pending bounties', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route POST /api/admin/bounties/:id/review
+ * @desc Approve or reject a bounty submission
+ */
+v1Router.post('/admin/bounties/:id/review', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    const { id } = req.params;
+    const { BountyReviewSchema } = await import('./utils/validation.js');
+    const validation = BountyReviewSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid review data', details: validation.error.format() });
+    }
+    const { status } = validation.data;
+    const reviewerId = (req as any).user.uid;
+
+    try {
+        const { reviewBounty } = await import('./venueService.js');
+        const result = await reviewBounty(id, status as 'APPROVED' | 'REJECTED', reviewerId);
+        res.json(result);
+    } catch (error: any) {
+        log('ERROR', 'Bounty review failed', { submissionId: id, error: error.message });
+        res.status(400).json({ error: error.message || 'Internal Server Error' });
+    }
+});
+
+/**
  * @route GET /api/venues/:id/members
  * @desc Fetch all members of a venue
  */
@@ -778,6 +818,7 @@ v1Router.post('/client-errors', (req, res) => {
 v1Router.get('/config/maps-key', (req, res) => {
     // Only return the browser key (public/restricted)
     const key = config.VITE_GOOGLE_BROWSER_KEY;
+
     if (!key) return res.status(500).json({ error: 'Maps Browser Key not configured' });
 
     res.json({ key });
@@ -871,8 +912,8 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
             const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
             const now = Date.now();
 
-            // Super-admins/Admin bypass (Ryan's email)
-            const isPrivileged = userData?.role === 'super-admin' || userData?.email === 'ryan@amaspc.com';
+            // Super-admins/Admin bypass
+            const isPrivileged = userData?.role === 'super-admin';
 
             if ((now - lastChanged) < thirtyDaysInMs && !isPrivileged) {
                 const daysLeft = Math.ceil((thirtyDaysInMs - (now - lastChanged)) / (24 * 60 * 60 * 1000));
@@ -1122,93 +1163,7 @@ v1Router.delete('/events/:id', verifyToken, requireRole(['admin', 'super-admin',
 
 // --- ARTIE AI CHAT GATEWAY ---
 
-/**
- * @route POST /v1/chat
- * @desc Artie AI Chat Relay (Direct Backend Path)
- */
-v1Router.post('/chat', identifyUser, artieRateLimiter, verifyHoneypot, blockAggressiveBots, async (req, res) => {
-    try {
-        const validation = ChatRequestSchema.safeParse(req.body);
-        if (!validation.success) {
-            return res.status(400).json({ error: 'Invalid chat data', details: validation.error.format() });
-        }
-        const { history, question, userId } = validation.data;
 
-        // [SECURITY REMEDIATION A-02]
-        // Fetch real role from DB instead of trusting request body
-        let realRole = 'user';
-        if (userId) {
-            const { db } = await import('./firebaseAdmin.js');
-            const userDoc = await db.collection('users').doc(userId).get();
-            const userData = userDoc.data();
-            realRole = userData?.role || 'user';
-        }
-
-        // Import the logic dynamically to keep dependencies clean
-        const { artieChatLogic } = await import('../../functions/src/flows/artieChat.js');
-        const { schmidtChatLogic } = await import('../../functions/src/flows/schmidtChat.js');
-        // [SCHMIDT SWITCH] Dynamic Agent Routing
-        let result;
-        const isOwner = ['owner', 'manager', 'admin', 'super-admin'].includes(realRole);
-
-        if (isOwner) {
-            console.log(`[ROUTER] 👔 User ${userId} is ${realRole} -> Activating SCHMIDT.`);
-            result = await schmidtChatLogic({ history: history || [], question, userId, userRole: realRole });
-        } else {
-            console.log(`[ROUTER] 🧢 User ${userId} is ${realRole} -> Activating ARTIE.`);
-            result = await artieChatLogic({ history: history || [], question, userId, userRole: realRole });
-        }
-
-        // Check if result is a stream (it will be for successful generatations)
-        if (typeof result !== 'string' && (result as any).stream) {
-            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.setHeader('Transfer-Encoding', 'chunked');
-
-            let fullResponse = '';
-            let rationaleFound = false;
-
-            for await (const chunk of (result as any).stream) {
-                const text = chunk.text();
-                if (text) {
-                    fullResponse += text;
-
-                    // [RATIONALE LOGGING]
-                    // If we haven't found the rationale yet, and we see the [RATIONALE] tag, 
-                    // we log it but don't write it to the response yet if we want to hide it.
-                    // However, to keep streaming fast, we'll just write everything but strip the tag in the frontend
-                    // OR we buffer only the rationale part.
-
-                    // Cleaner approach: If text starts with [RATIONALE]:, buffer until first newline, then log, then continue streaming normally.
-                    if (!rationaleFound && fullResponse.includes('[RATIONALE]:')) {
-                        const parts = fullResponse.split('\n');
-                        for (const part of parts) {
-                            if (part.startsWith('[RATIONALE]:')) {
-                                log('INFO', '[ARTIE_RATIONALE]', { rationale: part.replace('[RATIONALE]:', '').trim(), question });
-                                rationaleFound = true;
-                                // We don't res.write the rationale line
-                            } else if (rationaleFound) {
-                                res.write(part + (parts.indexOf(part) < parts.length - 1 ? '\n' : ''));
-                            }
-                        }
-                    } else if (rationaleFound) {
-                        res.write(text);
-                    } else if (!fullResponse.includes('[RATIONALE]') && fullResponse.length > 50) {
-                        // Safety fallback: if no rationale found after 50 chars, just start streaming
-                        rationaleFound = true;
-                        res.write(fullResponse);
-                    }
-                }
-            }
-            res.end();
-        } else {
-            // Fallback for strings (triage rejections, safety, etc.)
-            res.json({ data: result });
-        }
-    } catch (error: any) {
-        log('ERROR', 'Artie Local Relay Failure', { error: error.message });
-        res.status(500).json({ error: `Artie is having a moment: ${error.message}` });
-    }
-});
 
 /**
  * @route GET /api/ai/access-logs
@@ -1245,7 +1200,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
         const venue = venueDoc.data()!;
 
         // Dynamically import Gemini Service
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
         const gemini = new GeminiService();
 
         const prompt = `You are an SEO & AI Authority specialist for OlyBars.
@@ -1288,7 +1243,7 @@ v1Router.post('/ai/generate-description', async (req, res) => {
     try {
         const { db } = await import('./firebaseAdmin.js');
         const { KnowledgeService } = await import('./services/knowledgeService.js');
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
 
         // 1. Fetch Venue Data
         const venueDoc = await db.collection('venues').doc(venueId).get();
@@ -1306,6 +1261,21 @@ v1Router.post('/ai/generate-description', async (req, res) => {
         const context = KnowledgeService.getEventContext(date);
         const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.venueType || '', date);
 
+        // 3.5 Extract City for Multi-City Support
+        let city = "Olympia, WA";
+        if (venue?.address) {
+            try {
+                const parts = venue.address.split(',');
+                if (parts.length >= 3) {
+                    const cityPart = parts[1].trim();
+                    const stateZipPart = parts[2].trim().split(' ')[0];
+                    city = `${cityPart}, ${stateZipPart}`;
+                }
+            } catch (e) {
+                // Fallback
+            }
+        }
+
         // 4. Generate with Artie
         const gemini = new GeminiService();
         const description = await gemini.generateEventDescription({
@@ -1314,6 +1284,7 @@ v1Router.post('/ai/generate-description', async (req, res) => {
             eventType: type,
             date,
             time,
+            city,
             weather: context.weatherOutlook,
             holiday: context.holiday ? `${context.holiday}${foodAlignment ? ` (${foodAlignment})` : ''}` : foodAlignment || undefined,
             deals
@@ -1388,7 +1359,7 @@ v1Router.post('/ai/generate-press-release', verifyToken, async (req, res) => {
 
     try {
         const { db } = await import('./firebaseAdmin.js');
-        const { GeminiService } = await import('../../functions/src/services/geminiService.js');
+        const { GeminiService } = await import('./services/geminiService.js');
 
         const venueDoc = await db.collection('venues').doc(venueId).get();
         const venueData = venueDoc.data() || { name: 'Local Venue' };
@@ -1462,7 +1433,7 @@ v1Router.post('/utils/send-email', verifyToken, async (req, res) => {
 
     try {
         // Log the dispatch (Simulating real mailer)
-        console.log(`\nðŸ“¨ --- BACKEND EMAIL DISPATCH ---`);
+        console.log(`\n📧 --- BACKEND EMAIL DISPATCH ---`);
         console.log(`From: ${fromName || 'OlyBars Admin'}`);
         console.log(`To: ${Array.isArray(to) ? to.join(', ') : to}`);
         console.log(`Subject: ${subject}`);
@@ -1493,7 +1464,46 @@ setInterval(async () => {
     }
 }, 60000); // Check every minute
 
-app.listen(port, () => {
-    log('INFO', `Flash Boarding... OlyBars Server running on port ${port} in ${config.NODE_ENV} mode.`);
+/**
+ * @route POST /api/ai/generate-copy
+ * @desc Generate creative copy for events
+ */
+v1Router.post('/ai/generate-copy', verifyToken, async (req, res) => {
+    // ... existing implementation if any or placeholder
+    // The plan didn't specify modifying this, but checking consistency.
+    // Actually, VenueOpsService.generateEventCopy calls /api/ai/generate-event-copy
+    // Let's stick to the plan: Add /api/ai/generate-image
+    res.status(501).json({ error: 'Not implemented yet' });
 });
 
+/**
+ * @route POST /api/ai/generate-image
+ * @desc Generate an image using Vertex AI Imagen 3
+ */
+v1Router.post('/ai/generate-image', verifyToken, requireVenueAccess('manager'), async (req, res) => {
+    const validation = GenerateImageSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({ error: 'Invalid generation data', details: validation.error.format() });
+    }
+    const { prompt, venueId } = validation.data;
+
+    try {
+        const { GeminiService } = await import('./services/geminiService.js');
+        const gemini = new GeminiService();
+        const imageUrl = await gemini.generateImage(prompt, venueId);
+
+        log('INFO', 'Image Generated Successfully', { venueId, promptLength: prompt.length });
+        res.json({ success: true, imageUrl });
+    } catch (error: any) {
+        log('ERROR', 'Image Generation Failed', { venueId, error: error.message });
+        res.status(500).json({ error: 'Image generation failed. Please try again.' });
+    }
+});
+
+app.listen(port, () => {
+    const isCloudRun = !!process.env.K_SERVICE;
+    console.log(`\n🚀 OLYBARS BACKEND LISTENING ON PORT ${port}`);
+    console.log(`🌍 Environment: ${config.NODE_ENV}`);
+    console.log(`☁️ Platform: ${isCloudRun ? 'Cloud Run (Production)' : 'Local'}`);
+    console.log(`🛡️ Rate Limiting: Active`);
+});

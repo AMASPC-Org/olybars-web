@@ -1,7 +1,7 @@
 import { onCall } from 'firebase-functions/v2/https';
 import { ai } from '../genkit';
 import { gemini15Pro } from '@genkit-ai/googleai';
-import { BrandDNASchema } from '../../../src/types/schemas';
+import { BrandDNASchema } from '../types/shared_types';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 

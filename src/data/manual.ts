@@ -41,7 +41,17 @@ export const manualFAQs: FAQItem[] = [
     {
         "question": "How do I earn the most points?",
         "category": "The League",
-        "answer": "Clock in at Maker venues for double points, and always submit a Vibe Report with a photo and marketing consent to maximize your haul. Updating game statuses like Pool or Darts also adds a nice bonus!"
+        "answer": "Maximize your Season Score by: 1) Clocking in early at Mellow venues (100 pts), 2) Supporting Local Makers (1.5x boost), 3) Clocking in during official Events (+50 bonus), and 4) Completing high-value Flash Bounties (up to 200 pts)."
+    },
+    {
+        "question": "What are Flash Bounties?",
+        "category": "The League",
+        "answer": "Flash Bounties are venue-specific photo challenges. A bar might offer a bounty for snapping a photo of a specific drink special or a receipt. Upload the proof to claim instant points and support the venue's social marketing."
+    },
+    {
+        "question": "How do Event Bonuses work?",
+        "category": "The League",
+        "answer": "If a venue has an approved 'League Event' (like Trivia or Karaoke) on the schedule, clocking in during that time window automatically triggers a +50 bonus. This stacks with your base Clock-In points!"
     },
     {
         "question": "What can I do with my League points?",

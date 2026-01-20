@@ -28,8 +28,8 @@ export const leagueLeaderboard = ai.defineTool(
     },
     async ({ userId }: z.infer<typeof LeaderboardInputSchema>) => {
         try {
-            const snapshot = await db.collection('users')
-                .orderBy('stats.seasonPoints', 'desc')
+            const snapshot = await db.collection('public_profiles')
+                .orderBy('league_stats.points', 'desc')
                 .limit(20)
                 .get();
 
@@ -38,7 +38,7 @@ export const leagueLeaderboard = ai.defineTool(
                 return {
                     rank: index + 1,
                     handle: data.handle || 'Anonymous Legend',
-                    points: data.stats?.seasonPoints || 0,
+                    points: data.league_stats?.points || 0,
                     isUser: doc.id === userId
                 };
             });

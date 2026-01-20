@@ -31,15 +31,18 @@ import {
   Shield,
   Zap
 } from 'lucide-react';
-import { Venue, UserProfile } from '../../types';
+import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
-import { ArtieChatModal } from '../../components/artie/ArtieChatModal';
+import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
 import { Sidebar } from './Sidebar';
 import { BuzzClock } from '../ui/BuzzClock';
+import { InfoRulesModal } from '../ui/InfoRulesModal';
 import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
+import { FormatCurrency } from '../../utils/formatCurrency';
+import { GAMIFICATION_CONFIG } from '../../config/gamification';
 
 interface AppShellProps {
   venues: Venue[];
@@ -66,6 +69,8 @@ interface AppShellProps {
   isLoading?: boolean;
   showArtie?: boolean;
   setShowArtie?: (show: boolean) => void;
+  clockInHistory?: ClockInRecord[];
+  vibeCheckHistory?: VibeCheckRecord[];
 }
 
 // --- The App Shell Component ---
@@ -92,24 +97,30 @@ export const AppShell: React.FC<AppShellProps> = ({
   onEditVenue,
   isLoading,
   showArtie,
-  setShowArtie
+  setShowArtie,
+  clockInHistory,
+  vibeCheckHistory
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
   const [showMenu, setShowMenu] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const isMapPage = location.pathname === '/map';
 
   // Scroll listener for compact header
   useEffect(() => {
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 40);
+      setIsScrolled(mainContent.scrollTop > 40);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    mainContent.addEventListener('scroll', handleScroll, { passive: true });
+    return () => mainContent.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Pulse & Buzz Logic
@@ -156,7 +167,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   // Extract Venue Context for Artie
   const getVenueIdFromPath = () => {
-    const venueMatch = location.pathname.match(/\/venues\/([^/]+)/);
+    const venueMatch = location.pathname.match(/\/(?:venues|bars)\/([^/]+)/);
     if (venueMatch) return venueMatch[1];
     const vcMatch = location.pathname.match(/\/vc\/([^/]+)/);
     if (vcMatch) return vcMatch[1];
@@ -189,7 +200,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     '/venue-handover'
   ].includes(location.pathname);
 
-  const isDiscoveryFlow = location.pathname === '/' || location.pathname.startsWith('/venues/') || location.pathname === '/back-room';
+  const isDiscoveryFlow = location.pathname === '/' || location.pathname === '/bars' || location.pathname.startsWith('/bars/') || location.pathname === '/back-room';
 
   return (
     <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
@@ -231,6 +242,27 @@ export const AppShell: React.FC<AppShellProps> = ({
 
               <div className="flex items-center gap-4">
                 <button
+                  onClick={() => {
+                    // Force explicit check here to avoid routing issues
+                    if (userProfile?.role === 'guest' && onMemberLoginClick) {
+                      onMemberLoginClick('login');
+                    } else if (onProfileClick) {
+                      onProfileClick();
+                    }
+                  }}
+                  className="text-slate-400 hover:text-primary transition-all active:scale-95"
+                  title="Profile"
+                >
+                  <User className="w-6 h-6" strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() => setShowInfo(true)}
+                  className="text-slate-400 hover:text-primary transition-all active:scale-95"
+                  title="Rules & Prizes"
+                >
+                  <Info className="w-6 h-6" strokeWidth={2.5} />
+                </button>
+                <button
                   onClick={() => setShowMenu(true)}
                   className="text-white hover:text-primary transition-all active:scale-95"
                 >
@@ -243,7 +275,8 @@ export const AppShell: React.FC<AppShellProps> = ({
           {/* The Buzz Clock Component - Hidden on Map, during Search, on League Membership, or on administrative/profile pages */}
           {!isMapPage &&
             !searchQuery &&
-            !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room'].includes(location.pathname) &&
+            !location.pathname.startsWith('/partners') &&
+            !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room', '/passport', '/league'].includes(location.pathname) &&
             <BuzzClock venues={venues} />
           }
 
@@ -268,7 +301,9 @@ export const AppShell: React.FC<AppShellProps> = ({
             onToggleFavorite,
             onEditVenue,
             isLoading,
-            onToggleWeeklyBuzz
+            onToggleWeeklyBuzz,
+            clockInHistory,
+            vibeCheckHistory
           }} />
         </div>
         {location.pathname !== '/map' && <Footer />}
@@ -288,10 +323,10 @@ export const AppShell: React.FC<AppShellProps> = ({
                   <Trophy className="w-5 h-5 text-primary" strokeWidth={3} />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[8px] text-primary font-black uppercase tracking-widest leading-none mb-1">League Points</span>
-                  <p key={userPoints} className="font-mono font-black text-2xl text-white leading-none animate-in zoom-in-95 duration-300">
-                    {userPoints.toLocaleString()}
-                  </p>
+                  <span className="text-[8px] text-primary font-black uppercase tracking-widest leading-none mb-1">{GAMIFICATION_CONFIG.CURRENCY.NAME}</span>
+                  <div className="animate-in zoom-in-95 duration-300">
+                    <FormatCurrency amount={userPoints} showLabel={false} className="text-2xl" />
+                  </div>
                 </div>
               </div>
               <div
@@ -302,7 +337,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                   Season ends Feb 28, 2026
                 </p>
                 <p className="text-[7px] text-slate-600 font-black uppercase mx-1 mt-0.5">
-                  Points have no cash value. 21+.
+                  {GAMIFICATION_CONFIG.CURRENCY.UNIT} have no cash value. 21+.
                 </p>
                 <div className="flex items-center justify-end gap-1 mt-0.5">
                   <span className="text-[10px] text-black font-black bg-primary border-2 border-white px-2 py-0.5 transform -skew-x-12 inline-block">
@@ -357,12 +392,17 @@ export const AppShell: React.FC<AppShellProps> = ({
         userProfile={userProfile}
       />
 
-      {/* Artie Chat Modal */}
-      <ArtieChatModal
+      {/* OlyBars Assistant Modal */}
+      <OlyChatModal
         isOpen={!!showArtie}
         onClose={() => setShowArtie?.(false)}
         userProfile={userProfile}
         initialVenueId={initialVenueId || undefined}
+      />
+
+      <InfoRulesModal
+        isOpen={showInfo}
+        onClose={() => setShowInfo(false)}
       />
 
       <CookieBanner />

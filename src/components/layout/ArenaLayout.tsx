@@ -84,7 +84,7 @@ export const ArenaLayout: React.FC<ArenaLayoutProps> = ({
 
                 {/* Modular Filter Bar */}
                 {!isSearchOpen && (
-                    <div className="px-4 pb-4 flex gap-2 overflow-x-auto no-scrollbar pt-2">
+                    <div className="px-4 pb-4 flex gap-2 overflow-x-auto pt-2">
                         <button className="bg-primary text-black px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-black/10">
                             <Calendar size={12} strokeWidth={3} /> Tonight
                         </button>

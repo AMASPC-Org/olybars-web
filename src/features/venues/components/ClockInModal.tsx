@@ -1,10 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock } from 'lucide-react';
+import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock, Zap, Droplets } from 'lucide-react';
 import { Venue, ClockInRecord, PointsReason } from '../../../types';
 import { performClockIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
 import { queryClient } from '../../../lib/queryClient';
+import { PULSE_CONFIG } from '../../../config/pulse';
+import { PermissionRecoveryView } from './PermissionRecoveryView';
+import { GAMIFICATION_CONFIG } from '../../../config/gamification';
+import { FormatCurrency } from '../../../utils/formatCurrency';
 
 interface ClockInModalProps {
     isOpen: boolean;
@@ -17,7 +21,9 @@ interface ClockInModalProps {
     onVibeCheckPrompt?: () => void;
     isLoggedIn: boolean;
     userId: string;
+    userRole?: string;
     onLogin: (mode: 'login' | 'signup') => void;
+    onJoinLeague: () => void;
 }
 
 export const ClockInModal: React.FC<ClockInModalProps> = ({
@@ -31,9 +37,12 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     onVibeCheckPrompt,
     isLoggedIn,
     userId,
+    userRole,
     onLogin,
+    onJoinLeague,
 }) => {
     const [showCamera, setShowCamera] = useState(false);
+    const [clockInResult, setClockInResult] = useState<{ basePoints?: number; eventBonus?: number; total?: number } | null>(null);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [cameraError, setCameraError] = useState(false);
     const [isClockingIn, setIsClockingIn] = useState(false);
@@ -45,15 +54,25 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const [allowMarketingUse, setAllowMarketingUse] = useState(false);
-    const { coords, loading: geoLoading, requestLocation, refresh } = useGeolocation();
+    const { coords, loading: geoLoading, requestLocation, refresh, permissionStatus } = useGeolocation();
+
+    // Derived User State
+    // Visitor: Not logged in (userId is 'guest')
+    const isVisitor = userId === 'guest';
+    // Guest: Logged in but role is 'guest' (not a member)
+    const isAuthGuest = !isVisitor && userRole === 'guest';
 
     if (!isOpen || !selectedVenue) return null;
+
+    if (permissionStatus === 'denied') {
+        return <PermissionRecoveryView onCancel={onClose} onRetry={() => window.location.reload()} />;
+    }
 
     const currentDistance = coords && selectedVenue.location
         ? calculateDistance(coords.latitude, coords.longitude, selectedVenue.location.lat, selectedVenue.location.lng)
         : null;
 
-    const isAtVenue = currentDistance !== null && currentDistance <= 100;
+    const isAtVenue = currentDistance !== null && currentDistance <= PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -101,7 +120,9 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
     const confirmClockIn = async () => {
         if (!isAtVenue || !coords) {
-            setErrorMessage("Coordinate Verification Failed. You must be at the venue to clock in.");
+            const limit = PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS;
+            const distMsg = currentDistance ? `You are ${Math.round(currentDistance)}m away (Limit: ${limit}m).` : "Unable to verify distance.";
+            setErrorMessage(`Coordinate Verification Failed. ${distMsg} Please move closer to clock in.`);
             return;
         }
 
@@ -116,10 +137,17 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             // Attempt generic Clock In first
             // If success -> Shadow Success (Guest) or Standard Success (User)
             // If 401/403 -> Shadow Locked (Guest)
-            await performClockIn(selectedVenue.id, userId, latitude, longitude);
+            const result = await performClockIn(selectedVenue.id, userId, latitude, longitude);
+
+            setClockInResult({
+                basePoints: result.basePoints || 10,
+                eventBonus: result.eventBonus || 0,
+                total: result.pointsAwarded || 10
+            });
 
             // If we get here, the call succeeded (200 OK)
-            if (userId === 'guest') {
+            // Handle Guest (Anonymous) OR Authenticated Guest (Non-Member)
+            if (isVisitor || isAuthGuest) {
                 setShadowVariant('success');
             } else {
                 setClockInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
@@ -128,7 +156,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             }
 
             // Always award points locally for UI feedback (skipped for guest if locked, handled below)
-            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, userId !== 'guest');
+            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, !isVisitor);
 
             // Optimistic UI Update (TanStack Query Cache)
             queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
@@ -136,14 +164,29 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, clockIns: (v.clockIns || 0) + 1 } : v);
             });
 
-            if (userId !== 'guest' && vibeChecked) {
+            if (!isVisitor && !isAuthGuest && vibeChecked) {
                 setTimeout(onClose, 3000);
             }
             setIsClockingIn(false);
         } catch (err: any) {
-            // Honest Gate: Handle Auth Errors
-            if (userId === 'guest' && (err.status === 401 || err.status === 403)) {
-                setShadowVariant('locked');
+            // Honest Gate: Handle Auth Errors or Guest Role Limitations
+            if ((isVisitor || isAuthGuest) && (err.status === 401 || err.status === 403)) {
+
+                // Fallback for Guest/Visitor who gets rejected by backend
+                setClockInResult({
+                    basePoints: 10,
+                    eventBonus: 0,
+                    total: 10
+                });
+
+                // If it was a 401/403, we treat it as "Locked" (Shadow Points)
+                // BUT for Auth Guest, we might want 'success' variant but different message?
+                // The requirements say:
+                // Visitor -> "Signal Verified! +10 Pts... Save My Points Now"
+                // Guest -> "Thanks! ... Activate League Membership"
+
+                // If the backend REJECTS them, we simulate success (Shadow)
+                setShadowVariant(isAuthGuest ? 'success' : 'locked');
                 setIsClockingIn(false);
                 return;
             }
@@ -157,12 +200,22 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
-                    <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto animate-bounce">
-                        <Sparkles className="w-10 h-10 text-black" />
+                    <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto animate-bounce border-2 border-cyan-500">
+                        <Droplets className="w-10 h-10 text-cyan-400" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Clocked In!</h2>
-                        <p className="text-primary font-black uppercase tracking-widest text-[10px] mt-1">+10 LEAGUE POINTS AWARDED</p>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">Well Deepened!</h2>
+                        <div className="mt-2 space-y-1">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="text-cyan-400 font-black uppercase tracking-widest text-sm">Clock In Verified:</span>
+                                <FormatCurrency amount={clockInResult?.basePoints || 10} />
+                            </div>
+                            {(clockInResult?.eventBonus || 0) > 0 && (
+                                <p className="text-secondary font-black uppercase tracking-widest text-[10px] animate-pulse">EVENT BONUS: +{clockInResult?.eventBonus} Drops</p>
+                            )}
+                            <div className="h-px bg-white/10 w-24 mx-auto my-2" />
+                            <p className="text-white font-black uppercase tracking-widest text-xs">Total Flow: {clockInResult?.total || 10} {GAMIFICATION_CONFIG.CURRENCY.UNIT}</p>
+                        </div>
                     </div>
 
                     <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -175,8 +228,31 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <p className="text-[9px] text-primary font-bold uppercase mt-1 italic">Keep it up for a Bonus Badge!</p>
                     </div>
 
-                    {/* Double Dip / Partner Growth Section */}
-                    {(selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
+                    {/* Flash Bounty Contextual Placement */}
+                    {selectedVenue.activeFlashBounty && (
+                        <div className="bg-amber-950/40 p-6 rounded-2xl border-2 border-primary/50 space-y-4 shadow-[0_0_30px_rgba(251,191,36,0.2)] animate-in slide-in-from-top-4 duration-500">
+                            <div className="flex items-center gap-3 justify-center text-primary mb-2">
+                                <Zap className="w-5 h-5 fill-current" />
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] font-league">Flash Bounty Available</span>
+                                <Zap className="w-5 h-5 fill-current" />
+                            </div>
+                            <div className="space-y-2">
+                                <h4 className="text-white text-lg font-black uppercase font-league leading-none">{selectedVenue.activeFlashBounty.title}</h4>
+                                <p className="text-primary text-sm font-bold italic leading-tight">
+                                    {selectedVenue.activeFlashBounty.bounty_task_description || "Upload a photo of your purchase."}
+                                </p>
+                            </div>
+                            <button
+                                onClick={startCamera}
+                                className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(251,191,36,0.3)]"
+                            >
+                                <Camera className="w-5 h-5" /> Snap Photo
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Double Dip / Partner Growth Section (Only show if NO bounty, to simplify flow) */}
+                    {!selectedVenue.activeFlashBounty && (selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
                         <div className="space-y-3 pt-2 text-center">
                             {/* Flow A: External Loyalty */}
                             {selectedVenue.loyalty_signup_url && (
@@ -247,79 +323,52 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
     if (shadowVariant) {
         const isLocked = shadowVariant === 'locked';
+
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isLocked ? 'bg-slate-800 border-2 border-primary/30' : 'bg-primary animate-bounce'}`}>
-                        {isLocked ? <Lock className="w-8 h-8 text-primary" /> : <Sparkles className="w-10 h-10 text-black" />}
+                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-red-500/50 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)] overflow-hidden text-center p-8 space-y-6 relative">
+
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto bg-slate-900 border-2 border-red-500/30">
+                        <Droplets className="w-8 h-8 text-red-500 animate-pulse" />
                     </div>
 
                     <div>
                         <h2 className="text-2xl font-black text-white uppercase tracking-tighter font-league italic">
-                            {isLocked ? 'Signal Ready' : 'Vibe Updated!'}
+                            Leak Detected!
                         </h2>
                         <div className="mt-4 space-y-3">
                             <p className="text-sm text-slate-300 font-medium leading-relaxed">
-                                {isLocked
-                                    ? <>Guest signals are currently limited. Create a League Profile to <span className="text-white font-bold">publish this Clock In</span> and earn your first <span className="text-primary font-black">10 Points</span>.</>
-                                    : <>Thanks! You just <span className="text-primary font-black">updated the Vibe</span> for everyone. You generated <span className="text-white font-bold">10 Points</span>, but you aren't in the League yet.</>
+                                {isAuthGuest
+                                    ? <>That Clock-In generated <span className="text-cyan-400 font-black">+{clockInResult?.total || 10} Drops</span>, but your reservoir is unsealed.</>
+                                    : <>Signal Verified! <span className="text-cyan-400 font-black">+{clockInResult?.total || 10} Drops</span> found.<br /><br />Your bucket has a hole in it.</>
                                 }
                             </p>
-                            {!isLocked && (
-                                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-tight bg-slate-900 px-3 py-2 rounded-lg border border-white/5">
-                                    Join the League to <span className="text-primary">claim these points</span>, or they disappear at midnight.
-                                </p>
-                            )}
+                            <p className="text-[11px] text-red-400 font-bold uppercase tracking-tight bg-red-950/30 px-3 py-2 rounded-lg border border-red-500/20">
+                                {isAuthGuest
+                                    ? <>These drops will <span className="text-white underline">drain away</span> unless you activate your membership.</>
+                                    : <>Join the League to <span className="text-white">seal your reservoir</span>, or these drops expire at midnight.</>
+                                }
+                            </p>
                         </div>
                     </div>
 
-                    {!isLocked && (selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
-                        <div className="space-y-3 pt-2 text-center">
-                            {selectedVenue.loyalty_signup_url && (
-                                <div className="bg-primary/10 border border-primary/30 p-4 rounded-xl relative overflow-hidden group">
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1.5">Double Dip Alert</p>
-                                    <h4 className="text-white text-xs font-bold leading-tight mb-3">
-                                        Join {selectedVenue.name} Rewards while you're here!
-                                    </h4>
-                                    <button
-                                        onClick={() => window.open(selectedVenue.loyalty_signup_url, '_blank')}
-                                        className="w-full bg-primary text-black font-black py-2 rounded-lg text-[10px] uppercase tracking-wider"
-                                    >
-                                        Connect Venue Rewards
-                                    </button>
-                                </div>
-                            )}
-                            {!selectedVenue.loyalty_signup_url && selectedVenue.hero_item && (
-                                <div className="bg-slate-900 border border-white/10 p-3 rounded-xl flex gap-3 text-left">
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                                        <img src={selectedVenue.hero_item.photoUrl} alt={selectedVenue.hero_item.name} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black text-[#FFD700] uppercase tracking-tighter mb-0.5">Artie's Insider Tip</p>
-                                        <h4 className="text-white text-[10px] font-black uppercase truncate">{selectedVenue.hero_item.name}</h4>
-                                        <p className="text-[8px] text-slate-400 leading-tight line-clamp-2 mt-1">
-                                            {selectedVenue.hero_item.description}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
                     <div className="pt-2">
                         <button
-                            onClick={() => onLogin('signup')}
-                            className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+                            onClick={() => isAuthGuest ? onJoinLeague() : onLogin('signup')}
+                            className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
                         >
-                            {isLocked ? 'Create Profile & Publish' : 'Join League to Bank Points'}
+                            {isAuthGuest
+                                ? 'Seal My Reservoir'
+                                : 'Seal & Save Drops'
+                            }
                         </button>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3 italic">
-                            {isLocked ? 'It takes 30 seconds.' : "Don't miss out next time."}
+                            {isAuthGuest ? 'Instant Activation. No Forms.' : 'It takes 30 seconds.'}
                         </p>
                     </div>
 
                     <button onClick={onClose} className="text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:text-white transition-colors">
-                        Close & Continue as Guest
+                        Let them leak (Close)
                     </button>
                 </div>
             </div>

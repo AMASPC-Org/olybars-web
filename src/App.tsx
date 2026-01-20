@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { SEO } from './components/common/SEO';
@@ -7,7 +7,7 @@ import { X } from 'lucide-react';
 // --- CONFIG & TYPES ---
 import { queryClient } from './lib/queryClient';
 import {
-  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus
+  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus, VibeCheckRecord
 } from './types';
 import { isSystemAdmin } from './types/auth_schema';
 
@@ -23,25 +23,40 @@ import {
 } from './services/userService';
 
 // --- MODULAR COMPONENTS ---
+import { LoadingScreen } from './components/common/LoadingScreen';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { AppShell } from './components/layout/AppShell';
-import { BuzzScreen } from './features/venues/screens/BuzzScreen';
-import { KaraokeScreen } from './features/league/screens/KaraokeScreen';
-import { TriviaScreen } from './features/league/screens/TriviaScreen';
-import { LiveMusicScreen } from './features/league/screens/LiveMusicScreen';
-import { EventsScreen } from './features/league/screens/EventsScreen';
-import { VenuesScreen } from './features/venues/screens/VenuesScreen';
-import { LoginModal } from './features/auth/components/LoginModal';
-import { AuthPage } from './features/auth/screens/AuthPage';
-import { OwnerDashboardScreen } from './features/owner/screens/OwnerDashboardScreen';
-import { ClockInModal } from './features/venues/components/ClockInModal';
-import { OnboardingModal } from './components/ui/OnboardingModal';
 import { AgeGate } from './components/ui/AgeGate';
-import { VibeCheckModal } from './features/venues/components/VibeCheckModal';
-import { MakerSurveyModal } from './features/marketing/components/MakerSurveyModal'; // New Import
 import { useToast } from './components/ui/BrandedToast';
-import { VibeReceiptModal } from './features/social/components/VibeReceiptModal';
 import { VibeReceiptData, generateArtieHook } from './features/social/services/VibeReceiptService';
+import { BuzzScreen } from './features/venues/screens/BuzzScreen';
+import { VenuesScreen } from './features/venues/screens/VenuesScreen';
+
+// --- LAZY COMPONENTS ---
+const EventsScreen = lazy(() => import('./features/league/screens/EventsScreen').then(m => ({ default: m.EventsScreen })));
+const KaraokeScreen = lazy(() => import('./features/league/screens/KaraokeScreen').then(m => ({ default: m.KaraokeScreen })));
+const TriviaScreen = lazy(() => import('./features/league/screens/TriviaScreen').then(m => ({ default: m.TriviaScreen })));
+const LiveMusicScreen = lazy(() => import('./features/league/screens/LiveMusicScreen').then(m => ({ default: m.LiveMusicScreen })));
+const LeagueHQScreen = lazy(() => import('./features/league/screens/LeagueHQScreen').then(m => ({ default: m.LeagueHQScreen })));
+const OwnerDashboardScreen = lazy(() => import('./features/owner/screens/OwnerDashboardScreen').then(m => ({ default: m.OwnerDashboardScreen })));
+const LoginModal = lazy(() => import('./features/auth/components/LoginModal').then(m => ({ default: m.LoginModal })));
+const ClockInModal = lazy(() => import('./features/venues/components/ClockInModal').then(m => ({ default: m.ClockInModal })));
+const VibeCheckModal = lazy(() => import('./features/venues/components/VibeCheckModal').then(m => ({ default: m.VibeCheckModal })));
+const MakerSurveyModal = lazy(() => import('./features/marketing/components/MakerSurveyModal').then(m => ({ default: m.MakerSurveyModal })));
+const VibeReceiptModal = lazy(() => import('./features/social/components/VibeReceiptModal').then(m => ({ default: m.VibeReceiptModal })));
+const OnboardingModal = lazy(() => import('./components/ui/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
+const PreferredSipsModal = lazy(() => import('./features/profile/components/PreferredSipsModal').then(m => ({ default: m.PreferredSipsModal })));
+const HomeBaseModal = lazy(() => import('./features/profile/components/HomeBaseModal').then(m => ({ default: m.HomeBaseModal })));
+const FlyerExtractor = lazy(() => import('./pages/admin/FlyerExtractor').then(m => ({ default: m.FlyerExtractor })));
+const AdminDashboardScreen = lazy(() => import('./features/admin/screens/AdminDashboardScreen').then(m => ({ default: m.AdminDashboardScreen })));
+const UserProfileScreen = lazy(() => import('./features/profile/screens/UserProfileScreen')); // Default export
+const VenueProfileScreen = lazy(() => import('./features/venues/screens/VenueProfileScreen').then(m => ({ default: m.VenueProfileScreen })));
+const ArtieBioScreen = lazy(() => import('./features/artie/screens/ArtieBioScreen')); // Default export
+const HistoryFeedScreen = lazy(() => import('./features/history/screens/HistoryFeedScreen').then(m => ({ default: m.HistoryFeedScreen })));
+const HistoryArticleScreen = lazy(() => import('./features/history/screens/HistoryArticleScreen').then(m => ({ default: m.HistoryArticleScreen })));
+const SettingsScreen = lazy(() => import('./features/profile/screens/SettingsScreen')); // Default export
+const AuthPage = lazy(() => import('./features/auth/screens/AuthPage').then(m => ({ default: m.AuthPage })));
+const PassportScreen = lazy(() => import('./features/league/screens/PassportScreen').then(m => ({ default: m.PassportScreen })));
 
 // --- UTILS & HELPERS ---
 import { cookieService } from './services/cookieService';
@@ -50,32 +65,24 @@ import { calculateDistance, metersToMiles } from './utils/geoUtils';
 // --- RELOCATED SCREENS ---
 
 
-import { LeagueHQScreen } from './features/league/screens/LeagueHQScreen';
+// --- RELOCATED SCREENS (LAYZY) ---
 import TermsScreen from './features/marketing/screens/TermsScreen';
 import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
 import CookiePolicyScreen from './features/marketing/screens/CookiePolicyScreen';
 import PartnerSecurityScreen from './features/marketing/screens/PartnerSecurityScreen';
 import FAQScreen from './features/marketing/screens/FAQScreen';
-import { AdminDashboardScreen } from './features/admin/screens/AdminDashboardScreen';
-import { FlyerExtractor } from './pages/admin/FlyerExtractor';
-import UserProfileScreen from './features/profile/screens/UserProfileScreen';
-import { VenueProfileScreen } from './features/venues/screens/VenueProfileScreen';
 import AboutPage from './features/marketing/screens/About';
-import ArtieBioScreen from './features/artie/screens/ArtieBioScreen'; // [NEW] Import
 import { DiscoveryLayout } from './features/venues/screens/DiscoveryLayout';
 import { DiscoveryProvider } from './features/venues/contexts/DiscoveryContext';
 import OwnerPortal from './features/owner/screens/OwnerPortal';
 import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
-import SettingsScreen from './features/profile/screens/SettingsScreen';
-import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen'; // [NEW] QR Screen
+import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen';
 import MerchStandScreen from './features/merch/screens/MerchStandScreen';
 import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
 import VoucherRedemptionScreen from './features/merch/screens/VoucherRedemptionScreen';
 import ScrollToTop from './components/layout/ScrollToTop';
-import { HistoryFeedScreen } from './features/history/screens/HistoryFeedScreen';
-import { HistoryArticleScreen } from './features/history/screens/HistoryArticleScreen';
 import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookScreen';
-import { PlayGatewayScreen } from './features/play/screens/PlayGatewayScreen'; // [NEW]
+import { PlayGatewayScreen } from './features/play/screens/PlayGatewayScreen';
 import { LeaguePerksScreen } from './features/league/screens/LeaguePerksScreen';
 import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
 import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
@@ -85,9 +92,9 @@ import GlossaryScreen from './features/marketing/screens/GlossaryScreen';
 import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
 import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
 import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
-import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen'; // [NEW] Flight School Import
-import { MetaOAuthCallback } from './features/owner/components/MetaOAuthCallback'; // [NEW] Meta OAuth Callback
-import { BackRoomScreen } from './features/venues/screens/BackRoomScreen'; // [NEW]
+import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen';
+import { MetaOAuthCallback } from './features/owner/components/MetaOAuthCallback';
+import { BackRoomScreen } from './features/venues/screens/BackRoomScreen';
 
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
@@ -141,11 +148,23 @@ const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile }: any) => {
 
 export default function OlyBarsApp() {
   // --- DATA FETCHING (TanStack Query with Persistence) ---
+  const { showToast } = useToast();
+
   const { data: venues = [], isLoading } = useQuery({
     queryKey: ['venues-brief'],
     queryFn: () => fetchVenues(true), // Fetch brief mode for the list
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    initialData: () => {
+      // Instant hydration for Returning Users [OPTIMIZATION]
+      try {
+        const cached = localStorage.getItem('oly_venues_cache');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {
+        console.error('[OlyBars] Hydration failed:', e);
+      }
+      return [];
+    }
   });
 
   // Sync Venues to LocalStorage for next boot
@@ -157,6 +176,7 @@ export default function OlyBarsApp() {
 
   const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
   const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() => JSON.parse(localStorage.getItem('oly_clockins') || '[]'));
+  const [vibeCheckHistory, setVibeCheckHistory] = useState<VibeCheckRecord[]>(() => JSON.parse(localStorage.getItem('oly_vibe_history') || '[]'));
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
@@ -192,7 +212,12 @@ export default function OlyBarsApp() {
   const [chatInput, setChatInput] = useState('');
   const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(null);
-  const { showToast } = useToast();
+
+  // Progressive Profiling State
+  const [showPreferredSipsModal, setShowPreferredSipsModal] = useState(false);
+  const [showHomeBaseModal, setShowHomeBaseModal] = useState(false);
+  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{ id: string, name: string } | null>(null);
+  // const { showToast } = useToast(); // Moved to top
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
   // ]);
@@ -223,6 +248,14 @@ export default function OlyBarsApp() {
   useEffect(() => {
     localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory));
   }, [clockInHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+  }, [vibeCheckHistory]);
+
+  useEffect(() => {
+    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+  }, [vibeCheckHistory]);
 
   useEffect(() => {
     localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
@@ -300,8 +333,10 @@ export default function OlyBarsApp() {
       return;
     }
 
-    setSelectedVenue(venue);
-    setShowClockInModal(true);
+    React.startTransition(() => {
+      setSelectedVenue(venue);
+      setShowClockInModal(true);
+    });
   };
 
   const handleVibeCheck = (venue: Venue) => {
@@ -326,7 +361,6 @@ export default function OlyBarsApp() {
     setVibeVenue(venue);
     setShowVibeCheckModal(true);
   };
-
   const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>, soberFriendlyCheck?: { isGood: boolean; reason?: string }) => {
     const now = Date.now();
 
@@ -347,8 +381,9 @@ export default function OlyBarsApp() {
     }
 
     // Update Venue Status and Photos (Attempt for all, handle guest auth errors)
+    let backendResult: any = null;
     try {
-      await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
+      backendResult = await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
     } catch (err: any) {
       // Honest Gate: Propagate Auth Errors for Guest UI handling
       if (userProfile.uid === 'guest' && (err.status === 401 || err.status === 403)) {
@@ -377,6 +412,19 @@ export default function OlyBarsApp() {
       }
     };
     setCurrentReceipt(receipt);
+
+    // Persist to Local History (optimistic)
+    setVibeCheckHistory(prev => [
+      {
+        venueId: venue.id,
+        timestamp: Date.now(),
+        status,
+        points: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus
+      },
+      ...prev
+    ]);
+
+    return backendResult;
   };
 
   const handleToggleWeeklyBuzz = async () => {
@@ -418,6 +466,12 @@ export default function OlyBarsApp() {
     } catch (e) {
       showToast('Error updating favorites', 'error');
     }
+  };
+
+  const handleOpenPreferredSips = () => setShowPreferredSipsModal(true);
+  const handleOpenHomeBase = (venueId: string, venueName: string) => {
+    setHomeBaseTargetVenue({ id: venueId, name: venueName });
+    setShowHomeBaseModal(true);
   };
 
   const handleAcceptAgeGate = () => {
@@ -466,309 +520,374 @@ export default function OlyBarsApp() {
 
   return (
     <ErrorBoundary>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <DiscoveryProvider>
           <ScrollToTop />
-          <div className="h-full bg-background overflow-hidden relative">
-            <Routes>
-              <Route
-                path="*"
-                element={
-                  <AppShell
-                    venues={venues}
-                    userPoints={userPoints}
-                    isLeagueMember={userProfile.role !== 'guest'}
-                    alertPrefs={alertPrefs}
-                    setAlertPrefs={setAlertPrefs}
-                    onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
-                    onProfileClick={() => {
-                      if (userProfile.uid === 'guest') {
-                        setLoginMode('user');
+          <Suspense fallback={<LoadingScreen />}>
+            <div className="h-full bg-background overflow-hidden relative">
+              <Routes>
+                <Route
+                  path="*"
+                  element={
+                    <AppShell
+                      venues={venues}
+                      userPoints={userPoints}
+                      isLeagueMember={userProfile.role !== 'guest'}
+                      alertPrefs={alertPrefs}
+                      setAlertPrefs={setAlertPrefs}
+                      onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
+                      onProfileClick={() => {
+                        if (userProfile.uid === 'guest') {
+                          setLoginMode('user');
+                          setUserSubMode('login');
+                          setShowLoginModal(true);
+                        } else {
+                          // Use document location for SPA feel or navigation handler
+                          window.history.pushState({}, '', '/profile');
+                          // Since we aren't using a router hook at this level, 
+                          // we need to trigger a re-render or use a shared navigation handler.
+                          // However, routes are defined below. 
+                          // To keep it simple and fix the "reload" issue:
+                          const popStateEvent = new PopStateEvent('popstate');
+                          window.dispatchEvent(popStateEvent);
+                        }
+                      }}
+                      onOwnerLoginClick={() => {
+                        setLoginMode('owner');
                         setUserSubMode('login');
                         setShowLoginModal(true);
-                      } else {
-                        // Use document location for SPA feel or navigation handler
-                        window.history.pushState({}, '', '/profile');
-                        // Since we aren't using a router hook at this level, 
-                        // we need to trigger a re-render or use a shared navigation handler.
-                        // However, routes are defined below. 
-                        // To keep it simple and fix the "reload" issue:
-                        const popStateEvent = new PopStateEvent('popstate');
-                        window.dispatchEvent(popStateEvent);
-                      }
-                    }}
-                    onOwnerLoginClick={() => {
-                      setLoginMode('owner');
-                      setUserSubMode('login');
-                      setShowLoginModal(true);
-                    }}
-                    onMemberLoginClick={(mode?: 'login' | 'signup') => {
-                      setLoginMode('user');
-                      if (mode) setUserSubMode(mode);
-                      setShowLoginModal(true);
-                    }}
-                    userRole={userProfile.role}
-                    userHandle={userProfile.handle}
-                    userRank={userRank}
-                    onLogout={handleLogout}
-                    userProfile={userProfile}
-                    onToggleFavorite={handleToggleFavorite}
-                    onClockIn={handleClockIn}
-                    onVibeCheck={handleVibeCheck}
-                    clockedInVenue={clockedInVenue}
-                    onEditVenue={(vid) => {
-                      setOwnerDashboardInitialVenueId(vid);
-                      setOwnerDashboardInitialView('listing');
-                      setShowOwnerDashboard(true);
-                    }}
-                    onVenueDashboardClick={() => setShowOwnerDashboard(true)}
-                    showArtie={showArtie}
-                    setShowArtie={setShowArtie}
-                  />
-                }
-              >
-                <Route element={<DiscoveryLayout />}>
-                  <Route
-                    index
-                    element={
-                      <>
-                        <SEO
-                          title="Pulse & Buzz"
-                          description="Track the real-time vibe of Thurston County. See which bars are buzzing right now."
-                        />
-                        <BuzzScreen />
-                      </>
-                    }
-                  />
-                  <Route
-                    path="venues"
-                    element={
-                      <>
-                        <SEO title="Bar Directory" description="The complete index of bars, taprooms, and lounges in Thurston County." />
-                        <VenuesScreen venues={venues} />
-                      </>
-                    }
-                  />
-                  <Route
-                    path="venues/:id"
-                    element={
-                      <VenueProfileScreen />
-                    }
-                  />
-                  <Route
-                    path="venues/:id/events"
-                    element={
-                      <EventsScreen venues={venues} />
-                    }
-                  />
-                  <Route
-                    path="back-room"
-                    element={
-                      <>
-                        <SEO title="The Back Room" description="Private inventory for squads & parties." />
-                        <BackRoomScreen />
-                      </>
-                    }
-                  />
-                </Route>
-                <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Thurston County tonight." /><KaraokeScreen venues={venues} /></>} />
-                <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Thurston County." /><PlayGatewayScreen venues={venues} /></>} />
-                <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in Thurston County." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
-                <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in Thurston County." /><LiveMusicScreen venues={venues} /></>} />
-                <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Thurston County bar scene." /><EventsScreen venues={venues} /></>} />
-                <Route
-                  path="league"
-                  element={
-                    <>
-                      <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
-                      <LeagueHQScreen
-                        venues={venues}
-                        isLeagueMember={userProfile.role !== 'guest'}
-                        onJoinClick={(mode) => {
-                          setUserSubMode(mode || 'login');
-                          setLoginMode('user');
-                          setShowLoginModal(true);
-                        }}
-                        onAskArtie={() => setShowArtie(true)}
-                      />
-                    </>
-                  }
-                />
-                <Route path="partners/claim" element={<ClaimVenuePage />} />
-                <Route path="merch" element={<MerchStandScreen venues={venues} />} />
-                <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
-                <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
-                <Route path="meet-artie" element={<ArtieBioScreen />} />
-                <Route path="artie-bio" element={<ArtieBioScreen />} />
-                <Route path="artie" element={<ArtieBioScreen />} />
-                <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
-                <Route
-                  path="vc/:venueId"
-                  element={
-                    <QRVibeCheckScreen
-                      venues={venues}
-                      handleVibeCheck={confirmVibeCheck}
+                      }}
+                      onMemberLoginClick={(mode?: 'login' | 'signup') => {
+                        setLoginMode('user');
+                        if (mode) setUserSubMode(mode);
+                        setShowLoginModal(true);
+                      }}
+                      userRole={userProfile.role}
+                      userHandle={userProfile.handle}
+                      userRank={userRank}
+                      onLogout={handleLogout}
+                      userProfile={userProfile}
+                      onToggleFavorite={handleToggleFavorite}
+                      onClockIn={handleClockIn}
+                      onVibeCheck={handleVibeCheck}
+                      clockedInVenue={clockedInVenue}
+                      onEditVenue={(vid) => {
+                        setOwnerDashboardInitialVenueId(vid);
+                        setOwnerDashboardInitialView('listing');
+                        setShowOwnerDashboard(true);
+                      }}
+                      onVenueDashboardClick={() => setShowOwnerDashboard(true)}
+                      showArtie={showArtie}
+                      setShowArtie={setShowArtie}
+                      clockInHistory={clockInHistory}
+                      vibeCheckHistory={vibeCheckHistory}
                     />
                   }
-                />
-                <Route
-                  path="profile"
-                  element={
-                    userProfile.uid !== 'guest'
-                      ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
-                      : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
-                        Access Denied: Please Login to View Your League ID
-                        <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
-                      </div>
-                  }
-                />
-                <Route
-                  path="settings"
-                  element={
-                    <SettingsScreen userProfile={userProfile} setUserProfile={setUserProfile} />
-                  }
-                />
-                <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
-                <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
-                <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
-                <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
-                <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
-                <Route path="about" element={<><SEO title="Welcome to the League (Thurston County)" description="The mission and story behind Thurston County's nightlife operating system." /><AboutPage /></>} />
-                <Route
-                  path="admin"
-                  element={
-                    isSystemAdmin(userProfile)
-                      ? <AdminDashboardScreen userProfile={userProfile} />
-                      : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
-                  }
-                />
-                <Route
-                  path="admin/extractor"
-                  element={
-                    isSystemAdmin(userProfile)
-                      ? <FlyerExtractor />
-                      : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
-                  }
-                />
-                <Route path="history" element={<HistoryFeedScreen />} />
-                <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
-                <Route path="playbook" element={<PulsePlaybookScreen />} />
-                <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
-                <Route path="perks" element={<LeaguePerksScreen />} />
-                <Route path="glossary" element={<GlossaryScreen />} />
-                <Route path="points" element={<PointsGuideScreen />} />
-                <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
-                <Route path="league-membership" element={<LeagueMembershipPage />} />
-                <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
-                <Route path="flight-school" element={<FlightSchoolScreen />} />
-                <Route path="oauth/callback" element={<MetaOAuthCallback />} />
-                <Route path="auth" element={<AuthPage userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} alertPrefs={alertPrefs} setAlertPrefs={setAlertPrefs} openInfo={openInfo} onOwnerSuccess={() => setShowOwnerDashboard(true)} loginMode={loginMode} setLoginMode={setLoginMode} userSubMode={userSubMode} setUserSubMode={setUserSubMode} />} />
+                >
+                  <Route element={<DiscoveryLayout />}>
+                    <Route
+                      index
+                      element={
+                        <>
+                          <SEO
+                            title="Pulse & Buzz"
+                            description="Track the real-time vibe of Thurston County. See which bars are buzzing right now."
+                          />
+                          <BuzzScreen />
+                        </>
+                      }
+                    />
+                    <Route
+                      path="bars"
+                      element={
+                        <>
+                          <SEO title="Bar Directory" description="The complete index of bars, taprooms, and lounges in Thurston County." />
+                          <VenuesScreen venues={venues} />
+                        </>
+                      }
+                    />
+                    <Route
+                      path="bars/:id"
+                      element={
+                        <VenueProfileScreen
+                          onOpenSips={handleOpenPreferredSips}
+                          onOpenHomeBase={handleOpenHomeBase}
+                        />
+                      }
+                    />
+                    <Route
+                      path="bars/:id/events"
+                      element={
+                        <EventsScreen venues={venues} />
+                      }
+                    />
+                    <Route
+                      path="back-room"
+                      element={
+                        <>
+                          <SEO title="The Back Room" description="Private inventory for squads & parties." />
+                          <BackRoomScreen />
+                        </>
+                      }
+                    />
+                  </Route>
+                  <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Thurston County tonight." /><KaraokeScreen venues={venues} /></>} />
+                  <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Thurston County." /><PlayGatewayScreen venues={venues} /></>} />
+                  <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in Thurston County." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
+                  <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in Thurston County." /><LiveMusicScreen venues={venues} /></>} />
+                  <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Thurston County bar scene." /><EventsScreen venues={venues} /></>} />
+                  <Route
+                    path="league"
+                    element={
+                      <>
+                        <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
+                        <LeagueHQScreen
+                          venues={venues}
+                          isLeagueMember={userProfile.role !== 'guest'}
+                          onJoinClick={(mode) => {
+                            setUserSubMode(mode || 'login');
+                            setLoginMode('user');
+                            setShowLoginModal(true);
+                          }}
+                          onAskArtie={() => setShowArtie(true)}
+                        />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="passport"
+                    element={
+                      <PassportScreen
+                        venues={venues}
+                        userProfile={userProfile}
+                        clockInHistory={clockInHistory}
+                        vibeCheckHistory={vibeCheckHistory}
+                      />
+                    }
+                  />
+                  <Route path="partners/claim" element={<ClaimVenuePage />} />
+                  <Route path="merch" element={<MerchStandScreen venues={venues} />} />
+                  <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
+                  <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
+                  <Route path="meet-artie" element={<ArtieBioScreen />} />
+                  <Route path="artie-bio" element={<ArtieBioScreen />} />
+                  <Route path="artie" element={<ArtieBioScreen />} />
+                  <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} />} />
+                  <Route
+                    path="vc/:venueId"
+                    element={
+                      <QRVibeCheckScreen
+                        venues={venues}
+                        handleVibeCheck={confirmVibeCheck}
+                      />
+                    }
+                  />
+                  <Route
+                    path="profile"
+                    element={
+                      userProfile.uid !== 'guest'
+                        ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
+                        : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
+                          Access Denied: Please Login to View Your League ID
+                          <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
+                        </div>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <SettingsScreen userProfile={userProfile} setUserProfile={setUserProfile} />
+                    }
+                  />
+                  <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
+                  <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
+                  <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
+                  <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
+                  <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
+                  <Route path="about" element={<><SEO title="Welcome to the League (Thurston County)" description="The mission and story behind Thurston County's nightlife operating system." /><AboutPage /></>} />
+                  <Route
+                    path="admin"
+                    element={
+                      isSystemAdmin(userProfile)
+                        ? <AdminDashboardScreen userProfile={userProfile} />
+                        : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                    }
+                  />
+                  <Route
+                    path="admin/extractor"
+                    element={
+                      isSystemAdmin(userProfile)
+                        ? <FlyerExtractor />
+                        : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                    }
+                  />
+                  <Route path="history" element={<HistoryFeedScreen />} />
+                  <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
+                  <Route path="playbook" element={<PulsePlaybookScreen />} />
+                  <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
+                  <Route path="perks" element={<LeaguePerksScreen />} />
+                  <Route path="glossary" element={<GlossaryScreen />} />
+                  <Route path="points" element={<PointsGuideScreen />} />
+                  <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
+                  <Route path="league-membership" element={<LeagueMembershipPage />} />
+                  <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
+                  <Route path="flight-school" element={<FlightSchoolScreen />} />
+                  <Route path="oauth/callback" element={<MetaOAuthCallback />} />
+                  <Route path="auth" element={<AuthPage userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} alertPrefs={alertPrefs} setAlertPrefs={setAlertPrefs} openInfo={openInfo} onOwnerSuccess={() => setShowOwnerDashboard(true)} loginMode={loginMode} setLoginMode={setLoginMode} userSubMode={userSubMode} setUserSubMode={setUserSubMode} />} />
 
-                {/* AI & Developer Hub */}
-                <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
-                <Route path="ai/feed" element={<><SEO title="AI Feed Guide" description="Machine-readable guide for Venues, Events, and League Play data." /><AIFeedGuideScreen /></>} />
-                <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
-              </Route>
-            </Routes>
+                  {/* AI & Developer Hub */}
+                  <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
+                  <Route path="ai/feed" element={<><SEO title="AI Feed Guide" description="Machine-readable guide for Venues, Events, and League Play data." /><AIFeedGuideScreen /></>} />
+                  <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
+                </Route>
+              </Routes>
 
-            <LoginModal
-              isOpen={showLoginModal}
-              onClose={() => setShowLoginModal(false)}
-              loginMode={loginMode}
-              setLoginMode={setLoginMode}
-              userSubMode={userSubMode}
-              setUserSubMode={setUserSubMode}
-              userProfile={userProfile}
-              setUserProfile={setUserProfile}
-              venues={venues}
-              alertPrefs={alertPrefs}
-              setAlertPrefs={setAlertPrefs}
-              openInfo={openInfo}
-              onOwnerSuccess={() => setShowOwnerDashboard(true)}
-            />
-
-            {showOnboarding && (
-              <OnboardingModal
-                isOpen={showOnboarding}
-                onClose={() => setShowOnboarding(false)}
-                userRole={userProfile.role}
-              />
-            )}
-
-            {showOwnerDashboard && (
-              <OwnerDashboardScreen
-                isOpen={showOwnerDashboard}
-                onClose={() => setShowOwnerDashboard(false)}
-                venues={venues}
-                updateVenue={handleUpdateVenue}
+              <LoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                loginMode={loginMode}
+                setLoginMode={setLoginMode}
+                userSubMode={userSubMode}
+                setUserSubMode={setUserSubMode}
                 userProfile={userProfile}
-                initialVenueId={ownerDashboardInitialVenueId}
-                initialView={ownerDashboardInitialView}
+                setUserProfile={setUserProfile}
+                venues={venues}
+                alertPrefs={alertPrefs}
+                setAlertPrefs={setAlertPrefs}
+                openInfo={openInfo}
+                onOwnerSuccess={() => setShowOwnerDashboard(true)}
               />
-            )}
 
-            {showClockInModal && selectedVenue && (
-              <ClockInModal
-                isOpen={showClockInModal}
-                onClose={() => setShowClockInModal(false)}
-                selectedVenue={selectedVenue}
-                awardPoints={awardPoints}
-                setClockInHistory={setClockInHistory}
-                setClockedInVenue={setClockedInVenue}
-                vibeChecked={vibeCheckedVenue === selectedVenue.id}
-                onVibeCheckPrompt={() => {
-                  setVibeVenue(selectedVenue);
-                  setShowVibeCheckModal(true);
-                  setShowClockInModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                userId={userProfile.uid}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showOnboarding && (
+                <OnboardingModal
+                  isOpen={showOnboarding}
+                  onClose={() => setShowOnboarding(false)}
+                  userRole={userProfile.role}
+                />
+              )}
 
-            {showVibeCheckModal && vibeVenue && (
-              <VibeCheckModal
-                isOpen={showVibeCheckModal}
-                onClose={() => setShowVibeCheckModal(false)}
-                venue={vibeVenue}
-                onConfirm={confirmVibeCheck}
-                clockedIn={clockedInVenue === vibeVenue.id}
-                onClockInPrompt={() => {
-                  setSelectedVenue(vibeVenue);
-                  setShowClockInModal(true);
-                  setShowVibeCheckModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showOwnerDashboard && (
+                <OwnerDashboardScreen
+                  isOpen={showOwnerDashboard}
+                  onClose={() => setShowOwnerDashboard(false)}
+                  venues={venues}
+                  updateVenue={handleUpdateVenue}
+                  userProfile={userProfile}
+                  initialVenueId={ownerDashboardInitialVenueId}
+                  initialView={ownerDashboardInitialView}
+                />
+              )}
 
-            {showMakerSurvey && (
-              <MakerSurveyModal
-                isOpen={showMakerSurvey}
-                onClose={() => {
-                  setShowMakerSurvey(false);
-                  // Optimistic update to prevent re-trigger in this session
-                  setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
-                }}
-                userId={userProfile.uid}
-              />
-            )}
+              {showClockInModal && selectedVenue && (
+                <ClockInModal
+                  isOpen={showClockInModal}
+                  onClose={() => setShowClockInModal(false)}
+                  selectedVenue={selectedVenue}
+                  awardPoints={awardPoints}
+                  setClockInHistory={setClockInHistory}
+                  setClockedInVenue={setClockedInVenue}
+                  vibeChecked={vibeCheckedVenue === selectedVenue.id}
+                  onVibeCheckPrompt={() => {
+                    setVibeVenue(selectedVenue);
+                    setShowVibeCheckModal(true);
+                    setShowClockInModal(false);
+                  }}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  userId={userProfile.uid}
+                  userRole={userProfile.role}
+                  onLogin={handleMemberLoginClick}
+                  onJoinLeague={async () => {
+                    setShowClockInModal(false);
+                    if (userProfile.uid !== 'guest' && userProfile.role === 'guest') {
+                      try {
+                        await updateUserProfile(userProfile.uid, { role: 'user' });
+                        setUserProfile(prev => ({ ...prev, role: 'user' }));
+                        showToast("Membership Activated! Points Sealed.", "success");
+                        // Trigger Sips if needed
+                        if (!userProfile.favoriteDrinks || userProfile.favoriteDrinks.length === 0) {
+                          setTimeout(() => setShowPreferredSipsModal(true), 500);
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        showToast("Activation failed. Please try again.", "error");
+                      }
+                    } else {
+                      setShowOnboarding(true);
+                    }
+                  }}
+                />
+              )}
 
-            {currentReceipt && (
-              <VibeReceiptModal
-                data={currentReceipt}
-                onClose={() => setCurrentReceipt(null)}
-                isLoggedIn={userProfile.uid !== 'guest'}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
+              {showVibeCheckModal && vibeVenue && (
+                <VibeCheckModal
+                  isOpen={showVibeCheckModal}
+                  onClose={() => setShowVibeCheckModal(false)}
+                  venue={vibeVenue}
+                  onConfirm={confirmVibeCheck}
+                  clockedIn={clockedInVenue === vibeVenue.id}
+                  onClockInPrompt={() => {
+                    setSelectedVenue(vibeVenue);
+                    setShowClockInModal(true);
+                    setShowVibeCheckModal(false);
+                  }}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  userRole={userProfile.role}
+                  onLogin={handleMemberLoginClick}
+                />
+              )}
 
-            <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
-          </div>
+              {showPreferredSipsModal && (
+                <PreferredSipsModal
+                  isOpen={showPreferredSipsModal}
+                  onClose={() => setShowPreferredSipsModal(false)}
+                  userProfile={userProfile}
+                  setUserProfile={setUserProfile}
+                />
+              )}
+
+              {showHomeBaseModal && homeBaseTargetVenue && (
+                <HomeBaseModal
+                  isOpen={showHomeBaseModal}
+                  onClose={() => setShowHomeBaseModal(false)}
+                  venueId={homeBaseTargetVenue.id}
+                  venueName={homeBaseTargetVenue.name}
+                  userProfile={userProfile}
+                  setUserProfile={setUserProfile}
+                />
+              )}
+
+              {showMakerSurvey && (
+                <MakerSurveyModal
+                  isOpen={showMakerSurvey}
+                  onClose={() => {
+                    setShowMakerSurvey(false);
+                    // Optimistic update to prevent re-trigger in this session
+                    setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
+                  }}
+                  userId={userProfile.uid}
+                />
+              )}
+
+              {currentReceipt && (
+                <VibeReceiptModal
+                  data={currentReceipt}
+                  onClose={() => setCurrentReceipt(null)}
+                  isLoggedIn={userProfile.uid !== 'guest'}
+                  onLogin={handleMemberLoginClick}
+                />
+              )}
+
+              <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+            </div>
+          </Suspense>
         </DiscoveryProvider>
       </Router>
     </ErrorBoundary >
+
   );
 }

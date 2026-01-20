@@ -2,8 +2,11 @@ import { GeminiService } from '../services/geminiService';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables from functions/.env
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Reliable path resolution relative to process.cwd() (which is functions root)
+// If we are in functions/, root is ../.env
+const envPath = path.resolve(process.cwd(), '../.env');
+console.log(`Debug: Loading .env from ${envPath}`);
+dotenv.config({ path: envPath });
 
 async function verifyEventCompliance() {
     console.log("🍹🚀 Verifying Event LCB Compliance...");
@@ -23,7 +26,8 @@ async function verifyEventCompliance() {
             venueType: "Dive Bar",
             eventType: "Bottomless Mimosa Brunch", // RISKY INPUT
             date: "2025-06-01",
-            time: "11:00 AM"
+            time: "11:00 AM",
+            city: "Olympia, WA"
         });
 
         console.log("📝 Generated Description:", description);

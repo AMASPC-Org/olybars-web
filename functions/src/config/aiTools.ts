@@ -69,7 +69,7 @@ export const ARTIE_TOOLS = [
             properties: {
                 skill_id: {
                     type: 'STRING',
-                    description: 'The ID of the action to perform (e.g., "update_flash_deal", "update_happy_hour").'
+                    description: 'The ID of the action to perform (e.g., "schedule_flash_deal", "update_happy_hour").'
                 }
             },
             required: ['skill_id']

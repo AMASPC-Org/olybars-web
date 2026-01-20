@@ -133,7 +133,7 @@ export const BackRoomScreen: React.FC = () => {
                                             </a>
                                         ) : (
                                             <button
-                                                onClick={() => navigate(`/venues/${room.venueId}`)}
+                                                onClick={() => navigate(`/bars/${room.venueId}`)}
                                                 className="w-full bg-slate-800 text-white py-4 rounded-2xl flex items-center justify-center gap-2 font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all active:scale-95 border border-white/5"
                                             >
                                                 <Info size={14} />
@@ -142,7 +142,7 @@ export const BackRoomScreen: React.FC = () => {
                                         )}
 
                                         <button
-                                            onClick={() => navigate(`/venues/${room.venueId}`)}
+                                            onClick={() => navigate(`/bars/${room.venueId}`)}
                                             className="w-full py-2 text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] hover:text-primary transition-colors"
                                         >
                                             Visit {room.venueName} Profile

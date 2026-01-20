@@ -9,6 +9,7 @@ import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
 import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { VenueGallery } from '../components/VenueGallery';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { VibeMugs } from '../../../components/VibeMugs';
 
 interface VenuesScreenProps {
     venues: Venue[];
@@ -130,7 +131,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 return distA - distB;
             }
             if (activeSort === 'energy') {
-                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, dead: 3 };
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, mellow: 3, dead: 4 };
                 return order[a.status] - order[b.status];
             }
             if (activeSort === 'buzz') {
@@ -154,7 +155,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 }
 
                 // Fallback to Status
-                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, dead: 3 };
+                const order: Record<VenueStatus, number> = { packed: 0, buzzing: 1, chill: 2, mellow: 3, dead: 4 };
                 return order[a.status] - order[b.status];
             }
             return 0;
@@ -186,7 +187,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 </div>
 
                 {/* Type Toggles (Primary) */}
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-2 overflow-x-auto pb-2">
                     {[
                         { id: 'all', label: 'All' },
                         { id: 'bar_pub', label: 'Bars' },
@@ -211,7 +212,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
                 {/* Sorting & Quick Filters */}
                 <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
                         <button
                             onClick={() => setActiveSort('buzz')}
                             className={`flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === 'buzz' ? 'bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]' : 'bg-surface text-slate-400 border-slate-800'}`}
@@ -288,7 +289,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                     .map(v => (
                                         <Link
                                             key={`fallback-${v.id}`}
-                                            to={`/venues/${v.id}`}
+                                            to={`/bars/${v.id}`}
                                             className="w-full bg-slate-900/50 border border-white/5 rounded-xl p-4 flex justify-between items-center group/item hover:bg-slate-900 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
@@ -320,7 +321,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <Link to={`/venues/${venue.id}`} className="hover:text-primary transition-colors">
+                                            <Link to={`/bars/${venue.id}`} className="hover:text-primary transition-colors">
                                                 <h3 className="text-2xl font-black text-white font-league uppercase italic leading-none group-hover:text-primary transition-colors">
                                                     {venue.name}
                                                 </h3>
@@ -347,7 +348,8 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                     </div>
 
                                     <div className="text-right">
-                                        <div className={`text-[10px] font-black px-3 py-1 rounded-full border mb-2 inline-block font-league uppercase tracking-widest ${venue.hourStatus === 'open' ? 'bg-green-500/10 text-green-400 border-green-400/30' : venue.hourStatus === 'last_call' ? 'bg-red-600/20 text-red-400 border-red-500 animate-pulse' : 'bg-red-500/10 text-red-400 border-red-400/30'}`}>
+                                        <VibeMugs status={venue.status} size={14} />
+                                        <div className={`text-[10px] font-black px-3 py-1 rounded-full border mb-2 mt-2 inline-block font-league uppercase tracking-widest ${venue.hourStatus === 'open' ? 'bg-green-500/10 text-green-400 border-green-400/30' : venue.hourStatus === 'last_call' ? 'bg-red-600/20 text-red-400 border-red-500 animate-pulse' : 'bg-red-500/10 text-red-400 border-red-400/30'}`}>
                                             {venue.hourStatus === 'open' ? 'Open Now' : venue.hourStatus === 'last_call' ? 'LAST CALL 🕒' : 'Closed'}
                                         </div>
                                         {venue.distance !== null && (
@@ -371,7 +373,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                     )}
 
                                     {venue.leagueEvent && (
-                                        <Link to={`/venues/${venue.id}`} className="block bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between group/event cursor-pointer hover:bg-slate-800 transition-colors">
+                                        <Link to={`/bars/${venue.id}`} className="block bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between group/event cursor-pointer hover:bg-slate-800 transition-colors">
                                             <div className="flex items-center gap-3">
                                                 <Trophy size={16} className="text-primary" />
                                                 <div>

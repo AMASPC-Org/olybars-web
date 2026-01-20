@@ -1,26 +1,32 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
 import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
 
-interface Props {
-    children?: ReactNode;
+import { logErrorToBackend } from '../../services/errorService';
+
+interface ErrorBoundaryProps {
+    children: React.ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
     hasError: boolean;
     error: Error | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-    public state: State = {
-        hasError: false,
-        error: null
-    };
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
 
-    public static getDerivedStateFromError(error: Error): State {
+    static getDerivedStateFromError(error: Error) {
         return { hasError: true, error };
     }
 
-    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+        // Log to Backend
+        logErrorToBackend(error, 'ErrorBoundary', errorInfo.componentStack);
+
+        // Log to console for local dev
         console.error('Uncaught error:', error, errorInfo);
     }
 

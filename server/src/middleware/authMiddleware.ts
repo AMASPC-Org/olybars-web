@@ -6,6 +6,8 @@ export interface AuthenticatedRequest extends Request {
         uid: string;
         email?: string;
         role?: string;
+        systemRole?: string;
+        isAdmin?: boolean;
         homeBase?: string;
         venuePermissions?: Record<string, string>;
     };
@@ -49,15 +51,31 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
 
     try {
         const decodedToken = await auth.verifyIdToken(idToken);
+        const { uid, email, role: claimRole, isAdmin: claimIsAdmin } = decodedToken;
 
-        // Fetch User Role from Firestore for RBAC if needed
-        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        // Optimization: Priority 1 - Custom Claims (No Read)
+        if (claimRole) {
+            req.user = {
+                uid,
+                email,
+                role: (claimRole as string),
+                isAdmin: !!claimIsAdmin,
+                venuePermissions: {} // Will be hydrated if needed by requireVenueAccess
+            };
+            return next();
+        }
+
+        // Priority 2 - Fallback to Firestore (Transition Period)
+        console.warn(`[Auth] Fallback to Firestore for ${email} (Missing Custom Claims)`);
+        const userDoc = await db.collection('users').doc(uid).get();
         const userData = userDoc.data();
 
         req.user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email,
+            uid,
+            email,
             role: userData?.role || 'user',
+            systemRole: userData?.systemRole || 'user',
+            isAdmin: !!userData?.isAdmin,
             venuePermissions: userData?.venuePermissions || {}
         };
 
@@ -82,15 +100,28 @@ export const identifyUser = async (req: AuthenticatedRequest, res: Response, nex
 
     try {
         const decodedToken = await auth.verifyIdToken(idToken);
+        const { uid, email, role: claimRole, isAdmin: claimIsAdmin } = decodedToken;
 
-        // Fetch User Role from Firestore for RBAC
-        const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+        if (claimRole) {
+            req.user = {
+                uid,
+                email,
+                role: (claimRole as string),
+                isAdmin: !!claimIsAdmin
+            };
+            return next();
+        }
+
+        // Fallback for identification
+        const userDoc = await db.collection('users').doc(uid).get();
         const userData = userDoc.data();
 
         req.user = {
-            uid: decodedToken.uid,
-            email: decodedToken.email,
+            uid,
+            email,
             role: userData?.role || 'user',
+            systemRole: userData?.systemRole || 'user',
+            isAdmin: !!userData?.isAdmin,
             homeBase: userData?.homeBase
         };
     } catch (error) {
@@ -111,8 +142,8 @@ export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'sta
         const user = req.user;
         if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Admin Bypass
-        if (user.role === 'admin' || user.role === 'super-admin') return next();
+        // Admin Bypass (Enhanced for System Admin)
+        if (user.role === 'admin' || user.role === 'super-admin' || user.systemRole === 'admin' || user.isAdmin) return next();
 
         // Detect venueId from request
         const venueId = (req.params.id || req.params.venueId || req.query.venueId) as string;
@@ -153,7 +184,7 @@ export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'sta
  */
 export const requireRole = (roles: string[]) => {
     return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        if (!req.user || !roles.includes(req.user.role || '')) {
+        if (!req.user || (!roles.includes(req.user.role || '') && !roles.includes(req.user.systemRole || ''))) {
             return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
         }
         next();

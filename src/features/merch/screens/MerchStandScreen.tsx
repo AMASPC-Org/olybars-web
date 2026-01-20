@@ -50,14 +50,14 @@ const MerchStandScreen: React.FC<MerchStandScreenProps> = ({ venues }) => {
             </section>
 
             {/* Filter Tabs */}
-            <div className="px-6 mb-6 overflow-x-auto flex gap-2 no-scrollbar">
+            <div className="px-6 mb-6 overflow-x-auto flex gap-2">
                 {categories.map(cat => (
                     <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
                         className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap ${selectedCategory === cat
-                                ? 'bg-primary text-black border-primary'
-                                : 'bg-white/5 text-slate-400 border-white/10'
+                            ? 'bg-primary text-black border-primary'
+                            : 'bg-white/5 text-slate-400 border-white/10'
                             }`}
                     >
                         {cat}
