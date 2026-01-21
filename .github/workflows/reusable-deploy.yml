@@ -67,8 +67,6 @@ jobs:
         env:
           VITE_GOOGLE_BROWSER_KEY: ${{ secrets.vite_key }}
 
-      # --- 3. Backend Build & Deploy (Cloud Run) ---
-      # We build from root (.) so Dockerfile can access package.json if needed
       # --- 3. Backend Build & Deploy (Native Docker) ---
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev
