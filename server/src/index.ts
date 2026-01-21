@@ -28,7 +28,46 @@ const port = config.PORT;
 
 // [SECURITY] Standard headers
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: {
+        directives: {
+            // Re-apply defaults but relax for dev & google APIs
+            "default-src": ["'self'"],
+            "connect-src": [
+                "'self'",
+                "http://localhost:*",
+                "ws://localhost:*",
+                "https://identitytoolkit.googleapis.com",
+                "https://securetoken.googleapis.com",
+                "https://firestore.googleapis.com",
+                "https://*.firebaseio.com",
+                "https://*.cloudfunctions.net",
+                "https://maps.googleapis.com",
+                "https://stats.g.doubleclick.net" // Analytics often needs this
+            ],
+            "script-src": [
+                "'self'",
+                "'unsafe-inline'", // Needed for some google maps callbacks / dev tools
+                "'unsafe-eval'",   // Often needed for dev source maps
+                "https://maps.googleapis.com",
+                "https://*.googleapis.com"
+            ],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "img-src": [
+                "'self'",
+                "data:",
+                "blob:",
+                "https://maps.gstatic.com",
+                "https://maps.googleapis.com",
+                "https://*.googleusercontent.com",
+                "https://firebasestorage.googleapis.com"
+            ],
+            "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+            "frame-src": ["'self'", "https://*.firebaseapp.com"],
+            "object-src": ["'none'"],
+            "upgrade-insecure-requests": null, // Disable auto-upgrade for localhost dev
+        },
+    },
 }));
 app.use(compression());
 
@@ -1500,7 +1539,7 @@ v1Router.post('/ai/generate-image', verifyToken, requireVenueAccess('manager'), 
     }
 });
 
-app.listen(port, () => {
+app.listen(Number(port), '0.0.0.0', () => {
     const isCloudRun = !!process.env.K_SERVICE;
     console.log(`\n🚀 OLYBARS BACKEND LISTENING ON PORT ${port}`);
     console.log(`🌍 Environment: ${config.NODE_ENV}`);

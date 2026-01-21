@@ -1,5 +1,7 @@
 import { PULSE_CONFIG } from '../../src/config/pulse.js';
 import { db } from './firebaseAdmin.js';
+import { calculateDampedScore, getConsensusThreshold, calculateSaturation, calculateDecayedScore } from './utils/scoring.js';
+
 
 import { Venue, Signal, SignalType, Badge, UserBadgeProgress, VenueStatus, GameStatus } from '../../src/types.js';
 import { geocodeAddress } from './utils/geocodingService.js';
@@ -118,22 +120,14 @@ export const updateVenueBuzz = async (venueId: string) => {
         .where('timestamp', '>', twelveHoursAgo) // Optimization: limit query
         .get();
 
-    let score = 0;
+    const signals = signalsSnapshot.docs.map(doc => doc.data() as Signal);
+
+    // 1. Calculate Buzz Score (Damped & Decayed)
+    const score = calculateDampedScore(signals, now);
+
     const activeUserIds = new Set<string>();
 
-    signalsSnapshot.forEach(doc => {
-        const data = doc.data() as Signal;
-
-        // 1. Calculate Buzz Score
-        let signalValue = 0;
-        if (data.type === 'clock_in') signalValue = PULSE_CONFIG.POINTS.CLOCK_IN;
-        if (data.type === 'vibe_report') signalValue = PULSE_CONFIG.POINTS.VIBE_REPORT;
-
-        // Recency Decay: 50% drop every HALFLIFE (default 60 mins)
-        const ageInHours = (now - data.timestamp) / PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE;
-        const decayedValue = signalValue * Math.pow(0.5, ageInHours);
-        score += decayedValue;
-
+    signals.forEach(data => {
         // 2. Calculate Live Headcount (Rolling Window)
         // [Unified Density] Count Vibe Reports as "Bodies" too
         if (data.timestamp > liveWindowAgo && (data.type === 'clock_in' || data.type === 'vibe_report')) {
@@ -144,8 +138,6 @@ export const updateVenueBuzz = async (venueId: string) => {
     const venueDoc = await db.collection('venues').doc(venueId).get();
     const venueData = venueDoc.data();
 
-    const oldStatus = venueData?.status;
-
     // 4. Consensus Algorithm Logic (Rule 05-X - Beta Battalion Pivot)
     const consensusClockinWindow = now - PULSE_CONFIG.CONSENSUS.CLOCKIN_WINDOW;
     const consensusVibeWindow = now - PULSE_CONFIG.CONSENSUS.VIBE_WINDOW;
@@ -153,8 +145,7 @@ export const updateVenueBuzz = async (venueId: string) => {
     const consensusClockins = new Set<string>();
     const consensusVibeReports = new Set<string>();
 
-    signalsSnapshot.forEach(doc => {
-        const data = doc.data() as Signal;
+    signals.forEach(data => {
         if (data.timestamp > consensusClockinWindow && data.type === 'clock_in') {
             consensusClockins.add(data.userId);
         }
@@ -163,13 +154,17 @@ export const updateVenueBuzz = async (venueId: string) => {
         }
     });
 
+    // Dynamic Thresholds based on Venue Capacity
+    const capacity = venueData?.capacity || PULSE_CONFIG.PHYSICS.DEFAULT_CAPACITY;
+    const requiredClockins = getConsensusThreshold(capacity);
+
     const isConsensusPacked =
-        consensusClockins.size >= PULSE_CONFIG.CONSENSUS.CLOCKINS_REQUIRED ||
+        consensusClockins.size >= requiredClockins ||
         consensusVibeReports.size >= PULSE_CONFIG.CONSENSUS.VIBE_REPORTS_REQUIRED;
 
     // [Relative Density] Calculate Saturation
-    const capacity = venueData?.capacity || PULSE_CONFIG.PHYSICS.DEFAULT_CAPACITY;
-    const saturation = score / capacity;
+    // USES HEADCOUNT, NOT SCORE (Decoupled Game Logic)
+    const saturation = calculateSaturation(activeUserIds.size, capacity);
 
     // If consensus is met, force 'packed'. Otherwise follow saturation-based status.
     let calibratedStatus: VenueStatus = 'mellow';
@@ -227,19 +222,23 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     const now = Date.now();
 
     // 1. Calculate Virtual Buzz (Decay)
+    // 1. Calculate Virtual Buzz (Decay)
     let decayedScore = venue.currentBuzz?.score || 0;
     if (venue.currentBuzz?.score && venue.currentBuzz.lastUpdated) {
-        const ageInMs = now - venue.currentBuzz.lastUpdated;
-        const decayHours = PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE / (60 * 60 * 1000);
-        const ageInHours = ageInMs / (60 * 60 * 1000);
-        decayedScore = venue.currentBuzz.score * Math.pow(0.5, ageInHours / decayHours);
+        decayedScore = calculateDecayedScore(venue.currentBuzz.score, venue.currentBuzz.lastUpdated, now);
     }
 
     // 2. Determine Status (Respect Manual Override)
     let status = venue.status;
     if (!(venue.manualStatus && venue.manualStatusExpiresAt && venue.manualStatusExpiresAt > now)) {
         const capacity = venue.capacity || PULSE_CONFIG.PHYSICS.DEFAULT_CAPACITY;
-        const saturation = decayedScore / capacity;
+        // Approximation: We don't have realtime activeUserIds here in the purely virtual check.
+        // We must rely on the last known clockInscount (which is stored on the venue doc)
+        // or accept that status changes only on writes/refreshes.
+
+        // HOWEVER, 'clockIns' field on venue is the authoritative headcount for display.
+        const likelyHeadcount = venue.clockIns || 0;
+        const saturation = calculateSaturation(likelyHeadcount, capacity);
 
         status = 'dead';
         if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
