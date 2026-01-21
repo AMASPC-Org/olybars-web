@@ -69,13 +69,18 @@ jobs:
 
       # --- 3. Backend Build & Deploy (Cloud Run) ---
       # We build from root (.) so Dockerfile can access package.json if needed
-      - name: Build and Push Container
+      # --- 3. Backend Build & Deploy (Native Docker) ---
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev
+
+      - name: Build Container
         run: |
-          gcloud builds submit . \
-            --tag ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
-            --project ${{ inputs.project_id }} \
-            --region ${{ inputs.region }} \
-            --suppress-logs
+          docker build . \
+            --tag ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest
+
+      - name: Push Container
+        run: |
+          docker push ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest
 
       - name: Deploy to Cloud Run
         run: |

@@ -1,6 +1,6 @@
 node_modules
-# /dist removed
-# !server/dist removed
+dist
+server/dist
 .git
 .env
 .firebase
