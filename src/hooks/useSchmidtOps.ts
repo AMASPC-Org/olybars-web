@@ -1,18 +1,19 @@
 // File: src/hooks/useSchmidtOps.ts
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
 import { VenueOpsService } from '../services/VenueOpsService';
 import { SkillContext, EventSkillContext } from '../types/skill';
 import { ChatMessage } from '../types/chat'; // Unified Type
-import { SchmidtOpsState } from '../features/Schmidt/types';
+import * as ArtieConcierge from '../features/artie/concierge';
 
 // Modular Skill Handlers - PURE SCHMIDT
-import * as SchmidtBounty from '../features/Schmidt/flashBounty';
-import * as SchmidtImages from '../features/Schmidt/imageGen';
-import * as SchmidtContent from '../features/Schmidt/contentOps';
-import * as SchmidtEvents from '../features/Schmidt/eventOps';
-import * as SchmidtExecution from '../features/Schmidt/execution';
-import * as SchmidtExtraction from '../features/Schmidt/eventExtraction';
+import * as SchmidtBounty from '../skills/Schmidt/flashDeal';
+import * as SchmidtImages from '../skills/Schmidt/imageGen';
+import * as SchmidtContent from '../skills/Schmidt/marketing';
+import * as SchmidtEvents from '../skills/Schmidt/eventOps';
+import * as SchmidtExecution from '../skills/Schmidt/execution';
+import * as SchmidtExtraction from '../skills/Schmidt/eventExtraction';
+import { SchmidtOpsState } from '../skills/Schmidt/types';
 
 // 2. Regulatory Guardrails (LCB Compliance)
 const LCB_FORBIDDEN_TERMS = ['free alcohol', 'free beer', 'free shots', 'free drinks', 'unlimited', 'bottomless', 'complimentary', 'giveaway', '0.00', '$0']; // @guardrail-ignore
@@ -33,12 +34,21 @@ interface EventDraft {
 }
 
 export const useSchmidtOps = () => {
-    // No more 'persona' state - this is STRICTLY Schmidt
+    // 1. Core State (Unified Schmidt System)
+    const [persona, setPersona] = useState<'schmidt' | 'artie'>('artie'); // Default to Artie (Visitor)
     const [opsState, setOpsState] = useState<SchmidtOpsState>('idle');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [currentBubbles, setCurrentBubbles] = useState<QuickReplyOption[]>([]);
     const [draftData, setDraftData] = useState<any>({});
-    const [eventDraft, setEventDraft] = useState<EventDraft>({ imageState: 'none' }); // Specific state for the interview
+    const [eventDraft, setEventDraft] = useState<EventDraft>({ imageState: 'none' });
+
+    // [DEFENSIVE] Ensure persona is never undefined
+    useEffect(() => {
+        if (!persona) {
+            console.warn('[SchmidtOps] Persona undefined, resetting to artie');
+            setPersona('artie');
+        }
+    }, [persona]);
     const [isLoading, setIsLoading] = useState(false);
     const [venue, setVenue] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -116,7 +126,7 @@ export const useSchmidtOps = () => {
     // 5. The Traffic Controller (Skill Context Provider)
     const processAction = useCallback(async (action: string, rawPayload?: string, venueId?: string, requestContext?: { userId?: string; userRole?: string; hpValue?: string }) => {
         setError(null);
-        const payload = rawPayload?.trim();
+        let payload = rawPayload?.trim();
 
         if (venueId && !venue) {
             await fetchVenue(venueId);
@@ -124,7 +134,6 @@ export const useSchmidtOps = () => {
 
         // --- Context Implementation ---
         const addUserMessage = (text: string) => {
-            // Generate ID for key props
             const id = `u-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             setMessages(prev => [...prev, { id, role: 'user', text, timestamp: Date.now() }]);
         };
@@ -133,7 +142,7 @@ export const useSchmidtOps = () => {
             const id = `s-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             const newMessage: ChatMessage = {
                 id,
-                role: 'artie', // Kept generic for now, or 'model'
+                role: 'artie',
                 text: text,
                 timestamp: Date.now(),
             };
@@ -175,25 +184,50 @@ export const useSchmidtOps = () => {
             setEventDraft
         };
 
+        // --- Visitor Delegation (Artie Persona) ---
+        // If in Artie mode and not a designated internal skill, use the Concierge
+        const isSkillKey = action.startsWith('skill_');
+        const isSystemKey = ['START_SESSION', 'confirm_post', 'UPLOAD_FILE', 'completed', 'cancel'].includes(action);
+
+        // Map specific state machine transitions from the UI
+        const stateToActionMap: Record<string, string> = {
+            'flash_deal_input': 'SUBMIT_DEAL_TEXT',
+            'event_input': 'SUBMIT_EVENT_TEXT',
+            'social_post_input': 'SUBMIT_SOCIAL_POST_TEXT',
+            'email_draft_input': 'SUBMIT_EMAIL_TEXT',
+            'calendar_post_input': 'SUBMIT_CALENDAR_TEXT',
+            'website_content_input': 'SUBMIT_WEB_TEXT',
+            'image_gen_purpose': 'SUBMIT_IMAGE_PURPOSE'
+        };
+        const mappedAction = stateToActionMap[opsState];
+
+        if (!isSkillKey && !isSystemKey && !mappedAction && persona === 'artie') {
+            await ArtieConcierge.handleVisitorQuery(rawPayload || action, ctx as any);
+            return;
+        }
+
+        // Use the mapped action if we are in a waiting state
+        const routingAction = mappedAction || action;
+
         // --- THE ROUTING TABLE (SCHMIDT / OWNER ADMIN) ---
-        switch (action) {
+        switch (routingAction) {
             case 'START_SESSION':
-                setOpsState('selecting_skill');
                 setMessages([]);
-
-                const welcomeMsg = "Welcome back! I'm ready to help. What's the mission?";
-
-                const welcomeBubbles: QuickReplyOption[] = [
-                    { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
-                    { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
-                    { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
-                    { id: '4', label: 'Draft Email', value: 'skill_email_draft', icon: '✉️' },
-                    { id: '5', label: 'Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
-                    { id: '6', label: 'Web Content', value: 'skill_website_content', icon: '🌐' },
-                    { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
-                ];
-
-                addSchmidtResponse(welcomeMsg, welcomeBubbles);
+                if (persona === 'schmidt') {
+                    setOpsState('selecting_skill');
+                    const welcomeMsg = "Coach Schmidt here. We've got work to do. What's the mission?";
+                    const welcomeBubbles: QuickReplyOption[] = [
+                        { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
+                        { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
+                        { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
+                        { id: '4', label: 'Draft Email', value: 'skill_email_draft', icon: '✉️' },
+                        { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
+                    ];
+                    addSchmidtResponse(welcomeMsg, welcomeBubbles);
+                } else {
+                    setOpsState('idle');
+                    addSchmidtResponse("Cheers! I'm Artie, your local guide. Ask me anything about Oly's bars, deals, or events!");
+                }
                 break;
 
             // --- SCHMIDT: Flash Bounties ---
@@ -203,7 +237,7 @@ export const useSchmidtOps = () => {
             case 'bounty_food':
             case 'bounty_drink':
             case 'bounty_time':
-                SchmidtBounty.handleTypeSelection(action, ctx);
+                SchmidtBounty.handleTypeSelection(routingAction, ctx);
                 break;
             case 'method_ideation':
                 SchmidtBounty.handleMethodIdeation(ctx);
@@ -227,20 +261,14 @@ export const useSchmidtOps = () => {
             case 'purpose_web':
             case 'purpose_print':
             case 'purpose_exclusive':
-                {
-                    const labelMap: any = { 'purpose_social': 'Social Media', 'purpose_web': 'Website', 'purpose_print': 'Print Flyer', 'purpose_exclusive': 'Member Only' };
-                    SchmidtImages.handleSubmitPurpose(labelMap[action] || payload, ctx);
-                }
+                SchmidtImages.handleSubmitPurpose(routingAction, payload, ctx);
                 break;
             case 'SUBMIT_IMAGE_GOAL':
             case 'goal_event':
             case 'goal_menu':
             case 'goal_vibe':
             case 'goal_hiring':
-                {
-                    const labelMap: any = { 'goal_event': 'Promote Event', 'goal_menu': 'Showcase Menu', 'goal_vibe': 'Daily Vibe', 'goal_hiring': 'Hiring/Team' };
-                    SchmidtImages.handleSubmitGoal(labelMap[action] || payload, ctx);
-                }
+                SchmidtImages.handleSubmitGoal(routingAction, payload, ctx);
                 break;
             case 'SUBMIT_IMAGE_EVENT':
                 SchmidtImages.handleSubmitEventDetails(payload, ctx);
@@ -250,7 +278,7 @@ export const useSchmidtOps = () => {
                 break;
             case 'SUBMIT_IMAGE_SPECIALS':
             case 'no_specials':
-                SchmidtImages.handleSubmitSpecials(action === 'no_specials' ? 'no_specials' : payload, ctx);
+                SchmidtImages.handleSubmitSpecials(routingAction === 'no_specials' ? 'no_specials' : payload, ctx);
                 break;
             case 'SUBMIT_IMAGE_CONTEXT':
                 await SchmidtImages.handleSubmitContext(payload, ctx);
@@ -348,24 +376,19 @@ export const useSchmidtOps = () => {
                 setOpsState('selecting_skill');
                 setDraftData({});
                 setEventDraft({ imageState: 'none' });
-                setCurrentBubbles([
-                    { id: '1', label: 'Flash Bounty', value: 'skill_flash_deal', icon: '⚡' },
-                    { id: '2', label: 'Add Event', value: 'skill_add_event', icon: '📅' },
-                    { id: '3', label: 'Social Post', value: 'skill_social_post', icon: '📱' },
-                    { id: '4', label: 'Draft Email', value: 'skill_email_draft', icon: '✉️' },
-                    { id: '5', label: 'Calendar Post', value: 'skill_calendar_post', icon: '🗓️' },
-                    { id: '6', label: 'Web Content', value: 'skill_website_content', icon: '🌐' },
-                    { id: '7', label: 'Gen Image', value: 'skill_generate_image', icon: '🎨' }
-                ]);
-                addSchmidtResponse("Cancelled. What else?");
+                addSchmidtResponse("Cancelled. Ready for the next mission.");
                 break;
 
             default:
-                console.warn("Unknown Schmidt Action:", action);
-                addSchmidtResponse(`I'm learning a new trick called ${action}, but I haven't mastered it yet.`);
-                setOpsState('selecting_skill');
+                if (persona === 'artie') {
+                    await ArtieConcierge.handleVisitorQuery(payload || action, ctx as any);
+                } else {
+                    console.warn("Unknown Schmidt Action:", action);
+                    addSchmidtResponse(`Coach is confused by ${action}. Let's get back to basics.`);
+                    setOpsState('selecting_skill');
+                }
         }
-    }, [draftData, eventDraft, opsState, validateLCBCompliance, validateSchedule, venue, fetchVenue]);
+    }, [draftData, eventDraft, opsState, validateLCBCompliance, validateSchedule, venue, fetchVenue, persona]);
 
     const addSchmidtMessage = useCallback((text: string, imageUrl?: string) => {
         const id = `s-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -384,24 +407,17 @@ export const useSchmidtOps = () => {
         setOpsState('idle');
         setDraftData({});
         setEventDraft({ imageState: 'none' });
-        setCurrentBubbles([]); // CLEAR BUBBLES
+        setCurrentBubbles([]);
 
-        // Final sanity re-init
-        const id = `schmidt-init-${Date.now()}`;
-        setMessages([{
-            id,
-            role: 'artie',
-            text: `Schmidt here. System reset complete. Ready for new orders.`,
-            timestamp: Date.now()
-        }]);
-
-        // Trigger start session to repopulate bubbles
+        // Initial sanitzer
         processAction('START_SESSION');
     }, [processAction]);
 
     return {
+        persona,
+        setPersona,
         opsState,
-        setOpsState, // Exposed for external control (e.g. Edit button)
+        setOpsState,
         messages,
         currentBubbles,
         processAction,
