@@ -98,5 +98,5 @@ jobs:
         run: |
           firebase deploy \
             --project ${{ inputs.project_id }} \
-            --only functions,firestore,hosting,storage \
+            --only functions,firestore,storage,hosting:${{ inputs.environment == 'production' && 'prod' || 'dev' }} \
             --non-interactive
