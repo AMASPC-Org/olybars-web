@@ -73,7 +73,9 @@ jobs:
         run: |
           gcloud builds submit . \
             --tag ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
-            --project ${{ inputs.project_id }}
+            --project ${{ inputs.project_id }} \
+            --region ${{ inputs.region }} \
+            --suppress-logs
 
       - name: Deploy to Cloud Run
         run: |
