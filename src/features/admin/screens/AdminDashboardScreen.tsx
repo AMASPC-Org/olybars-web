@@ -9,13 +9,13 @@ import {
 } from 'lucide-react';
 
 import { fetchAllUsers, fetchSystemStats, fetchRecentActivity } from '../../../services/userService';
-import { fetchVenues, updateVenueDetails } from '../../../services/venueService';
+import { fetchVenues, updateVenueDetails, fetchAdminVenues, deleteVenue } from '../../../services/venueService';
 import { UserProfile, ActivityLog, Venue } from '../../../types';
 import { AiAccessTab } from '../components/AiAccessTab';
 import { PhotoApprovalCard } from '../components/PhotoApprovalCard';
 import { PinCalibrationMap } from '../components/PinCalibrationMap';
 import { RefineryQueue } from '../components/RefineryQueue';
-import { Camera, MapPin, Trophy } from 'lucide-react';
+import { Camera, MapPin, Trophy, Trash2 } from 'lucide-react';
 import { BountyReviewQueue } from '../components/BountyReviewQueue';
 
 interface AdminDashboardScreenProps {
@@ -31,7 +31,7 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
 
     const { data: venues = [] } = useQuery({
         queryKey: ['venues-full', activeTab],
-        queryFn: () => fetchVenues(activeTab === 'refinery' ? false : true),
+        queryFn: () => fetchAdminVenues(),
         enabled: activeTab === 'venues' || activeTab === 'overview' || activeTab === 'refinery',
     });
     const [searchTerm, setSearchTerm] = useState('');
@@ -169,6 +169,18 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
             queryClient.invalidateQueries({ queryKey: ['venues'] });
         } catch (error) {
             console.error('Failed to reject photo', error);
+        }
+    };
+
+    const handleDeleteVenue = async (venueId: string) => {
+        if (!window.confirm('Are you sure you want to permanently delete this venue? This cannot be undone.')) return;
+
+        try {
+            await deleteVenue(venueId);
+            queryClient.invalidateQueries({ queryKey: ['venues-full'] });
+        } catch (error) {
+            console.error('Failed to delete venue', error);
+            alert('Failed to delete venue');
         }
     };
 
@@ -382,6 +394,13 @@ export const AdminDashboardScreen: React.FC<AdminDashboardScreenProps> = ({ user
                                                     title={venue.isActive !== false ? "Active" : "Archived"}
                                                 >
                                                     {venue.isActive !== false ? <Power size={16} /> : <Archive size={16} />}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteVenue(venue.id)}
+                                                    className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-all rounded-lg ml-1"
+                                                    title="Permanently Delete Venue"
+                                                >
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </td>
                                         </tr>

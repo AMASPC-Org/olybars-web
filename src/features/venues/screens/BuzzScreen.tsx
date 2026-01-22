@@ -678,8 +678,8 @@ export const BuzzScreen: React.FC = () => {
                             }`}>
                             {venue.name}
                           </h3>
-                          {venue.distance && (
-                            <span className="text-[10px] font-bold text-slate-500 uppercase">{venue.distance}mi</span>
+                          {venue.distance !== null && (
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">{venue.distance.toFixed(1)}mi</span>
                           )}
                         </div>
 

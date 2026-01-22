@@ -1,5 +1,6 @@
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
-import { SchmidtOpsState } from '../features/Schmidt/types'; // Moved types to feature to avoid circular dep if needed, or just keep as is for now but add ChatMessage
+import { SchmidtOpsState } from '../skills/Schmidt/types';
+
 import { ChatMessage } from './chat';
 
 /**
@@ -26,7 +27,7 @@ export interface SkillContext {
     venue: any;
 
     // Core Logic Relay (to allow skills to trigger other actions/skills)
-    processAction: (action: string, payload?: string, venueId?: string, context?: { userId?: string; userRole?: string; hpValue?: string }) => Promise<void>;
+    processAction: (action: string, payload?: string, venueId?: string, context?: { userId?: string; userRole?: string; hpValue?: string }, forcedPersona?: 'schmidt' | 'artie') => Promise<void>;
 
     // Validation Helpers
     validateLCBCompliance?: (text: string) => { valid: boolean; reason?: string };

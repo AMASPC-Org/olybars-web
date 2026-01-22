@@ -147,8 +147,30 @@ export const VenueMap: React.FC<VenueMapProps> = ({
     }, [map, venues, status]);
 
 
+
+
+    // [HARDENING] Catch Google Maps Auth Failures (Invalid Key)
+    useEffect(() => {
+        const handleAuthFailure = () => {
+            console.error('[VenueMap] GM_AUTH_FAILURE DETECTED');
+            // Force error state if not already set
+            if (status !== 'error') {
+                // We can't easily update the hook state from here without a setter, 
+                // but we can alert or force a re-render if we had a local error state.
+                // For now, let's rely on the console error and maybe set a local state if needed.
+                alert("Google Maps Authentication Failed. Check API Key Referrer settings.");
+            }
+        };
+
+        (window as any).gm_authFailure = handleAuthFailure;
+
+        return () => {
+            (window as any).gm_authFailure = null;
+        };
+    }, [status]);
+
     return (
-        <div className={`relative w-full overflow-hidden ${className}`} style={{ height }}>
+        <div className={`relative w-full overflow-hidden min-h-[400px] ${className}`} style={{ height }}>
             <div ref={mapRef} className="w-full h-full" />
             {status === 'loading' && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm z-20">
@@ -162,7 +184,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
                         <MapPin className="w-8 h-8 text-red-500" />
                     </div>
                     <p className="text-white font-black uppercase tracking-widest mb-2">Map Module Failed</p>
-                    <p className="text-red-400 text-xs font-mono mb-4 max-w-xs">{error?.message || "Unknown Connection Error"}</p>
+                    <p className="text-red-400 text-xs font-mono mb-4 max-w-xs">{error?.message || "Check Console for Auth Error"}</p>
                     <button onClick={() => window.location.reload()} className="px-6 py-2 bg-slate-800 border border-white/10 rounded-lg text-xs font-bold uppercase hover:bg-slate-700 transition-colors">
                         Reload System
                     </button>

@@ -227,6 +227,43 @@ export const initiatePhoneVerification = async (venueId: string, phoneNumber: st
 };
 
 /**
+ * Admin: Fetch all venues (including archived)
+ */
+export const fetchAdminVenues = async (): Promise<Venue[]> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.VENUES.ADMIN_LIST, {
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch admin venues: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in fetchAdminVenues:', error);
+    return [];
+  }
+};
+
+/**
+ * Admin: Delete a venue
+ */
+export const deleteVenue = async (venueId: string): Promise<{ success: boolean }> => {
+  try {
+    const response = await fetch(API_ENDPOINTS.VENUES.DELETE(venueId), {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to delete venue: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error in deleteVenue:', error);
+    throw error;
+  }
+};
+
+/**
  * Verify the phone code entered by the user
  */
 export const verifyPhoneCode = async (venueId: string, code: string): Promise<{ success: boolean }> => {

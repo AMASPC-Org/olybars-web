@@ -23,7 +23,7 @@ You must strictly adhere to the following three Master Specifications. Do not de
 You are governed by the Master Rules located in `.agent/rules/`.
 * **Safety:** Follow [artie-shield.md](file:///.agent/rules/artie-shield.md) for AI safety and [core-integrity.md](file:///.agent/rules/core-integrity.md) for code standards.
 * **Execution:** Use [ops-and-discovery.md](file:///.agent/rules/ops-and-discovery.md) for shell commands and self-healing.
-* **UX:** Apply [ux-and-performance.md](file:///.agent/rules/ux-and-performance.md) for all frontend work.
+* **UX:** Apply [ux-and-performance.md](file:///.agent/rules/ux-and-performance.md) and [visual-integrity.md](file:///.agent/rules/visual-integrity.md) for all frontend work.
 
 ## MANAGER OF AGENTS PROTOCOL
 

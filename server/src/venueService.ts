@@ -1808,3 +1808,32 @@ export const getPendingBounties = async () => {
         ...doc.data()
     }));
 };
+
+/**
+ * Admin: Fetch all venues including inactive/archived ones.
+ */
+export const fetchAllVenuesAdmin = async (): Promise<Venue[]> => {
+    // Bypass cache for admin to ensure real-time accuracy and see "ghosted" venues
+    try {
+        const snapshot = await db.collection('venues').get();
+        const venues = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Venue));
+        // Sort alphabetically
+        return venues.sort((a, b) => a.name.localeCompare(b.name));
+    } catch (error) {
+        console.error('Error fetching venues for admin:', error);
+        throw error;
+    }
+};
+
+/**
+ * Admin: Delete a venue permanently.
+ */
+export const deleteVenue = async (venueId: string) => {
+    // 1. Delete the venue document
+    await db.collection('venues').doc(venueId).delete();
+
+    // 2. Clear cache to reflect changes immediately
+    venueCache = null;
+
+    return { success: true, message: `Venue ${venueId} deleted.` };
+};

@@ -124,13 +124,15 @@ export const useSchmidtOps = () => {
 
 
     // 5. The Traffic Controller (Skill Context Provider)
-    const processAction = useCallback(async (action: string, rawPayload?: string, venueId?: string, requestContext?: { userId?: string; userRole?: string; hpValue?: string }) => {
+    const processAction = useCallback(async (action: string, rawPayload?: string, venueId?: string, requestContext?: { userId?: string; userRole?: string; hpValue?: string }, forcedPersona?: 'schmidt' | 'artie') => {
         setError(null);
         let payload = rawPayload?.trim();
 
         if (venueId && !venue) {
             await fetchVenue(venueId);
         }
+
+        const effectivePersona = forcedPersona || persona;
 
         // --- Context Implementation ---
         const addUserMessage = (text: string) => {
@@ -201,7 +203,7 @@ export const useSchmidtOps = () => {
         };
         const mappedAction = stateToActionMap[opsState];
 
-        if (!isSkillKey && !isSystemKey && !mappedAction && persona === 'artie') {
+        if (!isSkillKey && !isSystemKey && !mappedAction && effectivePersona === 'artie') {
             await ArtieConcierge.handleVisitorQuery(rawPayload || action, ctx as any);
             return;
         }
@@ -213,7 +215,7 @@ export const useSchmidtOps = () => {
         switch (routingAction) {
             case 'START_SESSION':
                 setMessages([]);
-                if (persona === 'schmidt') {
+                if (effectivePersona === 'schmidt') {
                     setOpsState('selecting_skill');
                     const welcomeMsg = "Coach Schmidt here. We've got work to do. What's the mission?";
                     const welcomeBubbles: QuickReplyOption[] = [
@@ -380,7 +382,7 @@ export const useSchmidtOps = () => {
                 break;
 
             default:
-                if (persona === 'artie') {
+                if (effectivePersona === 'artie') {
                     await ArtieConcierge.handleVisitorQuery(payload || action, ctx as any);
                 } else {
                     console.warn("Unknown Schmidt Action:", action);
@@ -402,7 +404,7 @@ export const useSchmidtOps = () => {
         setMessages(prev => [...prev, newMessage]);
     }, []);
 
-    const resetOps = useCallback(() => {
+    const resetOps = useCallback((forcedPersona?: 'schmidt' | 'artie') => {
         setMessages([]);
         setOpsState('idle');
         setDraftData({});
@@ -410,7 +412,7 @@ export const useSchmidtOps = () => {
         setCurrentBubbles([]);
 
         // Initial sanitzer
-        processAction('START_SESSION');
+        processAction('START_SESSION', undefined, undefined, undefined, forcedPersona);
     }, [processAction]);
 
     return {

@@ -21,6 +21,7 @@ export const VibeMugs: React.FC<VibeMugsProps> = ({
 }) => {
     // 1. Legacy Adapter: Normalize 'dead' to 'mellow'
     const normalizedStatus = status.toLowerCase() === 'dead' ? 'mellow' : status.toLowerCase();
+    console.log('[VibeMugs] status:', status, 'normalized:', normalizedStatus);
 
     // 2. Define Mug Counts and Colors
     const config: Record<string, { count: number; color: string; label: string }> = {

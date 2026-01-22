@@ -39,6 +39,12 @@ This rule ensures high performance, cost-efficiency, and a personalized user exp
 - **Gold Standard**: Refer to `InfoRulesModal.tsx` for the correct implementation pattern.
 - **Clipping Prevention**: Never nest a Modal inside a container with `transform`, `filter`, or `perspective` properties.
 
-## 7. Visual System Constants
+## 7. Guest-First Accessibility & UX
+- **No Refusals**: Never redirect unauthenticated users to `/access-denied` if the content can be shown in a "Preview" or "Shadow" state.
+- **Login Friction**: If a restricted action is clicked, open the `LoginModal` instead of an error page.
+- **Shadow Drops**: When a Guest performs an action (e.g., check-in simulation), display "Shadow Drops" (+X Drops) with a call to action: "Login to save your reservoir."
+- **Settings Sanctuary**: Automatically hide the "Settings" and "Dashboard" links from the navigation menu for Guest profiles.
+
+## 8. Visual System Constants
 - **Mellow Status**: ALWAYS use `slate-500` (Gray) for "Mellow". NEVER use green/emerald (reserved for "Active/Buzzing").
 - **Money/Currency**: Use `emerald` only for financial transactions or "Drops" gains.

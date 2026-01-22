@@ -258,13 +258,12 @@ export default function OlyBarsApp() {
           if (freshProfile) {
             // 2. [SECURITY] Re-apply Ryan Rule (Hardcoded Super Admin)
             if (freshProfile.email === 'ryan@amaspc.com') {
-              console.log('[App] Applying Ryan Rule during hydration');
+
               freshProfile.role = 'super-admin' as any;
               freshProfile.systemRole = 'admin' as any;
             }
 
             // 3. Update State if different
-            console.log('[App] Hydrated Profile:', freshProfile.uid, freshProfile.role);
             setUserProfile(prev => ({
               ...prev,
               ...freshProfile,

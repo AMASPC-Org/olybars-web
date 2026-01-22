@@ -9,7 +9,7 @@ export const Footer = () => {
                     OLYBARS<span className="text-primary">.COM</span>
                 </span>
                 <p className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">
-                    Points have no cash value. 21+.
+                    Drops have no cash value. 21+.
                 </p>
             </div>
 

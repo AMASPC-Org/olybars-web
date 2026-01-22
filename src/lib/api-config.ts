@@ -41,6 +41,8 @@ export const API_ENDPOINTS = {
     },
     VENUES: {
         LIST: `${API_BASE_URL}/venues`,
+        ADMIN_LIST: `${API_BASE_URL}/admin/venues`,
+        DELETE: (id: string) => `${API_BASE_URL}/venues/${id}`,
         SYNC: (id: string) => `${API_BASE_URL}/venues/${id}/sync-google`,
         PULSE: (id: string) => `${API_BASE_URL}/venues/${id}/pulse`,
         CHECK_CLAIM: `${API_BASE_URL}/venues/check-claim`,

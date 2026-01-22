@@ -1,14 +1,18 @@
-# OlyBars Deployment Safety Protocol
+# Deployment Safety Protocols
 
-This rule prevents accidental deployment of broken code or misaligned environment configurations.
+## 1. The "No-Build" Ban
+The Agent is **FORBIDDEN** from running `firebase deploy` or `gcloud run deploy` until a build artifact has been successfully generated in the current session.
 
-## 1. Pre-Deployment Mandate
-- **Build Check**: `npm run build` MUST pass successfully before any manual `firebase deploy` or `gcloud deploy` command.
-- **Backend Check**: `npm run build --prefix functions` must be verified for backend changes.
+## 2. The TypeScript Gate
+Before any deployment command, you MUST execute:
+```bash
+npm run type-check && cd functions && npm run build
+```
+Failure here allows NO exceptions.
 
-## 2. Environment Alignment
-- **Verify Target**: Always check the current active Firebase project (`firebase projects:list`) against the desired environment (DEV vs PROD).
-- **Config Sync**: Ensure `.env.local` or environment variables in the terminal align with the target project ID (e.g., `ama-ecosystem-dev-9ceda`).
+## 3. Secret Scouting
+Before deploying to olybars-backend (Cloud Run), verify environment variables:
 
-## 3. Atomic Changes
-- Do not combine major refactors with architectural deployments if possible. Verify refactors locally and on DEV hosting before touching Cloud Run or PROD rules.
+Check `gcloud run services describe olybars-backend --format="value(spec.template.spec.containers[0].env)"`
+
+Ensure `Maps_API_KEY` and `OPENAI_API_KEY` (or Gemini equiv) are present.

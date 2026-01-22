@@ -74,7 +74,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             // Forbidden categories for future view (Mental Model: "Pulse" is for now, "Scene" is for now)
             const incompatibleFilters: FilterKind[] = ['all', 'status', 'scene', 'features'];
             if (incompatibleFilters.includes(filterKind)) {
-                console.log(`[DISCOVERY] Pivoting to 'events' for future date ${d.toDateString()}`);
+
                 setFilterKind('events');
                 setEventFilter('all');
             }

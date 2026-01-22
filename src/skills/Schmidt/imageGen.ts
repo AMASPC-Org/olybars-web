@@ -14,12 +14,20 @@ export const handleImageGenInit = (ctx: SkillContext) => {
     ]);
 };
 
-export const handleSubmitPurpose = (payload: string | undefined, ctx: SkillContext) => {
-    if (!payload) return;
-    ctx.addUserMessage(payload);
-    ctx.setDraftData((prev: any) => ({ ...prev, purpose: payload }));
+export const handleSubmitPurpose = (action: string, payload: string | undefined, ctx: SkillContext) => {
+    const labelMap: any = {
+        'purpose_social': 'Social Media',
+        'purpose_web': 'Website',
+        'purpose_print': 'Print Flyer',
+        'purpose_exclusive': 'Member Only'
+    };
+    const finalValue = labelMap[action] || payload;
+    if (!finalValue) return;
+
+    ctx.addUserMessage(finalValue);
+    ctx.setDraftData((prev: any) => ({ ...prev, purpose: finalValue }));
     ctx.setOpsState('image_gen_goal');
-    ctx.addSchmidtResponse(`Got it, a ${payload}. \n\nWhat's the main goal of this asset?`, [
+    ctx.addSchmidtResponse(`Got it, a ${finalValue}. \n\nWhat's the main goal of this asset?`, [
         { id: '1', label: 'Promote Event', value: 'goal_event', icon: '📅' },
         { id: '2', label: 'Showcase Menu', value: 'goal_menu', icon: '🍔' },
         { id: '3', label: 'Daily Vibe', value: 'goal_vibe', icon: '✨' },
@@ -27,12 +35,21 @@ export const handleSubmitPurpose = (payload: string | undefined, ctx: SkillConte
     ]);
 };
 
-export const handleSubmitGoal = (payload: string | undefined, ctx: SkillContext) => {
-    if (!payload) return;
-    ctx.addUserMessage(payload);
-    ctx.setDraftData((prev: any) => ({ ...prev, goal: payload }));
+export const handleSubmitGoal = (action: string, payload: string | undefined, ctx: SkillContext) => {
+    const labelMap: any = {
+        'goal_event': 'Promote Event',
+        'goal_menu': 'Showcase Menu',
+        'goal_vibe': 'Daily Vibe',
+        'goal_hiring': 'Hiring/Team'
+    };
+    const finalValue = labelMap[action] || payload;
+    if (!finalValue) return;
 
-    if (payload.toLowerCase().includes('event')) {
+    ctx.addUserMessage(finalValue);
+    ctx.setDraftData((prev: any) => ({ ...prev, goal: finalValue }));
+
+    if (finalValue.toLowerCase().includes('event')) {
+
         ctx.setOpsState('image_gen_event');
         ctx.addSchmidtResponse("Tell me about the event. (e.g. 'Trivia Night, 8pm, high energy')");
     } else {

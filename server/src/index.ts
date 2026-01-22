@@ -326,6 +326,38 @@ v1Router.get('/venues/:id', async (req, res) => {
 });
 
 /**
+ * @route GET /api/admin/venues
+ * @desc Fetch ALL venues for Admin Dashboard (includes archived)
+ */
+v1Router.get('/admin/venues', verifyToken, requireRole(['admin', 'super-admin']), async (req, res) => {
+    try {
+        const { fetchAllVenuesAdmin } = await import('./venueService.js');
+        const venues = await fetchAllVenuesAdmin();
+        res.json(venues);
+    } catch (error: any) {
+        log('ERROR', 'Failed to fetch admin venues', { error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
+ * @route DELETE /api/venues/:id
+ * @desc Delete a venue (Super Admin only)
+ */
+v1Router.delete('/venues/:id', verifyToken, requireRole(['super-admin']), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { deleteVenue } = await import('./venueService.js');
+        await deleteVenue(id);
+        log('INFO', `Venue deleted by super-admin`, { venueId: id, adminId: (req as any).user.uid });
+        res.json({ success: true, message: 'Venue deleted' });
+    } catch (error: any) {
+        log('ERROR', 'Failed to delete venue', { venueId: id, error: error.message });
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+/**
  * @route POST /api/clock-in
  * @desc Verify location and log a clock-in signal
  */

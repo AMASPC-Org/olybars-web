@@ -486,7 +486,7 @@ export class VenueOpsService {
                 }
             }
 
-            console.log('VenueOpsService: Submitting transformed payload:', payload);
+
 
             const result = await EventService.submitEvent(payload as any);
             return result;

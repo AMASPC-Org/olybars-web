@@ -46,3 +46,8 @@ All terminal commands MUST follow Windows PowerShell syntax.
   - `Dev` = Cloud Run (deployed). Changes here require a full build & deploy pipeline.
 - **Deployment Warning**: If asked to "deploy to fix localhost", STOP. You are confused. Deploying never fixes localhost.
 - **Context Awareness**: Always check `window.location.hostname` or the current URL before assuming which environment is broken.
+
+## 7. Known Environment Quirks (Self-Healing)
+- **Firebase Emulator**: Requires **Java 21**. If you see Java-refusal errors, remind the user or check the `PATH`.
+- **Port Locking**: If Port 3000 is occupied, use `/restore-dev` immediately.
+- **Geofencing**: Local development often lacks valid GPS. Use the "Mock Location" override in the Dev Tools to test Vibe reports.

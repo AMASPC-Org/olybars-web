@@ -9,7 +9,7 @@
       "scenic"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 200,
     "isPaidLeagueMember": true,
@@ -42,7 +42,7 @@
       "lgbtq"
     ],
     "foodService": "full_kitchen",
-    "status": "buzzing",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "isPaidLeagueMember": true,
@@ -97,7 +97,7 @@
     "activeFlashBountyId": "fd-w80-01",
     "deal": "$2 Pretzels & Cheese",
     "dealEndsIn": 45,
-    "vibeDefault": "BUZZING",
+    "vibeDefault": "MELLOW",
     "happyHourSpecials": "$1 OFF PINTS & LEOPOLD PRETZELS",
     "happyHour": {
       "startTime": "15:00",
@@ -221,7 +221,7 @@
       "dive"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Twin Peaks meets Skate Rat",
@@ -242,7 +242,7 @@
     "address": "515 Jefferson St SE, Olympia, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "vibeDefault": "CHILL",
+    "vibeDefault": "MELLOW",
     "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
@@ -266,7 +266,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "full_kitchen",
-    "status": "buzzing",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "The Community Hub & NA Pioneers",
@@ -288,7 +288,7 @@
     "address": "600 Franklin St SE STE 105, Olympia, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "vibeDefault": "BUZZING",
+    "vibeDefault": "MELLOW",
     "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
@@ -312,7 +312,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 30,
     "vibe": "The Teeny Tiny Taproom",
@@ -360,7 +360,7 @@
       "wine_focus"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 40,
     "vibe": "The Urban Cellar",
@@ -404,7 +404,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "snacks",
-    "status": "buzzing",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "The Hype Beast; 80s Synth-Pop Vibes",
@@ -448,7 +448,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Approachably dangerous, family founded",
@@ -509,7 +509,7 @@
     "vibe": "Relaxed and community-focused brewing space.",
     "insiderVibe": "Rainwater is the neighborhood's living room. It's often quieter than the big downtown spots, which makes it perfect for a long conversation over a sample flight. The brewers are almost always around and love to talk shop. The outdoor space is a hidden gem.",
     "originStory": "Founded by local brewing enthusiasts with a passion for the Pacific Northwest's rich water resources, Rainwater Brewing seeks to capture the essence of the region in every pint.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -579,7 +579,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "full_kitchen",
-    "status": "buzzing",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The District Anchor; Aberdeen Grit",
     "insiderVibe": "Aberdeen grit in a polished Tumwater building. Rowdy in a good way, designed for loud laughs and big groups.",
@@ -622,7 +622,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Outpost; precision and brotherhood",
     "insiderVibe": "It's in a warehouse district in Lacey. It's not 'cool' in the hipster sense, but it's honest. It's where you go after a shift. I respect it. No pretense.",
@@ -667,7 +667,7 @@
       "cocktail_focus"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Pilgrimage; Rugged and Authentic",
     "insiderVibe": "A world-class educational stop. The bacon whiskey is a conversation starter, but the gin is the real deal.",
@@ -710,7 +710,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "full_kitchen",
-    "status": "buzzing",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Monument; Sovereign Spirits",
     "insiderVibe": "It took an act of Congress to build this. A monument to sovereignty and spirits, partnering with Heritage to build a state-of-the-art facility.",
@@ -755,7 +755,7 @@
       "wine_focus"
     ],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Rare Drop; Spiced Honey Adventures",
     "insiderVibe": " Spicy habanero and ginger meads that drink like cocktails. Located in the heart of Lacey's industrial zone.",
@@ -800,7 +800,7 @@
       "wine_focus"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Industrial Anchor; Serious chemistry",
     "insiderVibe": "High quality product. Josh knows his chemistry. It appeals to the 'Wine Snob' demographic.",
@@ -845,7 +845,7 @@
       "wine_focus"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Hideaway; Stagecoach-stop fantasy",
     "insiderVibe": "Jim Myers (a dentist with a cowboy soul) transformed a potato barn into an 1800s New Orleans brothel-themed tasting room.",
@@ -888,7 +888,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "The Easter Egg; Scavenger Hunt Target",
     "insiderVibe": "We can't send people to them. They don't exist as a venue. But we can gamify the hunt. 'Find the Elk'—extra points for checking in a pint of Elk Pond at a partner bar. It encourages exploration of other venues.",
@@ -955,7 +955,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Industrial grit, stiff drinks, and shuffleboard.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1038,7 +1038,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "The legendary downtown dive. No frills.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1112,7 +1112,7 @@
       "noise_level": "Social"
     },
     "vibe": "Old school olympia. Great beer selection.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1169,7 +1169,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Mid-century modern aesthetic with top-tier cocktails.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1216,7 +1216,7 @@
     "vibe": "Active and welcoming with a great neighborhood feel.",
     "insiderVibe": "Nicole's is where the locals go. It's got that perfect balance of being a sports bar without being *just* a sports bar. The patio is one of the best in town, and the staff actually knows your name. It's unpretentious and consistently good.",
     "originStory": "Established as a cornerstone of the downtown Olympia bar scene, Nicole's has built a reputation for its inclusivity and commitment to providing a top-tier experience for every guest.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1340,7 +1340,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Goth-industrial haven. Dark and moody.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1383,7 +1383,7 @@
       "noise_level": "Social"
     },
     "vibe": "Classic bar returned to its roots.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1425,7 +1425,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Upscale cocktails and lounge atmosphere.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1467,7 +1467,7 @@
       "noise_level": "Social"
     },
     "vibe": "Martinis and music.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1507,7 +1507,7 @@
       "noise_level": "Social"
     },
     "vibe": "Massive selection of taps by the water.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1554,7 +1554,7 @@
     "vibe": "Sophisticated and romantic with exceptional views.",
     "insiderVibe": "Swing is the best 'date night' spot in Olympia, period. The view of Capitol Lake at sunset from the patio is unbeatable. It feels grown-up without being stuffy. The cocktail program is just as strong as the wine list—don't sleep on their seasonal specials.",
     "originStory": "Born from a love of fine wine and great company, Swing has become an Olympia landmark, celebrated for its curated cellar and elevated small plates.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1669,7 +1669,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Cozy spot for wine lovers.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1716,7 +1716,7 @@
     "vibe": "Intimate loft setting for curated wine tastings and retail.",
     "insiderVibe": "The Wine Loft is one of those 'if you know, you know' spots. It's upstairs, quiet, and absolutely packed with character. Maggie and the team are incredibly knowledgeable—this isn't a place for mass-produced labels. It's for finding that one bottle you'll remember for years. Their Saturday tastings are a local institution.",
     "originStory": "A cornerstone of the downtown Olympia wine scene, The Wine Loft has dedicated years to championing independent winemakers and providing a sophisticated sanctuary for wine lovers.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1794,7 +1794,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Retro arcade games and beer.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1858,7 +1858,7 @@
       "noise_level": "Social"
     },
     "vibe": "Local favorite.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1900,7 +1900,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Historic McMenamins vibe.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -1948,7 +1948,7 @@
     "vibe": "Classic American grill with a thick layer of local history.",
     "insiderVibe": "Hannah's is the definition of a 'comfortable' bar. It's where you go when you want a solid burger, a stiff drink, and to be surrounded by generations of Olympia history. It's high-energy on game days and karaoke nights, but welcoming every single day of the week.",
     "originStory": "Opening its doors in 1935, Hannah's has survived prohibition's end, several world changes, and countless downtown shifts, remaining a steady beacon of hospitality in the heart of the city.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2105,7 +2105,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Sports, food, and drinks.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2147,7 +2147,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Modern and energetic.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2180,7 +2180,7 @@
     ],
     "foodService": "none_byof",
     "vibe": "Wait for the bus, grab a drink.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2234,7 +2234,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Eclectic, artsy, and flavorful global tapas.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2277,7 +2277,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Elegant dining and lounge.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2308,7 +2308,7 @@
     "sceneTags": [],
     "foodService": "full_kitchen",
     "vibe": "Latin flavors and drinks.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2357,7 +2357,7 @@
       "noise_level": "Conversational"
     },
     "vibe": "Fine food in the uptown area.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2401,7 +2401,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Iconic dive & legendary karaoke.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2437,7 +2437,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Punk rock vegetarian/vegan spot.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2479,7 +2479,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Grand opening energy.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2536,7 +2536,7 @@
       "noise_level": "Loud/Music"
     },
     "vibe": "Olympia classic.",
-    "status": "buzzing",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2566,7 +2566,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "none_byof",
-    "status": "dead",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "Ghost",
     "location": {
@@ -2595,7 +2595,7 @@
     "venueType": "brewery_taproom",
     "sceneTags": [],
     "foodService": "none_byof",
-    "status": "dead",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "Ghost",
     "location": {
@@ -2626,7 +2626,7 @@
       "wine_focus"
     ],
     "foodService": "none_byof",
-    "status": "dead",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "Ghost",
     "location": {
@@ -2656,7 +2656,7 @@
       "wine_focus"
     ],
     "foodService": "none_byof",
-    "status": "dead",
+    "status": "mellow",
     "clockIns": 0,
     "vibe": "Ghost",
     "location": {
@@ -2701,7 +2701,7 @@
     "vibe": "Elegant, organic, and sophisticated.",
     "insiderVibe": "The Mark is where you go when you want to feel a bit fancy. The courtyard is arguably the most beautiful dining space in Olympia. Their commitment to organic and local ingredients isn't just talk—you can taste it in the food and the drinks. Perfect for a celebration or a high-end night out.",
     "originStory": "Dedicated to the principles of organic cooking and sustainable hospitality, The Mark has been a pioneer in Olympia's fine dining scene for years.",
-    "status": "chill",
+    "status": "mellow",
     "geoLoop": "Downtown_Walkable",
     "isActive": true,
     "isVisible": true,
@@ -2779,7 +2779,7 @@
     "name": "1886",
     "venueType": "restaurant_bar",
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Historic and elevated dining with a dedicated bar.",
@@ -2801,7 +2801,7 @@
     "name": "The Pig Bar",
     "venueType": "bar_pub",
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 50,
     "vibe": "A local favorite for drinks and a solid bar menu.",
@@ -2823,7 +2823,7 @@
     "name": "The Oyster House",
     "venueType": "restaurant_bar",
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Waterfront dining with a legendary oyster bar.",
@@ -2845,7 +2845,7 @@
     "name": "Skep and Skein",
     "venueType": "bar_pub",
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Mead, cider, and beer in a cozy, intellectual atmosphere.",
@@ -2867,7 +2867,7 @@
     "name": "Two Mile House",
     "venueType": "bar_pub",
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "Classic neighborhood bar with local roots.",
@@ -2889,7 +2889,7 @@
     "name": "Buzz's Bar and Grill",
     "venueType": "bar_pub",
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Rowdy, fun, and serves some of the best bar food in town.",
@@ -2911,7 +2911,7 @@
     "name": "The Iron Rabbit",
     "venueType": "restaurant_bar",
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Gastropub excellence with a fantastic cocktail program.",
@@ -2933,7 +2933,7 @@
     "name": "Cascadia Grill",
     "venueType": "restaurant_bar",
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "Eclectic menu and a warm, woody bar atmosphere.",
@@ -2960,15 +2960,15 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "Authentic Mexican flavors in a vibrant, artistic space.",
     "insiderVibe": "The outdoor seating is a must on a sunny day. Their daily happy hour from 2-5pm is one of the better kept secrets on the east side.",
-    "address": "1720 4th Ave E, Olympia, WA 98506, USA",
+    "address": "955 Black Lake Blvd SW, Olympia, WA 98502, USA",
     "location": {
-      "lat": 47.0354703,
-      "lng": -122.8227694
+      "lat": 47.0386833,
+      "lng": -122.9339004
     },
     "isActive": true,
     "isVisible": true,
@@ -2978,7 +2978,7 @@
       "score": 0,
       "lastUpdated": 1767436252598
     },
-    "googlePlaceId": "ChIJ05-qxVsLkVQRYc-36k1NMAE"
+    "googlePlaceId": "ChIJUwyDDrB1kVQRdQZdA9Qk_-k"
   },
   {
     "id": "chelsea-farms-oyster-bar",
@@ -2991,7 +2991,7 @@
       "upscale_casual"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Tide-to-table excellence in a chic, marine-inspired market space.",
@@ -3021,7 +3021,7 @@
       "activity_focus"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 200,
     "vibe": "The ultimate sports and socialization hub, featuring pickleball, rotisserie-style eats, and a self-serve tap wall.",
@@ -3051,7 +3051,7 @@
       "craft_beer"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Nostalgic retro gaming meets modern craft beer and elevated bar fare.",
@@ -3080,7 +3080,7 @@
       "sports"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Rustic charm and local brotherhood; your 'home away from home' in Tumwater.",
@@ -3110,7 +3110,7 @@
       "taco_tuesday"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Funky, local vibe with plenty of quirky memorabilia and a killer Bloody Mary bar.",
@@ -3139,7 +3139,7 @@
       "breakfast"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Premier sports bar and dining at the Tumwater Valley Golf Club.",
@@ -3170,7 +3170,7 @@
       "latin_night"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 300,
     "vibe": "All-ages restaurant by day, high-energy dance destination by night.",
@@ -3200,7 +3200,7 @@
       "pet_friendly"
     ],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 40,
     "vibe": "A permanent Renaissance Faire taproom where fantasy meets flavor.",
@@ -3230,7 +3230,7 @@
       "trivia"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Texas-style BBQ and craft beer haven in the South Sound.",
@@ -3261,7 +3261,7 @@
       "outdoor_patio"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "The local legend remodeled; friendly, community-focused, and 21+ only.",
@@ -3293,7 +3293,7 @@
       "outdoor_seating"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 75,
     "vibe": "A community hub in the heart of working-class Olympia history.",
@@ -3323,7 +3323,7 @@
       "covered_patio"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Unpretentious, spacious, and deeply rooted in the Eastside community.",
@@ -3354,7 +3354,7 @@
       "board_games"
     ],
     "foodService": "none_byof",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Hip, relaxed taproom vibes in a beautifully renovated vintage home.",
@@ -3385,7 +3385,7 @@
       "pull_tabs"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 50,
     "vibe": "A genuine neighborhood dive where everyone actually knows your name.",
@@ -3415,7 +3415,7 @@
       "breakfast"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "High-energy dive bar with legendary karaoke and one of the best cheap breakfasts in Lacey.",
@@ -3445,7 +3445,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 180,
     "vibe": "A massive, vibrant blend of traditional Irish spirits and local sports energy.",
@@ -3475,7 +3475,7 @@
       "outdoor_seating"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Rustic lodge aesthetics with sweeping views of the Capitol City Golf Club.",
@@ -3506,7 +3506,7 @@
       "activity_focus"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 140,
     "vibe": "Community-focused artisan pizza with a lively, family-friendly bar scene.",
@@ -3536,7 +3536,7 @@
       "community_hub"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 130,
     "vibe": "The original wood-fired pioneer of the region; iconic, warm, and highly social.",
@@ -3566,7 +3566,7 @@
       "covered_patio"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 85,
     "vibe": "Welcoming, down-to-earth tavern with a friendly country pulse.",
@@ -3597,7 +3597,7 @@
       "cocktails"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 110,
     "vibe": "An energetic fusion of Japanese cuisine and high-spirited nightlife.",
@@ -3627,7 +3627,7 @@
       "homestyle"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "A massive, welcoming roadside retreat featuring high-quality scratch cooking.",
@@ -3658,7 +3658,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "A local Olympia dive with a 'Cheers' heart and some of the best pub food in the region.",
@@ -3689,7 +3689,7 @@
       "flights"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 70,
     "vibe": "A locally owned tap house with a massive rotating selection and friendly service.",
@@ -3720,7 +3720,7 @@
       "upscale_casual"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 45,
     "vibe": "A cozy, sophisticated wine bar and bottle shop specializing in local gems.",
@@ -3750,7 +3750,7 @@
       "darts"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 130,
     "vibe": "A laid-back Westside staple attached to the bowling alley, perfect for sports and groups.",
@@ -3781,7 +3781,7 @@
       "sports"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "Friendly, old-school bar and grill focused on home-cooked favorites and community.",
@@ -3810,7 +3810,7 @@
       "upscale"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 50,
     "vibe": "Sophisticated cocktails in the heart of the Red Wind action.",
@@ -3839,7 +3839,7 @@
       "betting"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "The South Sound's premier casino sports destination.",
@@ -3868,7 +3868,7 @@
       "casino"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Elegant dining featuring Northwest favorites and casino luxury.",
@@ -3897,7 +3897,7 @@
       "activity_focus"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "High-energy sports gaming and classic bar favorites.",
@@ -3926,7 +3926,7 @@
       "craft_beer"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "Artisanal wood-fired pizza and a solid craft tap list.",
@@ -3956,7 +3956,7 @@
       "pool_hall"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "Laid-back Yelm institution since 1955 with a strong local following.",
@@ -3986,7 +3986,7 @@
       "locally_sourced"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "Family-friendly eatery focused on community and elevated scratch-made comfort.",
@@ -4016,7 +4016,7 @@
       "21_plus"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 70,
     "vibe": "Vibrant craft beverage hub housed in a former bank with 32 rotating taps.",
@@ -4046,7 +4046,7 @@
       "piano_bar"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 110,
     "vibe": "Chic yet casual 21+ destination with award-winning fries and elite cocktails.",
@@ -4076,7 +4076,7 @@
       "karaoke"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Historical downtown tavern with deep roots and a lively biker-friendly patio.",
@@ -4106,7 +4106,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Cozy dining with sweeping golf course views and hearty classic comfort.",
@@ -4136,15 +4136,15 @@
       "authentic"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Warm and homey Mexican hospitality with vibrant family atmosphere.",
     "insiderVibe": "Legendary margaritas and the 'Steak Mariachi' (with bacon and mushrooms) keep people coming back. It's a local favorite for birthday celebrations and consistent flavors.",
-    "address": "717 Yelm Ave E, Yelm, WA 98597, USA",
+    "address": "16502 106th Ave SE, Yelm, WA 98597, USA",
     "location": {
-      "lat": 46.9335779,
-      "lng": -122.5881996
+      "lat": 46.9333995,
+      "lng": -122.5882008
     },
     "isActive": true,
     "isVisible": true,
@@ -4166,7 +4166,7 @@
       "small_plates"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 45,
     "vibe": "Sophisticated and approachable wine haven with a Pacific Northwest focus.",
@@ -4196,7 +4196,7 @@
       "outdoor_seating"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 140,
     "vibe": "Award-winning pizza and high-energy sports lounge environment.",
@@ -4225,7 +4225,7 @@
       "sports_bar"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 75,
     "vibe": "A centrally located Yelm staple with high-energy live entertainment and local spirit.",
@@ -4254,7 +4254,7 @@
       "asian_fusion"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "Diverse menu and classic casino hospitality in Lacey.",
@@ -4283,7 +4283,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "A true rustic saloon with deep roots in the Littlerock community.",
@@ -4312,7 +4312,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Elevated Mexican dining experience with a modern Lacey twist.",
@@ -4341,7 +4341,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 110,
     "vibe": "Classic family hospitality and hearty Mexican tradition on Pacific Ave.",
@@ -4370,7 +4370,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Warm, welcoming Mexican dining center in the Yelm Hwy corridor.",
@@ -4399,7 +4399,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Authentic Mexican flavors serving the Hawks Prairie community.",
@@ -4428,7 +4428,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 85,
     "vibe": "A vibrant and authentic taste of Mexico in the heart of Tumwater.",
@@ -4458,7 +4458,7 @@
       "burgers"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 180,
     "vibe": "A sprawling sports hub with local brews and award-winning burgers.",
@@ -4487,7 +4487,7 @@
       "cocktails"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Sophisticated dining and exceptional dry-aged beef in the heart of Lacey.",
@@ -4516,7 +4516,7 @@
       "neighborhood"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Authentic and welcoming Mexican tradition in the Tumwater corridor.",
@@ -4545,7 +4545,7 @@
       "comfort_food"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 130,
     "vibe": "A welcoming blend of family grill and high-energy local pub.",
@@ -4575,7 +4575,7 @@
       "patio"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 70,
     "vibe": "Intimate, artistic Italian dining with deep roots and authentic Roman style.",
@@ -4605,7 +4605,7 @@
       "vibrant"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "A romantic, vibrant Latin-inspired escape in the heart of downtown.",
@@ -4635,7 +4635,7 @@
       "outdoor_seating"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 140,
     "vibe": "Vibrant waterfront dining at the edge of historic Percival Landing.",
@@ -4664,7 +4664,7 @@
       "upscale_casual"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "A refined burger experience with a global whiskey library.",
@@ -4693,7 +4693,7 @@
       "neighborhood"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 70,
     "vibe": "An authentic hometown bar in Tenino with legacy spanning over a century.",
@@ -4722,7 +4722,7 @@
       "burgers"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 140,
     "vibe": "A neighborhood gathering place known for its icy real-fruit drinks and hearty energy.",
@@ -4751,7 +4751,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "A sprawling sports and family hub with a legendary brick oven.",
@@ -4781,7 +4781,7 @@
       "craft_beer"
     ],
     "foodService": "limited_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 60,
     "vibe": "Vibrant, Lego-walled haven for gourmet dogs and craft beer.",
@@ -4811,7 +4811,7 @@
       "brunch"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Warm and welcoming neighborhood spot with elevated PNW comfort Food.",
@@ -4840,7 +4840,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Hearty comfort food and a legendary all-day breakfast menu.",
@@ -4870,7 +4870,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 80,
     "vibe": "Authentic Mexican flavors and exceptional family service.",
@@ -4900,7 +4900,7 @@
       "karaoke"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 100,
     "vibe": "Rustic charm powerhouse with award-winning sourdough burgers.",
@@ -4930,7 +4930,7 @@
       "family_friendly"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 50,
     "vibe": "Innovative tasting room fueled by the next generation of beverage makers.",
@@ -4960,7 +4960,7 @@
       "homemade_tortillas"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 90,
     "vibe": "Stylish, industrial-vibe Mexican destination with elite spirits.",
@@ -4990,7 +4990,7 @@
       "bottle_shop"
     ],
     "foodService": "snacks",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 40,
     "vibe": "Cozy, exploration-focused wine bar in the heart of the Craft District.",
@@ -5020,7 +5020,7 @@
       "breakfast"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 85,
     "vibe": "Cozy culinary destination with a relaxed sports bar energy in NW Olympia.",
@@ -5050,7 +5050,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 150,
     "vibe": "Casual waterfront landmark featuring Budd Inlet views and nautical charm.",
@@ -5079,7 +5079,7 @@
       "family_friendly"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "clockIns": 0,
     "capacity": 120,
     "vibe": "Traditional Chinese excellence serving the Westside community for decades.",
@@ -5107,7 +5107,7 @@
       "authentic"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "vibe": "Authentic Mexican flavors in the heart of downtown.",
     "insiderVibe": "Located inside the 222 Market, this is where you go for legit street tacos and family-owned warmth. It's vibrant, fresh, and consistently award-winning.",
     "originStory": "A family-owned gem that brought the true taste of Mexico to Olympia, quickly becoming a staple of the 222 Market community and winning the hearts (and stomachs) of locals.",
@@ -5136,7 +5136,7 @@
       "patio"
     ],
     "foodService": "full_kitchen",
-    "status": "buzzing",
+    "status": "mellow",
     "vibe": "The Waterfront Craft King.",
     "insiderVibe": "21+ only. Best selection of craft beer on tap in the city. The pizza is low-key great, and the patio is dog-friendly and perfect for people-watching on Columbia.",
     "originStory": "Established as Olympia's premier specialty beer shop and taproom, it's the go-to spot for anyone who takes their hops seriously but their atmosphere relaxing.",
@@ -5167,7 +5167,7 @@
       "community"
     ],
     "foodService": "full_kitchen",
-    "status": "chill",
+    "status": "mellow",
     "vibe": "Community craft beer hub.",
     "insiderVibe": "Located in the Briggs Village area, it's the perfect neighborhood spot for a pint and a burger. Welcoming, family-friendly, and a great rotation of PNW taps.",
     "originStory": "Built to serve the growing SE Olympia community, Briggs Taphouse has quickly become the 'Third Place' for the neighborhood.",
@@ -5217,7 +5217,8 @@
       "is_directory_listed": true,
       "is_league_eligible": true
     },
-    "googlePlaceId": "ChIJfSJlcx91kVQRmdfuB0BmnrM"
+    "googlePlaceId": "ChIJfSJlcx91kVQRmdfuB0BmnrM",
+    "status": "mellow"
   },
   {
     "id": "south-bay-pub",
@@ -5245,7 +5246,8 @@
       "lat": 47.0795779,
       "lng": -122.8479857
     },
-    "googlePlaceId": "ChIJEWWUQpMKkVQRrBJGBM7FKH8"
+    "googlePlaceId": "ChIJEWWUQpMKkVQRrBJGBM7FKH8",
+    "status": "mellow"
   },
   {
     "id": "crafthouse-rochester",
@@ -5263,6 +5265,7 @@
       "lat": 46.8140909,
       "lng": -123.1542509
     },
-    "googlePlaceId": "ChIJJe4VD1N9kVQRle5S7b5lAvU"
+    "googlePlaceId": "ChIJJe4VD1N9kVQRle5S7b5lAvU",
+    "status": "mellow"
   }
 ]

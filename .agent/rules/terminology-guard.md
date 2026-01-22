@@ -32,3 +32,8 @@ We have rebranded from generic "Points" to proprietary "Drops" (Well Water).
 If you see these patterns in `JSX` or `UI Strings`, auto-correct them:
 - `/\d+ Points/i` -> `X Drops`
 - `/Your Score/i` -> `Your Balance`
+
+## 4. The Self-Audit Mandate
+Before reporting any UI task as "Complete", you MUST run a global grep for forbidden terms to ensure no leaks were introduced or missed:
+- `grep -riE "points|score|xp" src/` (Filter out `node_modules` and `types`)
+- If matches are found in user-facing files, you must fix them before finishing.

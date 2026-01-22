@@ -44,9 +44,9 @@ const renderTextWithLinks = (text: string) => {
 };
 
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
-import { useArtieOps } from '../../hooks/useArtieOps'; // [NEW] Visitor Logic
-import { useSchmidtOps } from '../../hooks/useSchmidtOps'; // [MOD] Owner Logic
+import { useSchmidtOps } from '../../hooks/useSchmidtOps'; // [UNIFIED]
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+
 import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
 import { useToast } from '../../components/ui/BrandedToast';
 import { UserProfile, isSystemAdmin } from '../../types';
@@ -133,15 +133,14 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
     // --- 1. Mode Determination ---
     const isOpsMode = !((window as any)._artie_force_guest) && userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
 
-    // [STATE] Lifted Persona State
-    const [persona, setPersona] = useState<'schmidt' | 'artie'>('schmidt');
-
-    // --- 2. Hooks (Both Active) ---
-    const guestArtie = useArtieOps();
+    // --- 2. Hook (Unified) ---
     const opsSchmidt = useSchmidtOps();
 
-    // [SELECTOR] Decide which hook drives the UI
-    const activeHook = (isOpsMode && persona === 'schmidt') ? opsSchmidt : guestArtie;
+    // [SELECTOR] Logic now flows through one hook
+    const activeHook = opsSchmidt;
+    const persona = opsSchmidt.persona;
+
+
 
     const { showToast } = useToast();
     const [input, setInput] = useState('');
@@ -166,17 +165,15 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
         if (isOpen) {
             // Force persona based on permissions
             if (isOpsMode) {
-                // Default to Schmidt, but respect manual toggles if persistent? 
-                // For now, let's stick to Schmidt default on fresh open
                 if (!hasInitializedOps) {
-                    setPersona('schmidt');
-                    opsSchmidt.resetOps();
+                    opsSchmidt.setPersona('schmidt');
+                    opsSchmidt.resetOps('schmidt');
                     setHasInitializedOps(true);
                 }
             } else {
-                setPersona('artie'); // Force Artie for guests
                 if (!hasInitializedOps) {
-                    guestArtie.resetOps(); // Initialize Guest Greeting
+                    opsSchmidt.setPersona('artie');
+                    opsSchmidt.resetOps('artie');
                     setSuggestions([
                         "Who's winning?",
                         "Happy Hour now?",
@@ -186,6 +183,7 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
                     setHasInitializedOps(true);
                 }
             }
+
 
             // Visual Greeting Status
             setGreeting(getArtieGreeting(userProfile));
@@ -210,11 +208,11 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
         scrollToBottom();
 
         // Only parse actions if looking at Artie (Visitor)
-        if (persona === 'artie') {
-            const messages = guestArtie.messages;
+        if (opsSchmidt.persona === 'artie') {
+            const messages = opsSchmidt.messages;
             const lastMessage = messages[messages.length - 1];
 
-            if (lastMessage?.role === 'model' /* or 'artie' */ && !guestArtie.isLoading) {
+            if (lastMessage?.role === 'model' /* or 'artie' */ && !opsSchmidt.isLoading) {
                 if (lastMessage.text.includes('[ACTION]:')) {
                     try {
                         const actionJson = lastMessage.text.split('[ACTION]:')[1].trim();
@@ -231,7 +229,8 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
                 }
             }
         }
-    }, [guestArtie.messages, guestArtie.isLoading, persona]);
+    }, [opsSchmidt.messages, opsSchmidt.isLoading, persona]);
+
 
     // --- 5. Ops Mode Effects ---
     useEffect(() => {
@@ -282,53 +281,9 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
         const venueId = initialVenueId || userProfile?.homeBase;
         const requestContext = { userId: userProfile?.uid, userRole: userProfile?.role, hpValue };
 
-        if (isOpsMode && persona === 'schmidt') {
-            // --- Schmidt / Ops Logic ---
-            const stateToActionMap: Record<string, string> = {
-                'flash_deal_input': 'SUBMIT_DEAL_TEXT',
-                'event_input': 'SUBMIT_EVENT_TEXT',
-                'event_input_title': 'SUBMIT_EVENT_TEXT',
-                'event_input_date': 'SUBMIT_EVENT_TEXT',
-                'event_input_time': 'SUBMIT_EVENT_TEXT',
-                'event_input_type': 'SUBMIT_EVENT_TEXT',
-                'event_input_prizes': 'SUBMIT_EVENT_TEXT',
-                'event_input_details': 'SUBMIT_EVENT_TEXT',
-                'event_init_check_flyer': 'event_init_check_flyer',
-                'event_init_check_gen': 'event_init_check_gen',
-                'event_upload_wait': 'event_upload_wait',
-                'generating_creative_copy': 'review_event_copy',
-                'review_event_copy': 'review_event_copy',
-                'play_input': 'SUBMIT_PLAY_TEXT', // Deprecated?
-                'social_post_input': 'SUBMIT_SOCIAL_POST_TEXT',
-                'email_draft_input': 'SUBMIT_EMAIL_TEXT',
-                'calendar_post_input': 'SUBMIT_CALENDAR_TEXT',
-                'website_content_input': 'SUBMIT_WEB_TEXT',
-                'image_gen_purpose': 'SUBMIT_IMAGE_PURPOSE',
-                'image_gen_goal': 'SUBMIT_IMAGE_GOAL',
-                'image_gen_event': 'SUBMIT_IMAGE_EVENT',
-                'image_gen_audience': 'SUBMIT_IMAGE_AUDIENCE',
-                'image_gen_specials': 'SUBMIT_IMAGE_SPECIALS',
-                'image_gen_context': 'SUBMIT_IMAGE_CONTEXT'
-            };
+        // Unified Logic
+        await opsSchmidt.processAction(userText, undefined, venueId, requestContext);
 
-            const action = stateToActionMap[opsSchmidt.opsState];
-
-            if (action) {
-                await opsSchmidt.processAction(action, userText, venueId);
-            } else {
-                if (opsSchmidt.opsState === 'selecting_skill') {
-                    showToast("Please select a skill from the chips above.", "info");
-                } else {
-                    await opsSchmidt.processAction(userText, undefined, venueId, requestContext);
-                }
-            }
-        } else {
-            // --- Guest / Artie Logic ---
-            setPendingAction(null);
-            setSuggestions([]);
-            setActionStatus('idle');
-            await guestArtie.processAction(userText, undefined, undefined, requestContext);
-        }
     };
 
     const handleSuggestionClick = (suggestion: string) => {
@@ -519,25 +474,24 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="text-xl font-black text-white uppercase tracking-tight font-league">
-                                    {persona === 'schmidt' ? "Coach Schmidt" : "Artie"}
+                                    {opsSchmidt.persona === 'schmidt' ? "Coach Schmidt" : "Artie"}
                                 </h3>
                                 {isOpsMode && (
                                     <button
                                         onClick={() => {
-                                            const newPersona = persona === 'schmidt' ? 'artie' : 'schmidt';
-                                            setPersona(newPersona);
-                                            // Reset the new persona on switch
-                                            if (newPersona === 'schmidt') opsSchmidt.resetOps();
-                                            else guestArtie.resetOps();
+                                            const newPersona = opsSchmidt.persona === 'schmidt' ? 'artie' : 'schmidt';
+                                            opsSchmidt.setPersona(newPersona);
+                                            opsSchmidt.resetOps(newPersona);
                                             showToast(`Switched to ${newPersona === 'schmidt' ? 'Schmidt (Owner)' : 'Artie (Visitor)'} Mode`, "info");
                                         }}
                                         className="bg-primary/20 hover:bg-primary/40 p-1 rounded-md transition-colors"
                                         title="Switch Persona"
                                     >
-                                        {persona === 'schmidt' ? <Bot size={14} className="text-primary" /> : <Sparkles size={14} className="text-primary" />}
+                                        {opsSchmidt.persona === 'schmidt' ? <Bot size={14} className="text-primary" /> : <Sparkles size={14} className="text-primary" />}
                                     </button>
                                 )}
                             </div>
+
                             <div className="flex items-center gap-1.5">
                                 <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOpsMode ? 'bg-primary' : 'bg-green-500'}`} />
                                 <span className="text-[9px] text-primary font-bold uppercase tracking-widest">
@@ -549,15 +503,15 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
                     <button
                         onClick={() => {
                             if (isOpsMode) {
-                                if (persona === 'schmidt') opsSchmidt.resetOps();
-                                else guestArtie.resetOps();
+                                opsSchmidt.resetOps('schmidt');
                                 setPendingAction(null);
                             } else {
-                                guestArtie.resetOps();
+                                opsSchmidt.resetOps('artie');
                                 setPendingAction(null);
                                 // onClose(); // Don't close, just reset
                             }
                         }}
+
                         className="text-slate-500 hover:text-white transition-colors mr-2"
                         title="Reset Conversation"
                     >

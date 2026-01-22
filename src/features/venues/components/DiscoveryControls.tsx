@@ -121,7 +121,9 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                     <div className="relative">
                         <button
                             onClick={() => {
+                                handleInteraction();
                                 setShowVibeMenu(!showVibeMenu);
+                                setFilterKind('status');
                                 setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
                             }}
                             className={`${baseChipClasses} ${statusActive && filterKind !== 'all'
@@ -149,7 +151,10 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                     <div className="relative">
                         <button
                             onClick={() => {
+                                handleInteraction();
                                 setShowEventMenu(!showEventMenu);
+                                setFilterKind('events');
+                                if (!eventFilter) setEventFilter('all');
                                 setShowVibeMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false);
                             }}
                             className={`${baseChipClasses} ${eventsActive ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
@@ -162,7 +167,9 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                     <div className="relative">
                         <button
                             onClick={() => {
+                                handleInteraction();
                                 setShowPlayMenu(!showPlayMenu);
+                                setFilterKind('play');
                                 setShowVibeMenu(false); setShowSceneMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
                             }}
                             className={`${baseChipClasses} ${playActive ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
@@ -171,13 +178,13 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                         </button>
                     </div>
 
-
-
                     {/* SCENE */}
                     <div className="relative">
                         <button
                             onClick={() => {
+                                handleInteraction();
                                 setShowSceneMenu(!showSceneMenu);
+                                setFilterKind('scene');
                                 setShowVibeMenu(false); setShowPlayMenu(false); setShowFeatureMenu(false); setShowEventMenu(false);
                             }}
                             className={`${baseChipClasses} ${sceneActive ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}
@@ -190,7 +197,9 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                     <div className="relative">
                         <button
                             onClick={() => {
+                                handleInteraction();
                                 setShowFeatureMenu(!showFeatureMenu);
+                                setFilterKind('features');
                                 setShowVibeMenu(false); setShowSceneMenu(false); setShowPlayMenu(false); setShowEventMenu(false);
                             }}
                             className={`${baseChipClasses} ${featuresActive ? 'bg-primary text-black border-primary' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'} flex items-center gap-1.5`}

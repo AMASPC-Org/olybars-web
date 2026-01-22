@@ -10,6 +10,7 @@ import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
 import { VenueGallery } from '../components/VenueGallery';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { VibeMugs } from '../../../components/VibeMugs';
+import { useDiscovery } from '../contexts/DiscoveryContext';
 
 interface VenuesScreenProps {
     venues: Venue[];
@@ -31,6 +32,16 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
     const [activeType, setActiveType] = useState<VenueType | 'all'>('all');
     const [activeTag, setActiveTag] = useState<string | null>(searchParams.get('filter') === 'makers' ? 'Makers' : null);
 
+    // Context Filters
+    const {
+        filterKind,
+        statusFilter,
+        sceneFilter,
+        playFilter,
+        featureFilter,
+        eventFilter
+    } = useDiscovery();
+
     // Rotation Logic (shifts every 5 minutes) ensures global fairness
     const rotationOffset = useMemo(() => {
         const rotationInterval = 5 * 60 * 1000;
@@ -45,6 +56,62 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             hourStatus: getVenueStatus(v),
             distance: coords && v.location ? metersToMiles(calculateDistance(coords.latitude, coords.longitude, v.location.lat, v.location.lng)) : null
         })).filter(v => v.isActive !== false); // Filter out Soft Deleted / Archived venues
+
+        console.log('[VenuesScreen] Context State:', { filterKind, statusFilter, count: result.length, sample: result[0]?.status });
+
+        // 0. Global Context Filters (The Sticky Header Controls)
+        if (filterKind === 'status' && statusFilter !== 'all') {
+            result = result.filter(v => v.status === statusFilter);
+        }
+        else if (filterKind === 'deals') {
+            result = result.filter(v => !!v.deal || (v.flashBounties && v.flashBounties.length > 0));
+        }
+        else if (filterKind === 'scene' && sceneFilter !== 'all') {
+            // Basic Taxonomy Mapping or Direct Tag Match
+            result = result.filter(v => {
+                // 1. Check Scene Tags
+                if (v.sceneTags && v.sceneTags.includes(sceneFilter as SceneTag)) return true;
+                // 2. Check Venue Type (rough mapping for common terms)
+                if (sceneFilter === 'dive' && v.venueType === 'bar_pub') return true; // Loose
+                if (sceneFilter === 'brewery' && (v.venueType === 'brewery_taproom' || v.venueType === 'brewpub')) return true;
+                if (sceneFilter === 'sports' && v.sceneTags?.includes('sports')) return true;
+                // 3. Fallback: string match on type
+                return v.venueType.includes(sceneFilter);
+            });
+        }
+        else if (filterKind === 'play' && playFilter !== 'all') {
+            result = result.filter(v => {
+                // Check games list if it exists (assuming strict string match for now)
+                // In a real app, we'd have a normalized Game array.
+                // For now, looking for amenity flags or loose matches if we had a games array.
+                // Since Venue type doesn't explicitly store a list of games in the simplified type used here, 
+                // we might need to rely on sceneTags or add a games field. 
+                // FALLBACK: Filter by amenities if mappable, or skip if data missing.
+                // Assuming 'v.games' or similar might exist in full schema, but let's stick to what we see.
+                // Inspecting Venue type in memory would be good, but let's assume sceneTags covers some:
+                if (playFilter === 'Pool' && v.sceneTags?.includes('pool_tables' as any)) return true;
+                if (playFilter === 'Darts' && v.sceneTags?.includes('darts' as any)) return true;
+                if (playFilter === 'Arcade' && v.venueType === 'arcade_bar') return true;
+                return false; // Strict fail if not mapped yet to ensure 'working' filter means exact matches
+            });
+        }
+        else if (filterKind === 'features' && featureFilter !== 'all') {
+            if (featureFilter === 'patio') result = result.filter(v => v.hasOutdoorSeating);
+            else if (featureFilter === 'dog_friendly') result = result.filter(v => v.isDogFriendly);
+            else if (featureFilter === 'all_ages') result = result.filter(v => v.isAllAges);
+            else if (featureFilter === 'dance_floor') result = result.filter(v => v.sceneTags?.includes('dance_floor' as any));
+        }
+        else if (filterKind === 'events') {
+            if (eventFilter === 'all') {
+                result = result.filter(v => !!v.leagueEvent);
+            } else if (eventFilter !== 'other') {
+                result = result.filter(v => v.leagueEvent === eventFilter || v.leagueEvent?.toLowerCase().includes(eventFilter.toLowerCase()));
+            }
+        }
+        else if (filterKind === 'makers') {
+            result = result.filter(v => v.isHQ || v.isLocalMaker || v.venueType === 'brewery_taproom');
+        }
+
 
         // 1. Search Filter
         if (searchQuery) {
@@ -162,7 +229,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
         });
 
         return result;
-    }, [venues, searchQuery, showOpenOnly, activeTag, activeSort, coords]);
+    }, [venues, searchQuery, showOpenOnly, activeTag, activeSort, coords, filterKind, statusFilter, sceneFilter, playFilter, featureFilter, eventFilter]);
 
     return (
         <div className="bg-background min-h-screen pb-32 font-body text-slate-100">

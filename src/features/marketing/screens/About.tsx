@@ -11,10 +11,10 @@ import { isVenueOpen } from '../../../utils/venueUtils';
 import { SEO } from '../../../components/common/SEO';
 
 // Assets
-import heroArena from '../../../assets/hero-arena.png';
+// import heroArena from '../../../assets/hero-arena.png';
 import leagueBadge from '../../../assets/league-badge.png';
 import artieCoachBg from '../../../assets/artie-coach-bg.png';
-import venuePartnerBg from '../../../assets/venue-partner-bg.png';
+// import venuePartnerBg from '../../../assets/venue-partner-bg.png';
 
 import { API_BASE_URL } from '../../../lib/api-config';
 
@@ -190,7 +190,8 @@ const AboutPage = () => {
             <header className="relative mb-12 -mx-6 -mt-6">
                 <div className="relative h-[35vh] md:h-[45vh] overflow-hidden">
                     <img
-                        src={heroArena}
+                        // src={heroArena}
+                        src="" // TODO: Restore hero-arena.png
                         alt="The Arena - Thurston County"
                         className="w-full h-full object-cover"
                     />
@@ -382,7 +383,7 @@ const AboutPage = () => {
                 <section className="relative">
                     <div className="bg-primary/5 border border-primary/20 rounded-[3rem] overflow-hidden relative p-8">
                         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                            <img src={venuePartnerBg} alt="" className="w-full h-full object-cover grayscale" />
+                            {/* <img src={venuePartnerBg} alt="" className="w-full h-full object-cover grayscale" /> */}
                         </div>
 
                         <div className="relative z-10">

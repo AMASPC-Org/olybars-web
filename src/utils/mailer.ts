@@ -27,12 +27,6 @@ export const sendEmail = async (options: EmailOptions): Promise<{ success: boole
         return await response.json();
     } catch (error) {
         console.error('[MAILER_ERROR]', error);
-        // In local development, we just log it
-        console.log(`\n📨 --- LOCAL MAIL SIMULATION ---`);
-        console.log(`To: ${Array.isArray(options.to) ? options.to.join(', ') : options.to}`);
-        console.log(`Subject: ${options.subject}`);
-        console.log(`Body:\n${options.body}`);
-        console.log(`---------------------------------\n`);
         return { success: true };
     }
 };

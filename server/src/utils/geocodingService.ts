@@ -6,6 +6,8 @@ export interface GeocodeResult {
     lat: number;
     lng: number;
     formattedAddress?: string;
+    placeId?: string;
+    candidateCount?: number;
 }
 
 /**
@@ -27,7 +29,8 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
             return {
                 lat: location.lat,
                 lng: location.lng,
-                formattedAddress: data.results[0].formatted_address
+                formattedAddress: data.results[0].formatted_address,
+                placeId: data.results[0].place_id
             };
         } else {
             console.warn(`[GEOCODE_WARNING] Geocoding failed for ${address}: ${data.status}`);
@@ -50,7 +53,7 @@ export async function findPlaceLocation(query: string): Promise<GeocodeResult | 
     }
 
     try {
-        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=geometry,name,formatted_address&key=${GOOGLE_MAPS_API_KEY}`;
+        const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=geometry,name,formatted_address,place_id&key=${GOOGLE_MAPS_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
 
@@ -59,7 +62,9 @@ export async function findPlaceLocation(query: string): Promise<GeocodeResult | 
             return {
                 lat: location.lat,
                 lng: location.lng,
-                formattedAddress: data.candidates[0].formatted_address
+                formattedAddress: data.candidates[0].formatted_address,
+                placeId: data.candidates[0].place_id,
+                candidateCount: data.candidates.length
             };
         } else {
             console.warn(`[PLACES_WARNING] FindPlace failed for ${query}: ${data.status}`);
