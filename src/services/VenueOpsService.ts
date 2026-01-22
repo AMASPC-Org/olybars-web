@@ -111,7 +111,7 @@ export class VenueOpsService {
                 endTime: endTime,
                 isActive: true,
                 updatedAt: serverTimestamp(),
-                lastUpdatedBy: 'Artie',
+                lastUpdatedBy: 'Schmidt', // Persona Update
                 bounty_task_description: bounty.bounty_task_description || ''
             };
 
@@ -216,9 +216,10 @@ export class VenueOpsService {
             createdAt: serverTimestamp()
         });
 
-        // 2. Deduct Token (Increment Usage)
-        batch.update(venueRef, {
-            'partnerConfig.flashBountiesUsed': increment(1)
+        // 2. Deduct Token (Increment Usage) in PRIVATE DATA
+        const configRef = doc(db, `venues/${venueId}/private_data/config`);
+        batch.update(configRef, {
+            'flashBountiesUsed': increment(1)
         });
 
         await batch.commit();
@@ -289,7 +290,7 @@ export class VenueOpsService {
             // But to keep it simple and per the plan, we'll just log success as if it's stored.
             // Actually, let's at least store the last draft.
             await updateDoc(venueRef, {
-                'lastArtieDraft': {
+                'lastSchmidtDraft': { // Persona Update
                     ...draft,
                     timestamp: Date.now()
                 }
@@ -326,20 +327,38 @@ export class VenueOpsService {
 
     /**
      * Skill: add_menu_item
+     * [SECURITY] Splits data: Public (Item) vs Private (Margins)
      */
-    static async addMenuItem(venueId: string, item: { category: string, name: string, description: string, price?: string }) {
+    static async addMenuItem(venueId: string, item: { category: string, name: string, description: string, price?: string, margin_tier?: string }) {
         if (!venueId) throw new Error("Venue ID is required.");
 
+        const batch = writeBatch(db);
+        const venueRef = doc(db, 'venues', venueId);
+
+        // 1. Public Item
+        const itemRef = doc(collection(venueRef, 'menuItems'));
+        const publicPayload = { ...item };
+        delete (publicPayload as any).margin_tier; // Strip private data
+
+        batch.set(itemRef, {
+            ...publicPayload,
+            createdAt: serverTimestamp(),
+            status: 'active'
+        });
+
+        // 2. Private Margins
+        if (item.margin_tier) {
+            const privateMarginsRef = doc(db, `venues/${venueId}/private_data/menu_margins`);
+            batch.set(privateMarginsRef, {
+                [itemRef.id]: item.margin_tier
+            }, { merge: true });
+        }
+
+        // 3. Update Timestamp
+        batch.update(venueRef, { menuUpdatedAt: serverTimestamp() });
+
         try {
-            const venueRef = doc(db, 'venues', venueId);
-            const itemRef = doc(collection(venueRef, 'menuItems'));
-            await setDoc(itemRef, {
-                ...item,
-                createdAt: serverTimestamp(),
-                status: 'active'
-            });
-            // We also update the timestamp on the main venue doc
-            await updateDoc(venueRef, { menuUpdatedAt: serverTimestamp() });
+            await batch.commit();
             return { success: true };
         } catch (error: any) {
             console.error('Error adding menu item:', error);

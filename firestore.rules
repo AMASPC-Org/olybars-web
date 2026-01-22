@@ -70,6 +70,12 @@ service cloud.firestore {
       match /private_data/{docId} {
         allow read, write: if isSuperAdmin() || isOwnerOf(venueId);
       }
+
+      // Public Menu Items: Readable by all, Writable by Owner/Admin
+      match /menuItems/{itemId} {
+        allow read: if true;
+        allow write: if isSuperAdmin() || isOwnerOf(venueId);
+      }
     }
 
     // Signals: Managed by Backend API

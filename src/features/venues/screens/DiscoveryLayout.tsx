@@ -22,7 +22,8 @@ export const DiscoveryLayout: React.FC = () => {
         isLoading,
         onToggleWeeklyBuzz,
         clockInHistory,
-        vibeCheckHistory
+        vibeCheckHistory,
+        onMemberLoginClick
     } = useOutletContext<{
         venues: Venue[],
         userProfile: UserProfile,
@@ -36,7 +37,8 @@ export const DiscoveryLayout: React.FC = () => {
         isLoading: boolean,
         onToggleWeeklyBuzz: () => void,
         clockInHistory?: ClockInRecord[],
-        vibeCheckHistory?: VibeCheckRecord[]
+        vibeCheckHistory?: VibeCheckRecord[],
+        onMemberLoginClick?: (mode?: 'login' | 'signup') => void
     }>();
 
     return (
@@ -54,6 +56,7 @@ export const DiscoveryLayout: React.FC = () => {
             onToggleWeeklyBuzz={onToggleWeeklyBuzz}
             clockInHistory={clockInHistory}
             vibeCheckHistory={vibeCheckHistory}
+            onMemberLoginClick={onMemberLoginClick}
         />
     );
 };
@@ -71,7 +74,8 @@ const DiscoveryLayoutContent: React.FC<{
     isLoading: boolean,
     onToggleWeeklyBuzz: () => void,
     clockInHistory?: ClockInRecord[],
-    vibeCheckHistory?: VibeCheckRecord[]
+    vibeCheckHistory?: VibeCheckRecord[],
+    onMemberLoginClick?: (mode?: 'login' | 'signup') => void
 }> = ({
     venues,
     userProfile,
@@ -85,7 +89,8 @@ const DiscoveryLayoutContent: React.FC<{
     isLoading,
     onToggleWeeklyBuzz,
     clockInHistory,
-    vibeCheckHistory
+    vibeCheckHistory,
+    onMemberLoginClick
 }) => {
         const navigate = useNavigate();
         const location = useLocation();
@@ -100,7 +105,13 @@ const DiscoveryLayoutContent: React.FC<{
                 <StickyHeader
                     userProfile={userProfile}
                     onMenuClick={onToggleMenu}
-                    onProfileClick={() => navigate('/profile')}
+                    onProfileClick={() => {
+                        if (userProfile.role === 'guest' || userProfile.uid === 'guest') {
+                            onMemberLoginClick?.('login');
+                        } else {
+                            navigate('/profile');
+                        }
+                    }}
                 />
 
                 <div className="space-y-6">

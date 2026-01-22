@@ -24,14 +24,20 @@ export const VibeMugs: React.FC<VibeMugsProps> = ({
     console.log('[VibeMugs] status:', status, 'normalized:', normalizedStatus);
 
     // 2. Define Mug Counts and Colors
+    // 2. Define Mug Counts and Colors
     const config: Record<string, { count: number; color: string; label: string }> = {
-        mellow: { count: 1, color: 'text-slate-400', label: 'Mellow' },
-        chill: { count: 2, color: 'text-amber-400', label: 'Chill' },
-        buzzing: { count: 3, color: 'text-orange-500', label: 'Buzzing' },
-        packed: { count: 4, color: 'text-red-600', label: 'Packed' }
+        mellow: { count: 1, color: 'text-slate-400', label: 'Mellow' }, // was trickle
+        chill: { count: 2, color: 'text-blue-400', label: 'Chill' },   // was flowing
+        buzzing: { count: 3, color: 'text-orange-500', label: 'Buzzing' }, // was gushing
+        packed: { count: 4, color: 'text-red-500', label: 'Packed' },    // was flooded
+        trickle: { count: 1, color: 'text-slate-400', label: 'Mellow' }, // Legacy fallback
+        flowing: { count: 2, color: 'text-blue-400', label: 'Chill' },   // Legacy fallback
+        gushing: { count: 3, color: 'text-orange-500', label: 'Buzzing' }, // Legacy fallback
+        flooded: { count: 4, color: 'text-red-500', label: 'Packed' },     // Legacy fallback
+        dead: { count: 1, color: 'text-slate-400', label: 'Mellow' }     // Legacy fallback
     };
 
-    const current = config[normalizedStatus] || config.mellow;
+    const current = config[normalizedStatus] || config.trickle;
 
     return (
         <div className={`flex items-center gap-1 ${className}`} aria-label={`${current.label} Vibe`}>

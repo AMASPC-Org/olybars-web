@@ -40,11 +40,11 @@ Venue staff are busy. All Vibe updates must be achievable in **< 15 seconds**.
 - **Incentive**: Keeping an accurate Vibe ensures the right crowd finds the venue, optimizing revenue per square foot.
 
 ### 5.2 Real-Time Status definitions
-Staff select from four "Mug" states:
-1.  **Mellow** (1 Mug): < 15% Cap. Focus on intimacy, conversation, and open seating.
-2.  **Chill** (2 Mugs): 15-50% Cap. Social hum, easy service, moderate energy.
-3.  **Buzzing** (3 Mugs): 51-90% Cap. High social energy, fast-paced service.
-4.  **Packed** (4 Mugs): > 90% Cap. Physical peak, high wait times, loud energy.
+Staff select from four "Mug" states (Water Metaphor):
+1.  **Trickle** (1 Mug): < 15% Cap. Focus on intimacy, conversation, and open seating.
+2.  **Flowing** (2 Mugs): 15-50% Cap. Social hum, easy service, moderate energy.
+3.  **Gushing** (3 Mugs): 51-90% Cap. High social energy, fast-paced service.
+4.  **Flooded** (4 Mugs): > 90% Cap. Physical peak, high wait times, loud energy.
 
 > [!NOTE]
 > Setting a "Mellow" vibe triggers a "Pioneer Bounty" (100 PTS) for players, actively incentivizing crowd distribution to your venue during quiet hours.

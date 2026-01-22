@@ -110,11 +110,25 @@ Cell service in Olympia bars (e.g., The Brotherhood basement) is unreliable.
 | **Vibe Photo** | 15 pts | 1/venue/night | CV Analysis |
 | **Explorer Bonus** | 50 pts | 5 unique/7 days | System Logic |
 
-### 8.2 The "Buzz" Algorithm
-Calculates real-time venue activity.
-*   **Inputs**: Hard Clock-in (10.0), Vibe Report (3.0).
-*   **Decay**: Score drops by 50% every 60 mins without signals.
-*   **States**: Dead (0-10), Chill (11-40), Buzzing (41-100), Packed (101+).
+### 8.2 Bayesian Vibe Estimation (The "True" Vibe)
+The system uses Bayesian Inference to estimate the "True Vibe" ($V_{true}$) by combining real-time signals with historical priors. This prevents "No Data" from being interpreted as "Empty".
+
+$$ P(V_{true} | Signals) \propto P(Signals | V_{true}) \cdot P(V_{true}) $$
+
+*   **Prior ($P(V_{true})$)**: The historical baseline probability of a vibe state for a specific (Venue, Day, Hour).
+    *   *Source*: Aggregated `currentBuzz.score` history (rolling 12-week average).
+*   **Likelihood ($P(Signals | V_{true})$)**: The probability of observing current signals given a vibe state.
+    *   *Signal*: Hard Clock-ins (High fidelity), User Vibe Reports (Medium fidelity).
+    *   *Decay*: Signals decay exponentially ($e^{-\lambda t}$) over 60 minutes.
+*   **Posterior**: The updated probability distribution. The displayed Vibe is the *Maximum A Posteriori* (MAP) estimate.
+
+#### 8.2.1 Unified Nomenclature
+| State | Score | Prior (Example) |
+| :--- | :--- | :--- |
+| **Mellow** | 0-15 | Early Week / Afternoons |
+| **Chill** | 16-50 | Happy Hour / Dinners |
+| **Buzzing** | 51-90 | Fri/Sat Peak |
+| **Packed** | 91+ | Special Events |
 
 ### 8.3 Exposure Equity (Algorithmic Fairness)
 To prevent "The Drowning Effect," visibility is managed via dynamic rotation.

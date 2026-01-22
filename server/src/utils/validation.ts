@@ -46,6 +46,8 @@ export const UserUpdateSchema = z.object({
     homeBase: z.string().optional(),
     playerGamePreferences: z.array(z.string()).optional(),
     hasCompletedMakerSurvey: z.boolean().optional(),
+    weeklyBuzz: z.boolean().optional(),
+    showMemberSince: z.boolean().optional(),
     sms_opt_in: z.boolean().optional(),
     notificationSettings: z.object({
         allow_league_intel: z.boolean(),

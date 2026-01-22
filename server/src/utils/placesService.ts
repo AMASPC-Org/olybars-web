@@ -19,6 +19,12 @@ export interface PlaceDetails {
     url?: string;
     rating?: number;
     user_ratings_total?: number;
+    price_level?: number;
+    types?: string[];
+    serves_beer?: boolean;
+    serves_wine?: boolean;
+    serves_vegetarian_food?: boolean;
+    wheelchair_accessible_entrance?: boolean;
     geometry: {
         location: {
             lat: number;
@@ -76,7 +82,7 @@ export async function getPlaceDetails(placeId: string): Promise<PlaceDetails | n
     }
 
     try {
-        const fields = 'place_id,name,formatted_address,formatted_phone_number,international_phone_number,website,opening_hours,geometry,url,photos,rating,user_ratings_total';
+        const fields = 'place_id,name,formatted_address,formatted_phone_number,international_phone_number,website,opening_hours,geometry,url,photos,rating,user_ratings_total,price_level,types,serves_beer,serves_wine,serves_vegetarian_food,wheelchair_accessible_entrance';
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_MAPS_API_KEY}`;
 
         const response = await fetch(url);

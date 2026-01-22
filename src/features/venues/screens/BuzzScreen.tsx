@@ -37,34 +37,33 @@ const SkeletonCard = () => (
 );
 
 const PulseMeter = ({ status }: { status: VenueStatus }) => {
-  if (status === 'dead' || status === 'mellow') {
+  if (status === 'trickle') {
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/30 text-slate-400 text-xs font-bold border border-slate-800">
-        <Clock className="w-3 h-3" /> Mellow
+        <Clock className="w-3 h-3" /> Trickle
       </span>
     );
   }
 
-  if (status === 'chill') {
+  if (status === 'flowing') {
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-900/30 text-blue-200 text-xs font-bold border border-blue-800">
-        <Beer className="w-3 h-3" /> Chill
+        <Beer className="w-3 h-3" /> Flowing
       </span>
     );
   }
 
-
-  if (status === 'buzzing') {
+  if (status === 'gushing') {
     return (
       <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-900/30 text-red-200 text-xs font-bold border border-red-800 animate-pulse">
-        <Flame className="w-3 h-3" /> Buzzing
+        <Flame className="w-3 h-3" /> Gushing
       </span>
     );
   }
 
   return (
     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-900/30 text-pink-200 text-xs font-bold border border-pink-800 animate-pulse">
-      <Zap className="w-3 h-3" /> Packed
+      <Zap className="w-3 h-3" /> Flooded
     </span>
   );
 };
@@ -72,11 +71,10 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
 type FilterKind = 'status' | 'scene' | 'play' | 'makers' | 'features' | 'events' | 'all';
 
 const STATUS_ORDER: Record<VenueStatus, number> = {
-  packed: 0,
-  buzzing: 1,
-  chill: 2,
-  mellow: 3,
-  dead: 4,
+  flooded: 0,
+  gushing: 1,
+  flowing: 2,
+  trickle: 3,
 };
 
 const EventCard = ({ event, onClick }: { event: any, onClick: () => void }) => {
@@ -483,7 +481,7 @@ export const BuzzScreen: React.FC = () => {
       // Next Stop Sort: Bounty > Loaded > Distance
       if (isNextStopMode) {
         if (aBounty !== bBounty) return aBounty ? -1 : 1;
-        const statusOrder: Record<string, number> = { packed: 0, buzzing: 1, chill: 2, mellow: 3 };
+        const statusOrder: Record<string, number> = { flooded: 0, gushing: 1, flowing: 2, trickle: 3 };
         const statusDiff = (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
         if (statusDiff !== 0) return statusDiff;
       }

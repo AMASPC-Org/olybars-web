@@ -143,7 +143,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       .filter(v => v.diff > 0 && v.diff < 180)
       .sort((a, b) => a.diff - b.diff)[0];
 
-    return nextHH ? 'chill' : 'quiet';
+    return nextHH ? 'flowing' : 'trickle';
   };
 
   const pulseStatus = getPulseStatus();
@@ -213,7 +213,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           }`}>
           <div className={`relative border-b-2 transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-black/90 border-slate-800'
             }`}>
-            {/* Top Glow bar for "Buzzing" status */}
+            {/* Top Glow bar for "Gushing" status */}
             {pulseStatus === 'buzzing' && (
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
             )}
@@ -225,8 +225,6 @@ export const AppShell: React.FC<AppShellProps> = ({
               >
                 <div className="relative flex-shrink-0">
                   <img
-                    src={logoIcon}
-                    alt="Logo Icon"
                     className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:rotate-12 transition-transform duration-300"
                   />
                   {pulseStatus === 'buzzing' && (
@@ -303,7 +301,8 @@ export const AppShell: React.FC<AppShellProps> = ({
             isLoading,
             onToggleWeeklyBuzz,
             clockInHistory,
-            vibeCheckHistory
+            vibeCheckHistory,
+            onMemberLoginClick
           }} />
         </div>
         {location.pathname !== '/map' && <Footer />}

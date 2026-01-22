@@ -166,13 +166,13 @@ export const updateVenueBuzz = async (venueId: string) => {
     // USES HEADCOUNT, NOT SCORE (Decoupled Game Logic)
     const saturation = calculateSaturation(activeUserIds.size, capacity);
 
-    // If consensus is met, force 'packed'. Otherwise follow saturation-based status.
-    let calibratedStatus: VenueStatus = 'mellow';
-    if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) calibratedStatus = 'packed';
-    else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) calibratedStatus = 'buzzing';
-    else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) calibratedStatus = 'chill';
+    // If consensus is met, force 'flooded'. Otherwise follow saturation-based status.
+    let calibratedStatus: VenueStatus = 'trickle';
+    if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) calibratedStatus = 'flooded'; // Threshold constants kept as is for physics
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) calibratedStatus = 'gushing';
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) calibratedStatus = 'flowing';
 
-    if (isConsensusPacked) calibratedStatus = 'packed';
+    if (isConsensusPacked) calibratedStatus = 'flooded';
 
     // Manual Overrides (Owner/Admin Control) - Still respected for UI, but SMS trigger is consensus-only
     const finalStatus = (venueData?.manualStatus && venueData?.manualStatusExpiresAt > now)
@@ -240,11 +240,11 @@ const applyVirtualDecay = (venue: Venue): Venue => {
         const likelyHeadcount = venue.clockIns || 0;
         const saturation = calculateSaturation(likelyHeadcount, capacity);
 
-        status = 'dead';
-        if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'packed';
-        else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'buzzing';
-        else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'chill';
-        else status = 'dead';
+        status = 'trickle'; // Default 'dead' -> 'trickle'
+        if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) status = 'flooded';
+        else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) status = 'gushing';
+        else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) status = 'flowing';
+        else status = 'trickle';
     }
 
     // 3. Determine Clock-ins (Respect Manual Override)
@@ -488,7 +488,7 @@ export const clockIn = async (venueId: string, userId: string, userLat: number, 
 
     // Calculate Dynamic Points (The Pioneer Curve - Refactored Jan 2026)
     // Mellow: 100, Chill: 50, Buzzing: 25, Packed: 10
-    const basePoints = PULSE_CONFIG.POINTS.VIBE_POINTS[venueData.status as VenueStatus] || PULSE_CONFIG.POINTS.VIBE_POINTS.mellow;
+    const basePoints = (PULSE_CONFIG.POINTS.VIBE_POINTS as any)[venueData.status] || PULSE_CONFIG.POINTS.VIBE_POINTS.mellow;
     let points = basePoints + eventBonus;
     const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
@@ -1269,6 +1269,18 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     // Map opening hours (simplified as a string for now, as used in ListingManagementTab)
     if (details.opening_hours?.weekday_text) {
         updates.hours = details.opening_hours.weekday_text.join('\n');
+    }
+
+    // [NEW] Map Features to Services
+    const distinctServices = new Set<string>(venueData.services || []);
+    if (details.serves_beer) distinctServices.add('Serves Beer');
+    if (details.serves_wine) distinctServices.add('Serves Wine');
+    if (details.serves_vegetarian_food) distinctServices.add('Vegetarian Options');
+    if (details.wheelchair_accessible_entrance) distinctServices.add('Wheelchair Accessible');
+
+    // Convert Set back to array
+    if (distinctServices.size > 0) {
+        updates.services = Array.from(distinctServices);
     }
 
     // 4. Update Database

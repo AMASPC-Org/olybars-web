@@ -371,6 +371,40 @@ export class GeminiService {
         }
     }
 
+    async rewriteDescription(text: string, tone: string): Promise<string> {
+        const prompt = `
+        TASK: Rewrite this event description to be more engaging.
+        TONE: ${tone}
+        ORIGINAL TEXT: "${text}"
+
+        CONSTRAINTS:
+        1. Keep it short (2 sentences max).
+        2. Enhance the vibe but keep the core facts (time, price, rules).
+        3. No robotic language. Sound like a knowledgeable local.
+        4. [LCB SAFETY]: No "bottomless", "all you can drink", or "get wasted" implications.
+
+        OUTPUT JSON: { "rewritten": "string" }
+        `;
+
+        const response = await this.genAI.models.generateContent({
+            model: 'gemini-2.0-flash',
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: GeminiService.ARTIE_PERSONA }] },
+            config: { response_mime_type: "application/json" }
+        });
+
+        let result = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (!result) throw new Error("Empty response from AI");
+        result = result.replace(/```json\n?|```/g, '').trim();
+
+        try {
+            const json = JSON.parse(result);
+            return json.rewritten;
+        } catch (e) {
+            return result; // Fallback to raw text if JSON parse fails
+        }
+    }
+
     async analyzeScrapedContent(rawContent: string, currentTime: string, venueContext: { city: string, timezone: string }, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
         // Default to Olympia if missing (Safety Net)
         const cityString = venueContext?.city || "Olympia, WA";

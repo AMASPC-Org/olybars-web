@@ -1,4 +1,4 @@
-import { Venue } from '../types';
+import { Venue, VenueStatus } from '../types';
 
 export type HoursStatus = 'open' | 'last_call' | 'closed';
 
@@ -65,6 +65,49 @@ export const getVenueStatus = (venue: Venue, now: Date = new Date()): HoursStatu
     }
 
     return 'closed';
+};
+
+
+export const getNextFallbackVibe = (current: VenueStatus): VenueStatus | null => {
+    switch (current) {
+        case 'flooded': return 'gushing';
+        case 'gushing': return 'flowing';
+        case 'flowing': return 'trickle';
+        case 'trickle': return 'flowing'; // Bounce back up to find activity
+        default: return null;
+    }
+};
+
+/**
+ * Calculates the "True Vibe" using Bayesian inference.
+ * Combines real-time signals with historical priors.
+ */
+export const calculateBayesianVibe = (
+    currentScore: number,
+    lastUpdated: number,
+    historicalPrior: number = 10 // Default to "Trickle" baseline
+): VenueStatus => {
+    const now = Date.now();
+    const minutesSinceUpdate = (now - lastUpdated) / (1000 * 60);
+
+    // 1. Calculate Likelihood (Decayed Signal)
+    // Decay: Halflife of 60 minutes
+    const decayFactor = Math.pow(0.5, minutesSinceUpdate / 60);
+    const likelihoodScore = currentScore * decayFactor;
+
+    // 2. Weighting (Signal vs Prior)
+    // If signal is fresh (< 2 hours), it dominates (80% weight).
+    // As it ages, Prior takes over.
+    const signalWeight = Math.max(0, 1 - (minutesSinceUpdate / 120)); // Linear fade over 2 hours
+    const priorWeight = 1 - signalWeight;
+
+    const posteriorScore = (likelihoodScore * signalWeight) + (historicalPrior * priorWeight);
+
+    // 3. Map Posterior to State
+    if (posteriorScore >= 91) return 'flooded';
+    if (posteriorScore >= 51) return 'gushing';
+    if (posteriorScore >= 16) return 'flowing';
+    return 'trickle';
 };
 
 /**

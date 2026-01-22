@@ -70,6 +70,30 @@ export const VenueMap: React.FC<VenueMapProps> = ({
         }
     }, [map, mapRegion]);
 
+    // [UX-CLEANUP] Hide labels when zoomed out to prevent clutter
+    const LABEL_HIDE_THRESHOLD = 16;
+
+    // Zoom Listener for Dynamic Labels
+    useEffect(() => {
+        if (!map) return;
+
+        const listener = map.addListener('zoom_changed', () => {
+            const currentZoom = map.getZoom() || 14;
+            const shouldShowLabels = currentZoom >= LABEL_HIDE_THRESHOLD;
+
+            markersRef.current.forEach((marker: any) => {
+                // If it's a "beacon" circle (no venueLabel), skip it
+                if (marker.venueLabel) {
+                    marker.setLabel(shouldShowLabels ? marker.venueLabel : null);
+                }
+            });
+        });
+
+        return () => {
+            google.maps.event.removeListener(listener);
+        };
+    }, [map]);
+
     useEffect(() => {
         if (!map || !venues || !window.google) return;
 
@@ -85,7 +109,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             if (venue.isCinderella && !isVenueOpen(venue)) return;
 
             const isLeagueAnchor = venue.tier_config?.is_league_eligible;
-            const isBuzzing = venue.status === 'buzzing';
+            const isGushing = venue.status === 'buzzing' || venue.status === 'packed';
             const isPrivate = venue.membershipRequired;
 
             // Private clubs are desaturated
@@ -95,6 +119,18 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             const pinPath = isPrivate
                 ? "M12,2a5,5,0,0,0-5,5v3H6a2,2,0,0,0-2,2v8a2,2,0,0,0,2,2H18a2,2,0,0,0,2-2V12a2,2,0,0,0-2-2H17V7A5,5,0,0,0,12,2Zm3,8H9V7a3,3,0,0,1,6,0Z"
                 : "M4,3h12v15c0,2.2-1.8,4-4,4H8c-2.2,0-4-1.8-4-4V3z M16,6h2c1.7,0,3,1.3,3,3v4c0,1.7-1.3,3-3,3h-2";
+
+            // Prepare Label Object
+            const labelConfig = {
+                text: venue.name,
+                color: isPrivate ? "#94a3b8" : "white",
+                fontSize: "10px",
+                fontWeight: "900",
+                className: "marker-label-bg"
+            };
+
+            const currentZoom = map.getZoom() || 14;
+            const shouldShowLabel = currentZoom >= LABEL_HIDE_THRESHOLD;
 
             // Standard Marker implementation since mapId overrides styles
             const marker = new google.maps.Marker({
@@ -107,17 +143,14 @@ export const VenueMap: React.FC<VenueMapProps> = ({
                     fillOpacity: 1,
                     strokeWeight: 1.5,
                     strokeColor: "#000",
-                    scale: isBuzzing ? 1.5 : (isPrivate ? 0.8 : 1),
+                    scale: isGushing ? 1.5 : (isPrivate ? 0.8 : 1),
                     anchor: new google.maps.Point(12, 12),
                 },
-                label: {
-                    text: venue.name,
-                    color: isPrivate ? "#94a3b8" : "white",
-                    fontSize: "10px",
-                    fontWeight: "900",
-                    className: "marker-label-bg" // We can style this in CSS for the background
-                }
+                label: shouldShowLabel ? labelConfig : null // Initial state based on zoom
             });
+
+            // Store label config for dynamic toggling
+            (marker as any).venueLabel = labelConfig;
 
             marker.addListener('click', () => {
                 navigate(`/bars/${venue.id}`);

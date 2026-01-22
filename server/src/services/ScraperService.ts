@@ -225,7 +225,8 @@ export class ScraperService {
             pointsAwarded: 25, // Standard scraped event bounty
             sourceConfidence: data.sourceConfidence || 0,
             lastScraped: Date.now(),
-            source: 'automation'
+            source: 'automation',
+            status: 'PENDING'
         };
 
         await db.collection('league_events').doc(eventId).set(event, { merge: true });

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { FormatCurrency } from '../../../utils/formatCurrency';
-import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle, ShoppingBag, Utensils } from 'lucide-react';
+import { Beer, Settings, HelpCircle, X, Trophy, Users, Smartphone, Zap, Plus, Minus, Shield, ChevronRight, Info, QrCode, Download, Printer, Calendar, Crown, Clock, Lock, AlertTriangle, ShoppingBag, Utensils, Sparkles, Bell } from 'lucide-react';
 import { Venue, UserProfile, GameStatus, PartnerTier, TIER_CONFIG, ScheduledDeal } from '../../../types';
 import { format, addHours, parseISO } from 'date-fns';
 import { OwnerMarketingPromotions } from '../../../components/OwnerMarketingPromotions';
@@ -28,6 +28,8 @@ import { BackRoomManagementTab } from '../components/BackRoomManagementTab';
 import { Book, ShieldCheck, Globe } from 'lucide-react';
 import { MfaService } from '../../../services/mfaService';
 import { BrewHouse } from '../../../components/dashboard/BrewHouse';
+import { NotificationsTab } from '../components/NotificationsTab';
+import { useVenueNotifications } from '../hooks/useVenueNotifications';
 
 
 interface OwnerDashboardProps {
@@ -95,7 +97,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealTaskDescription, setDealTaskDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
     const [showArtieCommands, setShowArtieCommands] = useState(false);
-    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom'>(initialView as any); // Added 'menu', 'scraper', 'manual', 'backroom'
+    const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom' | 'notifications'>(initialView as any);
     const [hourlyReport, setHourlyReport] = useState<any>(null);
     const [selectedReportDate, setSelectedReportDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [statsPeriod, setStatsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -108,6 +110,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [privateData, setPrivateData] = useState<any>(null);
     const [isLoadingPrivate, setIsLoadingPrivate] = useState(false);
     const { showToast } = useToast();
+    const { count: notificationCount, hasNotifications } = useVenueNotifications(myVenue?.id);
 
     // [SECURITY] MFA Enforcement Check for Partners
     const isMfaEnrolled = MfaService.isEnrolled(auth.currentUser);
@@ -627,9 +630,35 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                         </button>
                     </>
                 )}
+                <button
+                    onClick={() => setDashboardView('notifications')}
+                    className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 flex items-center gap-2 relative ${dashboardView === 'notifications' ? 'text-primary border-primary' : 'text-slate-500 border-transparent'}`}
+                >
+                    <Bell className="w-3 h-3" />
+                    Notifications
+                    {hasNotifications && (
+                        <span className="absolute top-2 right-2 flex bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 items-center justify-center shadow-md animate-in zoom-in">
+                            {notificationCount > 9 ? '9+' : notificationCount}
+                        </span>
+                    )}
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-8 p-6 pb-24">
+                {myVenue && dashboardView === 'notifications' && (
+                    <NotificationsTab venueId={myVenue.id} />
+                )}
+
+                {myVenue && dashboardView === 'scraper' && (
+                    <ScraperManagementTab
+                        venue={myVenue}
+                        onUpdate={updateVenue}
+                        userProfile={userProfile}
+                        onNavigate={(view) => setDashboardView(view)}
+                        notificationCount={notificationCount}
+                    />
+                )}
+
                 {myVenue && dashboardView === 'main' && (
                     <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -639,7 +668,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                             </div>
                             <div className="bg-surface p-6 border border-white/10 rounded-lg shadow-xl">
                                 <BrewHouse
-                                    currentStatus={myVenue.status || 'mellow'}
+                                    currentStatus={myVenue.status || 'trickle'}
                                     onStatusChange={setManualVibe}
                                     isLoading={isLoadingPrivate}
                                 />
@@ -1095,13 +1124,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                     />
                 )}
 
-                {myVenue && dashboardView === 'scraper' && (
-                    <ScraperManagementTab
-                        venue={myVenue}
-                        onUpdate={(id, updates) => updateVenue(id, updates)}
-                        userProfile={userProfile}
-                    />
-                )}
+
 
                 {myVenue && dashboardView === 'events' && (
                     <EventsManagementTab venue={myVenue} />

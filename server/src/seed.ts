@@ -30,10 +30,14 @@ async function seedVenues() {
         console.warn('⚠️  [WARNING] YOU ARE ABOUT TO UPDATE VENUE DEFINITIONS IN PRODUCTION.');
         console.warn('⚠️  [WARNING] This will overwrite static fields but PRESERVE runtime data (clock-ins, vibe).');
 
-        const answer = await question('Are you absolutely sure you want to proceed? (Y/N): ');
-        if (answer.toLowerCase() !== 'y') {
-            console.log('Seeding aborted by user. 🍻');
-            process.exit(0);
+        if (!process.argv.includes('--yes')) {
+            const answer = await question('Are you absolutely sure you want to proceed? (Y/N): ');
+            if (answer.toLowerCase() !== 'y') {
+                console.log('Seeding aborted by user. 🍻');
+                process.exit(0);
+            }
+        } else {
+            console.log('⚠️  [WARNING] Bypassing confirmation via --yes flag.');
         }
     } else if (isLocal) {
         if (!process.env.FIRESTORE_EMULATOR_HOST) {

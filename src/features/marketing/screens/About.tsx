@@ -43,7 +43,7 @@ const AboutPage = () => {
     }, []);
 
     const buzzingVenues = useMemo(() =>
-        venues.filter(v => v.status === 'buzzing' && v.isActive !== false).slice(0, 2),
+        venues.filter(v => (v.status === 'buzzing' || v.status === 'packed') && v.isActive !== false).slice(0, 2),
         [venues]);
 
     const activeHappyHours = useMemo(() =>
@@ -275,7 +275,7 @@ const AboutPage = () => {
                                 <div>
                                     <h4 className="text-white font-black text-xl uppercase font-league mb-2 flex items-center gap-2 italic">Report the Vibe <ChevronRight size={18} className="text-primary" /></h4>
                                     <p className="text-sm text-slate-400 font-body leading-relaxed">
-                                        Tell the League what the energy is. Chill? Buzzing? Loud? Your qualitative input feeds the real-time "Pulse" for the whole city.
+                                        Tell the League what the energy is. Trickle? Gushing? Flooded? Your qualitative input feeds the real-time "Pulse" for the whole city.
                                     </p>
                                 </div>
                             </div>

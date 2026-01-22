@@ -5,8 +5,9 @@ import { PubSub } from '@google-cloud/pubsub';
 import puppeteer from 'puppeteer';
 import robotsParser from 'robots-parser';
 import md5 from 'md5';
-import { ScrapingMetadata } from '../types/scraping';
 import { GeminiService } from '../services/geminiService';
+// Import shared types
+import { Venue, ScraperSource } from 'olybars-production/src/types/venue';
 
 const db = admin.firestore();
 const pubsub = new PubSub();
@@ -15,53 +16,55 @@ const TOPIC_NAME = 'venue-scrape-queue';
 // --- DISPATCHER ---
 
 export const scoutDispatcher = onSchedule({
-    schedule: 'every wed,fri 09:00',
+    schedule: 'every wed,fri 09:00', // Keeps legacy schedule, but effectively acts as a safety net for "stale" items
     timeZone: 'America/Los_Angeles',
     retryCount: 3,
     memory: '512MiB'
 }, async (event) => {
     console.log('🚀 [Dispatcher] Starting scout dispatch run...');
 
-    // Phase A: The Dispatcher
-    const snapshot = await db.collection('venues') // Actually we need to query based on scraping_metadata, so maybe a collectionGroup or a specialized query.
-    // TDD says: Select venues where scraping.enabled == true AND circuit_breaker_tripped == false
-    // Since scraping_metadata is likely a subcollection field or root field. 
-    // Assuming scraping_metadata is a field on the venue doc for now based on typical Firestore patterns, or a subcollection. 
-    // TDD says: "Collection: venues/{venueId}/scraping_metadata". This implies a subcollection 'scraping_metadata' with a single doc? 
-    // Or just "scraping_metadata" object on venue? TDD says "Collection: venues/{venueId}/scraping_metadata". 
-    // Let's assume it's a subcollection named 'scraping_metadata' with a doc (maybe 'config'?).
-    // Actually, querying across subcollections is 'collectionGroup'.
-
-    // Let's assume for simplicity & cost (read charges) it's a map on the venue object OR we use collectionGroup.
-    // TDD Spec: "Collection: venues/{venueId}/scraping_metadata". 
-    // Let's implement as collectionGroup 'scraping_metadata'.
-
-    const candidates = await db.collectionGroup('scraping_metadata')
-        .where('enabled', '==', true)
-        .where('circuitBreaker.tripped', '==', false)
+    // Query for venues with scraping enabled
+    const venuesSnap = await db.collection('venues')
+        .where('is_scraping_enabled', '==', true)
         .get();
 
-    console.log(`[Dispatcher] Found ${candidates.size} eligible candidates.`);
+    console.log(`[Dispatcher] Found ${venuesSnap.size} venues with scraping enabled.`);
 
     const batchPublisher = pubsub.topic(TOPIC_NAME);
     const publishPromises: Promise<any>[] = [];
+    const now = Date.now();
+    const STALE_THRESHOLD = 24 * 60 * 60 * 1000; // 24 Hours
 
-    for (const doc of candidates.docs) {
-        const meta = doc.data() as ScrapingMetadata;
-        // doc.ref.parent.parent?.id is the venueId
-        const venueId = doc.ref.parent.parent?.id;
+    for (const doc of venuesSnap.docs) {
+        const venue = doc.data() as Venue;
+        if (!venue.scraper_config) continue;
 
-        if (!venueId || !meta.targetUrl) continue;
+        for (const source of venue.scraper_config) {
+            // FILTER: Only Active Sources
+            if (!source.isEnabled) continue;
 
-        const messageData = {
-            venueId,
-            url: meta.targetUrl,
-            previousHash: meta.contentHash || '',
-            metaPath: doc.ref.path
-        };
+            // FILTER: Only Sources that are Stale or have never been run
+            // NOTE: We do NOT pick up 'pending' items here. Realtime triggers handle those.
+            // We mainly want to catch 'active' items that haven't updated in a while.
+            // Also retry 'error' items if they are old enough (backoff)? For now, let's stick to active/stale.
 
-        const dataBuffer = Buffer.from(JSON.stringify(messageData));
-        publishPromises.push(batchPublisher.publishMessage({ data: dataBuffer }));
+            const lastRun = source.lastScraped || 0;
+            const isStale = (now - lastRun) > STALE_THRESHOLD;
+
+            // Also pick up if it's 'active' but somehow missed a run (e.g. manual toggle on but no trigger fired?)
+            // Just strictly using STALE check for now to avoid thundering herd on every run.
+
+            if (isStale && source.status !== 'pending') {
+                const messageData = {
+                    venueId: venue.id,
+                    sourceId: source.id,
+                    url: source.url,
+                    previousHash: source.contentHash || ''
+                };
+                const dataBuffer = Buffer.from(JSON.stringify(messageData));
+                publishPromises.push(batchPublisher.publishMessage({ data: dataBuffer }));
+            }
+        }
     }
 
     await Promise.all(publishPromises);
@@ -78,66 +81,77 @@ export const scoutWorker = onMessagePublished({
     cpu: 1,
     secrets: ["GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY", "GOOGLE_BACKEND_KEY", "VITE_GOOGLE_BROWSER_KEY", "INTERNAL_HEALTH_TOKEN", "GOOGLE_MAPS_API_KEY"]
 }, async (event) => {
-    const { venueId, url, previousHash, metaPath } = event.data.message.json;
-    console.log(`🤖 [Worker] Scout allocated for ${venueId} (${url})`);
+    const { venueId, sourceId, url, previousHash } = event.data.message.json;
+    console.log(`🤖 [Worker] Scout allocated for ${venueId} source ${sourceId} (${url})`);
 
-    const metaRef = db.doc(metaPath);
+    const venueRef = db.collection('venues').doc(venueId);
 
-    // Step 1: Gatekeeper
-    // Verify manually_blocked (fetch venue core doc)
-    const venueDoc = await db.collection('venues').doc(venueId).get();
-    const venueData = venueDoc.data();
-    if (venueData?.is_manually_blocked) {
-        console.warn(`[Worker] Venue ${venueId} is manually blocked. Aborting.`);
+    // Step 1: Pre-Flight Checks (Read-only first to save writes)
+    // Actually, we need to read the config to check robots cache and status before launching browser
+    // But since we need to update status eventually, we'll do a transactional flow or optimistic locking?
+    // Firestore transactions are good but Puppeteer is slow. DON'T put Puppeteer inside a transaction.
+    // Pattern: 
+    // 1. Fetch Venue.
+    // 2. Validate Source exists & rules.
+    // 3. Scrape (Outside Transaction).
+    // 4. Update Venue (Transaction/Merge).
+
+    const venueDoc = await venueRef.get();
+    if (!venueDoc.exists) return;
+    const venueData = venueDoc.data() as Venue;
+
+    if (venueData.is_manually_blocked) {
+        console.warn(`[Worker] Venue ${venueId} blocked.`);
         return;
     }
 
-    // Domain Blacklist
-    if (url.includes('facebook.com') || url.includes('instagram.com')) {
-        console.log(`[Worker] Social media URL detected. yielding to Apify.`);
+    const source = venueData.scraper_config?.find(s => s.id === sourceId);
+    if (!source) {
+        console.warn(`[Worker] Source ${sourceId} not found on venue.`);
         return;
     }
 
-    // Robots.txt Cache
-    // We need to fetch the current metadata to check cache age
-    const currentMetaSnap = await metaRef.get();
-    const currentMeta = currentMetaSnap.data() as ScrapingMetadata;
-
-    let canScrape = true; // Default Allow (Fail Open)
+    // Robots Check (Politeness)
+    // If we have a cached verdict < 7 days old, verify it
     const now = Date.now();
-    const cacheAge = now - (currentMeta?.robotsCache?.checkedAt || 0);
-    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 
-    if (cacheAge > SEVEN_DAYS) {
-        // Refresh Verdict
+    // Default Allow
+    let canScrape = true;
+    let newRobotsCache = source.robotsCache;
+
+    // Check if we need to refresh robots.txt
+    const cacheAge = now - (source.robotsCache?.checkedAt || 0);
+    const needsRefresh = !source.robotsCache || cacheAge > CACHE_TTL;
+
+    if (needsRefresh) {
         try {
             const robotsUrl = new URL('/robots.txt', url).href;
             const resp = await fetch(robotsUrl);
             if (resp.ok) {
                 const txt = await resp.text();
                 const robots = robotsParser(robotsUrl, txt);
-                // Check if User-Agent "OlyBarsBot" is allowed
                 if (robots.isDisallowed(url, 'OlyBarsBot')) {
                     console.warn(`[Worker] Robots.txt disallows OlyBarsBot.`);
-                    await metaRef.update({
-                        'robotsCache.verdict': 'disallow',
-                        'robotsCache.checkedAt': now
-                    });
-                    return; // EXIT
+                    canScrape = false;
+                    newRobotsCache = { verdict: 'disallow', checkedAt: now };
                 } else {
-                    await metaRef.update({
-                        'robotsCache.verdict': 'allow',
-                        'robotsCache.checkedAt': now
-                    });
+                    newRobotsCache = { verdict: 'allow', checkedAt: now };
                 }
             } else {
-                console.warn(`[Worker] Robots.txt fetch failed (${resp.status}). Failing Open.`);
+                // Fail Open if robots.txt 404s
+                newRobotsCache = { verdict: 'allow', checkedAt: now };
             }
         } catch (e) {
-            console.warn(`[Worker] Robots.txt network error. Failing Open.`);
+            // Fail Open on Network Error (assuming site is up but robots.txt unreachable)
+            newRobotsCache = { verdict: 'allow', checkedAt: now };
         }
-    } else if (currentMeta?.robotsCache?.verdict === 'disallow') {
-        console.warn(`[Worker] Cached Disallow verdict. Aborting.`);
+    } else if (source.robotsCache?.verdict === 'disallow') {
+        canScrape = false;
+    }
+
+    if (!canScrape) {
+        await updateSourceStatus(venueRef, sourceId, 'error', 'Blocked by robots.txt', undefined, newRobotsCache);
         return;
     }
 
@@ -145,7 +159,7 @@ export const scoutWorker = onMessagePublished({
     let browser;
     let currentHash = '';
     let rawText = '';
-    let screenshotBuffer: Buffer | undefined;
+    let scrapeError: string | undefined;
 
     try {
         browser = await puppeteer.launch({
@@ -154,129 +168,132 @@ export const scoutWorker = onMessagePublished({
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 (Compatible; OlyBarsBot/1.0; +https://olybars.com/bot)');
 
-        // Time-Boxed Race
-        try {
-            await Promise.race([
-                page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 }),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 15000))
-            ]);
-        } catch (e) {
-            // Check if we loaded enough
-            if (!page.url()) throw e; // Totally failed
-            console.log('[Worker] Navigation timeout/race, analyzing what we have...');
-        }
+        // Racing navigation against timeout
+        await Promise.race([
+            page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Navigation Timeout')), 30000))
+        ]);
 
-        // Change Detection
         rawText = await page.evaluate(() => document.body.innerText);
         currentHash = md5(rawText);
 
         if (currentHash === previousHash) {
-            console.log(`[Worker] No content change detected (${currentHash}).`);
-            await metaRef.update({ lastRun: now });
+            console.log(`[Worker] Content unchanged (${currentHash}). Updating timestamp only.`);
+            await updateSourceStatus(venueRef, sourceId, 'active', undefined, currentHash, newRobotsCache);
             return;
         }
 
-        // Capture Screenshot (for Multimodal Fallback)
-        screenshotBuffer = Buffer.from(await page.screenshot({ fullPage: false, type: 'jpeg', quality: 60 }));
-
     } catch (e: any) {
-        console.error(`[Worker] Puppeteer Crash: ${e.message}`);
-        // Circuit Breaker Logic
-        const failCount = (currentMeta?.circuitBreaker?.failCount || 0) + 1;
-        await metaRef.update({
-            'circuitBreaker.failCount': failCount,
-            'circuitBreaker.lastFailure': now,
-            'circuitBreaker.tripped': failCount >= 3
-        });
-        return;
+        console.error(`[Worker] Scrape Failed: ${e.message}`);
+        scrapeError = e.message;
+        // Don't return yet, we need to update status
     } finally {
         if (browser) await browser.close();
+    }
+
+    if (scrapeError) {
+        const failures = (source.consecutiveFailures || 0) + 1;
+        // Backoff? For now just log failure.
+        // If failures > 5, maybe disable? keeping it simple for now.
+        await updateSourceStatus(venueRef, sourceId, 'error', scrapeError, undefined, newRobotsCache, failures);
+        return;
     }
 
     // Step 3: The Brain (Gemini)
     try {
         const gemini = new GeminiService();
-        // Context Injection
-        const todayPST = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
 
-        // Multi-City Extraction
-        let city = "Olympia, WA";
+        // Context Prep
+        let city = "Olympia, WA"; // Default
         if (venueData?.address) {
-            // "514 4th Ave E, Olympia, WA 98501" -> "Olympia, WA"
-            // Simple robust parser: split by comma, trim
             const parts = venueData.address.split(',');
             if (parts.length >= 3) {
-                // usually [Street, City, State Zip, Country] or [Street, City, State Zip]
-                // Let's try to get City + State
                 const cityPart = parts[1].trim();
-                const stateZipPart = parts[2].trim().split(' ')[0]; // "WA" from "WA 98501"
+                const stateZipPart = parts[2].trim().split(' ')[0];
                 city = `${cityPart}, ${stateZipPart}`;
             }
         }
 
-        const venueContext = {
-            city,
-            timezone: 'America/Los_Angeles'
-        };
+        const venueContext = { city, timezone: 'America/Los_Angeles' };
+        const todayPST = new Date().toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' });
 
-        // Using "EVENTS" logic from our service
-        const events = await gemini.analyzeScrapedContent(rawText, todayPST, venueContext, 'EVENTS');
+        // Analyze
+        // Note: Using 'EVENTS' as default target type for now, but source.target should drive this
+        const targetType = source.target || 'EVENTS';
+        // Only run analysis if it's an event or menu scrape? 
+        // Logic supports EVENTS, MENU, NEWSLETTER.
 
-        // Note: TDD asks for Multimodal (Text + Screenshot). 
-        // Our current GeminiService.analyzeScrapedContent only takes text.
-        // We might need to enhance GeminiService to accept image or use a specific flow here.
-        // For now, we rely on the robust text extraction we just built.
+        // We map explicit target types to what GeminiService expects
+        let geminiTarget: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS';
+        if (targetType === 'MENU') geminiTarget = 'MENU';
+        if (targetType === 'NEWSLETTER') geminiTarget = 'NEWSLETTER';
 
-        // Step 4: The Scribe
-        if (events && events.length > 0) {
-            console.log(`[Worker] Extracted ${events.length} events.`);
+        const extractedData = await gemini.analyzeScrapedContent(rawText, todayPST, venueContext, geminiTarget);
+
+        // Step 4: The Scribe (Save Results)
+        if (extractedData) {
             const batch = db.batch();
 
-            for (const ev of events) {
-                // ID Generation: venueId_YYYYMMDD_TitleSlug
-                const titleSlug = ev.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const eventId = `${venueId}_${ev.date.replace(/-/g, '')}_${titleSlug}`;
-                const eventRef = db.collection('league_events').doc(eventId);
-
-                batch.set(eventRef, {
-                    ...ev,
-                    venueId,
-                    source: 'automation',
-                    lastScraped: now,
-                    pointsAwarded: 25 // Default
-                }, { merge: true });
+            if (geminiTarget === 'EVENTS' && Array.isArray(extractedData)) {
+                console.log(`[Worker] Saving ${extractedData.length} events.`);
+                for (const ev of extractedData) {
+                    const titleSlug = ev.title.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const eventId = `${venueId}_${ev.date.replace(/-/g, '')}_${titleSlug}`;
+                    const eventRef = db.collection('league_events').doc(eventId);
+                    batch.set(eventRef, {
+                        ...ev,
+                        venueId,
+                        source: 'automation',
+                        lastScraped: Date.now(),
+                        pointsAwarded: 25
+                    }, { merge: true });
+                }
             }
-
-            // Meta Update
-            batch.update(metaRef, {
-                contentHash: currentHash,
-                lastRun: now,
-                lastSuccess: now,
-                consecutiveEmptyScrapes: 0,
-                'circuitBreaker.failCount': 0
-            });
+            // Handle other types later (Menu/Newsletter updates to venue doc?)
 
             await batch.commit();
-
-        } else {
-            console.log(`[Worker] No events found.`);
-            const fails = (currentMeta?.consecutiveEmptyScrapes || 0) + 1;
-
-            // 3-Strike Rule
-            if (fails >= 3) {
-                console.warn(`[Worker] 3rd consecutive empty scrape. Marking cancelled.`);
-                // Logic to query future events and mark 'cancelled_by_bot' would go here
-                // For now just logging as per TDD Phase 4.
-            }
-
-            await metaRef.update({
-                contentHash: currentHash,
-                lastRun: now,
-                consecutiveEmptyScrapes: fails
-            });
         }
 
+        // Success Update
+        await updateSourceStatus(venueRef, sourceId, 'active', undefined, currentHash, newRobotsCache, 0);
+
     } catch (e: any) {
-        console.error(`[Worker] Brain/Scribe Error: ${e.message}`);
+        console.error(`[Worker] Analysis Failed: ${e.message}`);
+        await updateSourceStatus(venueRef, sourceId, 'error', `Analysis Failed: ${e.message}`, currentHash, newRobotsCache);
     }
 });
+
+// Helper to reliably update a specific item in the array
+async function updateSourceStatus(
+    venueRef: FirebaseFirestore.DocumentReference,
+    sourceId: string,
+    status: 'active' | 'error' | 'pending',
+    errorMsg?: string,
+    contentHash?: string,
+    robotsCache?: { verdict: 'allow' | 'disallow', checkedAt: number },
+    consecutiveFailures: number = 0
+) {
+    await db.runTransaction(async (t) => {
+        const doc = await t.get(venueRef);
+        if (!doc.exists) return;
+        const data = doc.data() as Venue;
+
+        if (!data.scraper_config) return;
+
+        const idx = data.scraper_config.findIndex(s => s.id === sourceId);
+        if (idx === -1) return;
+
+        const sources = [...data.scraper_config];
+        sources[idx] = {
+            ...sources[idx],
+            status,
+            lastScraped: Date.now(),
+            errorMsg: errorMsg || undefined, // Clear if undefined
+            consecutiveFailures, // Reset or Increment
+            ...(contentHash ? { contentHash } : {}),
+            ...(robotsCache ? { robotsCache } : {})
+        };
+
+        t.update(venueRef, { scraper_config: sources });
+    });
+}

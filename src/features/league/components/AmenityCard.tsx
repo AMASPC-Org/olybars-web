@@ -9,7 +9,7 @@ interface AmenityCardProps {
 }
 
 export const AmenityCard: React.FC<AmenityCardProps> = ({ venue, gameFeature, onClockIn }) => {
-    const isBuzzing = venue.status === 'buzzing' || (venue.currentBuzz?.score || 0) > 70;
+    const isBuzzing = venue.status === 'buzzing' || venue.status === 'packed' || (venue.currentBuzz?.score || 0) > 70;
 
     return (
         <div className="bg-[#1e293b]/50 backdrop-blur-md rounded-2xl border border-white/10 p-4 hover:border-primary/30 transition-all group mb-4">

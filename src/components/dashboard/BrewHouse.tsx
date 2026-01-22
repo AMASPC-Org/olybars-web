@@ -21,13 +21,13 @@ export const BrewHouse: React.FC<BrewHouseProps> = ({
     const [hovered, setHovered] = useState<string | null>(null);
 
     // Normalize current status for comparison
-    const normalizedCurrent = currentStatus.toLowerCase() === 'dead' ? 'mellow' : currentStatus.toLowerCase();
+    const normalizedCurrent = currentStatus.toLowerCase() === 'dead' ? 'trickle' : currentStatus.toLowerCase();
 
     const options = [
-        { id: 'mellow', label: 'Mellow', mugs: 1, color: 'slate', fill: 'bg-slate-500/20', border: 'border-slate-500/50', text: 'text-slate-400', height: 'h-[25%]' },
-        { id: 'chill', label: 'Chill', mugs: 2, color: 'amber', fill: 'bg-amber-500/30', border: 'border-amber-500/50', text: 'text-amber-400', height: 'h-[50%]' },
-        { id: 'buzzing', label: 'Buzzing', mugs: 3, color: 'orange', fill: 'bg-orange-500/40', border: 'border-orange-500/50', text: 'text-orange-500', height: 'h-[75%]' },
-        { id: 'packed', label: 'Packed', mugs: 4, color: 'red', fill: 'bg-red-600/50', border: 'border-red-600/50', text: 'text-red-600', height: 'h-[100%]' }
+        { id: 'trickle', label: 'Trickle', mugs: 1, color: 'slate', fill: 'bg-slate-500/20', border: 'border-slate-500/50', text: 'text-slate-400', height: 'h-[25%]' },
+        { id: 'flowing', label: 'Flowing', mugs: 2, color: 'amber', fill: 'bg-amber-500/30', border: 'border-amber-500/50', text: 'text-amber-400', height: 'h-[50%]' },
+        { id: 'gushing', label: 'Gushing', mugs: 3, color: 'orange', fill: 'bg-orange-500/40', border: 'border-orange-500/50', text: 'text-orange-500', height: 'h-[75%]' },
+        { id: 'flooded', label: 'Flooded', mugs: 4, color: 'red', fill: 'bg-red-600/50', border: 'border-red-600/50', text: 'text-red-600', height: 'h-[100%]' }
     ];
 
     return (
@@ -37,7 +37,7 @@ export const BrewHouse: React.FC<BrewHouseProps> = ({
                     <Beer size={16} />
                     Vibe Control (Write Mode)
                 </h3>
-                {normalizedCurrent === 'mellow' && (
+                {normalizedCurrent === 'trickle' && (
                     <span className="text-[10px] bg-slate-500/10 text-slate-400 px-2 py-0.5 rounded-full border border-slate-500/20 flex items-center gap-1 animate-pulse">
                         <Sparkles size={10} />
                         PIONEER BOUNTY ACTIVE

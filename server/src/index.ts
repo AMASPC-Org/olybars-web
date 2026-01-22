@@ -945,7 +945,7 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
         return res.status(400).json({ error: 'Invalid update data', details: validation.error.format() });
     }
 
-    const { handle, email, phone, favoriteDrink, favoriteDrinks, homeBase, playerGamePreferences, hasCompletedMakerSurvey, role } = validation.data;
+    const { handle, email, phone, favoriteDrink, favoriteDrinks, homeBase, playerGamePreferences, hasCompletedMakerSurvey, role, weeklyBuzz, showMemberSince } = validation.data;
 
     try {
         const { db } = await import('./firebaseAdmin.js');
@@ -968,6 +968,8 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
         if (playerGamePreferences !== undefined) updates.playerGamePreferences = playerGamePreferences;
         if (email !== undefined) updates.email = email;
         if (hasCompletedMakerSurvey !== undefined) updates.hasCompletedMakerSurvey = hasCompletedMakerSurvey;
+        if (weeklyBuzz !== undefined) updates.weeklyBuzz = weeklyBuzz;
+        if (showMemberSince !== undefined) updates.showMemberSince = showMemberSince;
 
         // [SECURITY REMEDIATION L-01] Role change lockdown
         if (role !== undefined) {
@@ -1577,4 +1579,5 @@ app.listen(Number(port), '0.0.0.0', () => {
     console.log(`🌍 Environment: ${config.NODE_ENV}`);
     console.log(`☁️ Platform: ${isCloudRun ? 'Cloud Run (Production)' : 'Local'}`);
     console.log(`🛡️ Rate Limiting: Active`);
+    console.log(`🗺️ Maps Key Configured: ${config.VITE_GOOGLE_BROWSER_KEY ? 'YES ✅' : 'NO ❌'}`);
 });

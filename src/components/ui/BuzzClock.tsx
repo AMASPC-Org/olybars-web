@@ -243,10 +243,10 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
         if (!status) return null;
         const s = status.toLowerCase();
         // Project Toast: Mellow is now a soft indigo/slate to differentiate from Green "Active" deals
-        if (s === 'dead' || s === 'mellow') return { text: 'MELLOW', color: 'text-slate-400', bg: 'bg-slate-500' };
-        if (s === 'chill') return { text: 'CHILL', color: 'text-sky-300', bg: 'bg-sky-400' };
-        if (s === 'buzzing') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
-        if (s === 'packed') return { text: 'PACKED', color: 'text-rose-400', bg: 'bg-rose-500' };
+        if (s === 'dead' || s === 'mellow' || s === 'trickle') return { text: 'MELLOW', color: 'text-slate-400', bg: 'bg-slate-500' };
+        if (s === 'chill' || s === 'flowing') return { text: 'CHILL', color: 'text-blue-400', bg: 'bg-blue-500' };
+        if (s === 'buzzing' || s === 'gushing') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
+        if (s === 'packed' || s === 'flooded') return { text: 'PACKED', color: 'text-rose-400', bg: 'bg-rose-500' };
         return null;
     };
 

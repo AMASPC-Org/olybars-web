@@ -1,5 +1,4 @@
-export type VibeLevel = 'dead' | 'mellow' | 'chill' | 'buzzing' | 'packed';
-
+export type VibeLevel = 'trickle' | 'flowing' | 'gushing' | 'flooded';
 export const PULSE_CONFIG = {
     // Scoring Weights
     POINTS: {
@@ -10,11 +9,15 @@ export const PULSE_CONFIG = {
 
         // [NEW] The Pioneer Curve (Dynamic Clock-in Points)
         VIBE_POINTS: {
+            trickle: 100,
+            flowing: 50,
+            gushing: 25,
+            flooded: 10,
             mellow: 100,
             chill: 50,
             buzzing: 25,
             packed: 10,
-            dead: 100 // Legacy backward compatibility
+            dead: 100     // Legacy backward compatibility
         }
     },
 
@@ -44,10 +47,14 @@ export const PULSE_CONFIG = {
 
     // REFACTORED: Status based on % Saturation (0.0 to 1.0+)
     THRESHOLDS: {
-        PACKED: 0.85,   // > 85% Capacity
-        BUZZING: 0.50,  // > 50% Capacity
-        CHILL: 0.15,    // > 15% Capacity
-        MELLOW: 0,      // < 15% Capacity
+        FLOODED: 0.85,   // > 85% Capacity
+        GUSHING: 0.50,  // > 50% Capacity
+        FLOWING: 0.15,    // > 15% Capacity
+        TRICKLE: 0,      // < 15% Capacity
+        PACKED: 0.85,    // Alias
+        BUZZING: 0.50,   // Alias
+        CHILL: 0.15,     // Alias
+        MELLOW: 0,       // Alias
         DEAD: 0,        // [DEPRECATED]
         FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
@@ -64,11 +71,11 @@ export const PULSE_CONFIG = {
     // Display Strings (User/Owner Facing)
     DESCRIPTIONS: {
         LIVE_MEANING: "Unique people checked in within the last 60 minutes.",
-        MELLOW_MEANING: "Quiet & intimate. Bounty active. < 15% cap.",
-        CHILL_MEANING: "Social hum. Date night vibes. 15-50% cap.",
-        BUZZING_MEANING: "High energy. Social peak. 51-90% cap.",
-        PACKED_MEANING: "Physical peak. Party is here. > 90% cap.",
-        DEAD_MEANING: "[DEPRECATED] See Mellow.",
+        TRICKLE_MEANING: "Quiet & intimate. Bounty active. < 15% cap.",
+        FLOWING_MEANING: "Social hum. Steady stream. 15-50% cap.",
+        GUSHING_MEANING: "High energy. Social peak. 51-85% cap.",
+        FLOODED_MEANING: "Maximum depth. Party is here. > 85% cap.",
+        DEAD_MEANING: "[DEPRECATED] See Trickle.",
         FLASH_BOUNTY_MEANING: "Ending soon! High urgency."
     }
 };

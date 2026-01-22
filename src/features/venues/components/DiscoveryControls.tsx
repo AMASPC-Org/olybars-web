@@ -227,10 +227,10 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({ venues = [
                         <div className="flex flex-wrap gap-2">
                             {/* VIBE OPTIONS */}
                             {showVibeMenu && [
-                                { id: 'packed', label: 'Packed', icon: Zap },
-                                { id: 'buzzing', label: 'Buzzing', icon: Flame },
-                                { id: 'chill', label: 'Chill', icon: Beer },
-                                { id: 'mellow', label: 'Mellow', icon: Clock }
+                                { id: 'flooded', label: 'Flooded', icon: Zap },
+                                { id: 'gushing', label: 'Gushing', icon: Flame },
+                                { id: 'flowing', label: 'Flowing', icon: Beer },
+                                { id: 'trickle', label: 'Trickle', icon: Clock }
                             ].map(option => (
                                 <button
                                     key={option.id}

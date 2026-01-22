@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { X, Globe, Plus, AlertCircle } from 'lucide-react';
-import { ScrapeTarget } from '../../../../types/venue';
+import { X, Globe, Plus, AlertCircle, Clock } from 'lucide-react';
+import { ScrapeTarget, PartnerTier } from '../../../../types/venue';
 
 interface AddSourceModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (url: string, target: ScrapeTarget) => void;
+    onAdd: (url: string, target: ScrapeTarget, frequency: 'daily' | 'weekly' | 'monthly') => void;
     existingUrls: string[];
+    tier: PartnerTier;
 }
 
-export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose, onAdd, existingUrls }) => {
+export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose, onAdd, existingUrls, tier }) => {
     const [url, setUrl] = useState('');
     const [target, setTarget] = useState<ScrapeTarget>('EVENTS');
+    const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
     const [error, setError] = useState<string | null>(null);
+
+    // Tier Logic
+    const canDoWeekly = [PartnerTier.PRO, PartnerTier.AGENCY].includes(tier);
+    const canDoDaily = tier === PartnerTier.AGENCY;
 
     if (!isOpen) return null;
 
@@ -45,7 +51,7 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose,
             return;
         }
 
-        onAdd(cleanUrl, target);
+        onAdd(cleanUrl, target, frequency);
         setUrl('');
         onClose();
     };
@@ -78,6 +84,26 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({ isOpen, onClose,
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            Update Frequency
+                        </label>
+                        <select
+                            value={frequency}
+                            onChange={(e) => setFrequency(e.target.value as any)}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:border-primary/50 outline-none font-medium appearance-none"
+                        >
+                            <option value="monthly">Monthly (Included)</option>
+                            <option value="weekly" disabled={!canDoWeekly}>
+                                Weekly {canDoWeekly ? '(Pro)' : '(Pro Only 🔒)'}
+                            </option>
+                            <option value="daily" disabled={!canDoDaily}>
+                                Daily {canDoDaily ? '(Agency)' : '(Agency Only 🔒)'}
+                            </option>
+                        </select>
                     </div>
 
                     <div className="space-y-1.5">

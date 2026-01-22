@@ -3,7 +3,7 @@ import { Venue, ScraperSource, ScrapeTarget } from '../../../types/venue';
 import { UserProfile } from '../../../types';
 import { isSystemAdmin } from '../../../types/auth_schema';
 import { VenueOpsService } from '../../../services/VenueOpsService';
-import { ExternalLink, Globe, Plus } from 'lucide-react';
+import { ExternalLink, Globe, Plus, Activity, Bell, ChevronRight } from 'lucide-react';
 import { ScraperConsentToggle } from './scraper/ScraperConsentToggle';
 import { ConnectSourceCard } from './scraper/ConnectSourceCard';
 import { AddSourceModal } from './scraper/AddSourceModal';
@@ -13,14 +13,22 @@ interface ScraperManagementTabProps {
     venue: Venue;
     onUpdate: (venueId: string, updates: Partial<Venue>) => Promise<void>;
     userProfile: UserProfile;
+    onNavigate?: (view: 'notifications') => void;
+    notificationCount?: number;
 }
 
-export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({ venue, onUpdate, userProfile }) => {
+export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({ venue, onUpdate, userProfile, onNavigate, notificationCount = 0 }) => {
     const { showToast } = useToast();
     const isActiveAdmin = isSystemAdmin(userProfile);
     const [isScrapingEnabled, setIsScrapingEnabled] = useState(venue.is_scraping_enabled || false);
     const [scraperConfig, setScraperConfig] = useState<ScraperSource[]>(venue.scraper_config || []);
     const [isAddSourceModalOpen, setIsAddSourceModalOpen] = useState(false);
+
+    // [FIX] Sync local state with real-time venue updates
+    React.useEffect(() => {
+        setIsScrapingEnabled(venue.is_scraping_enabled || false);
+        setScraperConfig(venue.scraper_config || []);
+    }, [venue.is_scraping_enabled, venue.scraper_config]);
 
     const handleToggleScraping = async (enabled: boolean) => {
         setIsScrapingEnabled(enabled);
@@ -45,13 +53,14 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({ venu
         }
     };
 
-    const handleAddSource = async (url: string, type: ScrapeTarget) => {
+    const handleAddSource = async (url: string, type: ScrapeTarget, frequency: 'daily' | 'weekly' | 'monthly') => {
         const newSource: ScraperSource = {
             id: crypto.randomUUID(),
             url,
             target: type,
             isEnabled: true,
-            status: 'pending'
+            status: 'pending',
+            frequency // [NEW] Save user preference
         };
         const updated = [...scraperConfig, newSource];
         setScraperConfig(updated);
@@ -99,6 +108,47 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({ venu
                         onToggle={handleToggleScraping}
                     />
 
+                    {/* [NEW] Recent Activity / Health Card */}
+                    <div className="bg-gradient-to-r from-slate-900 to-black border border-white/5 rounded-xl p-4 flex items-center justify-between group">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-primary/10 p-2 rounded-lg border border-primary/20">
+                                <Activity className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-black text-white uppercase tracking-widest mb-0.5">Scraper Activity</h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Status:</span>
+                                    <span className="text-[10px] text-green-400 font-black uppercase tracking-widest flex items-center gap-1">
+                                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                        Operational
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {notificationCount > 0 ? (
+                            <button
+                                onClick={() => onNavigate?.('notifications')}
+                                className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+                            >
+                                <div className="relative">
+                                    <Bell className="w-4 h-4 text-red-400" />
+                                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                                </div>
+                                <div className="text-left">
+                                    <span className="block text-[8px] font-black text-red-400 uppercase tracking-widest leading-none">Action Required</span>
+                                    <span className="block text-[10px] font-bold text-white uppercase tracking-widest leading-none">{notificationCount} Pending Items</span>
+                                </div>
+                                <ChevronRight className="w-3 h-3 text-red-400" />
+                            </button>
+                        ) : (
+                            <div className="text-right">
+                                <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Run</span>
+                                <span className="block text-xs font-black text-white uppercase tracking-widest">~2 Hours Ago</span>
+                            </div>
+                        )}
+                    </div>
+
                     {isScrapingEnabled && (
                         <div className="space-y-4 animate-in slide-in-from-top-4 duration-500">
                             <div className="flex items-center justify-between mb-2">
@@ -141,6 +191,7 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({ venu
                 onClose={() => setIsAddSourceModalOpen(false)}
                 onAdd={handleAddSource}
                 existingUrls={scraperConfig.map(s => s.url)}
+                tier={venue.partner_tier}
             />
         </div>
     );

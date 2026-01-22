@@ -45,8 +45,8 @@ export const PartnerManualTab: React.FC = () => {
         {
             "title": "Status Integrity (Crowdsourced)",
             "icon": AlertTriangle,
-            "artie": "Ask Coach: \"Coach, tell everyone we are PACKED!\"",
-            "manual": "NEW: 'Packed' status alerts are now Crowdsourced. While you can mark your status as 'Packed' in the dashboard, the official Pulse Alert (SMS to followers) only triggers when 3 unique users check in or 2 users report 'Packed' via Vibe Check within 15 minutes. Your dashboard control acts as your 'suggested' status."
+            "artie": "Ask Coach: \"Coach, tell everyone we are FLOODED!\"",
+            "manual": "NEW: 'Flooded' status alerts are now Crowdsourced. While you can mark your status as 'Flooded' in the dashboard, the official Pulse Alert (SMS to followers) only triggers when 3 unique users check in or 2 users report 'Flooded' via Vibe Check within 15 minutes. Your dashboard control acts as your 'suggested' status."
         },
         {
             title: "Instagram & Content Sync",

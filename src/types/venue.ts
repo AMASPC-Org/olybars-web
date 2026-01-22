@@ -1,8 +1,4 @@
-/**
- * VenueStatus: Current energy/capacity level of a venue.
- * 'dead' is deprecated in favor of 'mellow'.
- */
-export type VenueStatus = 'dead' | 'mellow' | 'chill' | 'buzzing' | 'packed';
+export type VenueStatus = 'trickle' | 'flowing' | 'gushing' | 'flooded';
 
 
 export enum PartnerTier {
@@ -83,6 +79,14 @@ export interface ScraperSource {
     status: 'active' | 'error' | 'pending';
     errorMsg?: string;
     consecutiveFailures?: number; // [NEW] For backoff logic
+    contentHash?: string; // [NEW] MD5 of innerText for change detection
+    robotsCache?: { // [NEW] Politeness check
+        verdict: 'allow' | 'disallow';
+        checkedAt: number;
+    };
+    frequency?: 'daily' | 'weekly' | 'monthly'; // [NEW] Tier-based frequency
+    nextRun?: number; // [NEW] Computed timestamp for UI
+    extractionMode?: ScrapeTarget; // [NEW] Explicit mode (Events, Menu, etc)
 }
 
 export interface SocialPostDraft {
@@ -143,7 +147,7 @@ export interface MenuItem {
     stats: MenuItemStats;
 
     // [CRITICAL] AI & Ops Fields
-    margin_tier: MarginTier;
+    // margin_tier: MarginTier; // MOVED TO PRIVATE DATA
     ai_tags?: string[]; // Auto-generated
     source: MenuSource;
     status: MenuItemStatus;
@@ -221,6 +225,10 @@ export interface LeagueEvent {
     sourceConfidence: number; // 0.0 - 1.0 (from AI)
     lastScraped?: number;
     distributeToMedia?: boolean; // [NEW] For MediaDistributionService
+
+    // [NEW] Approval Workflow
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    originalDescription?: string; // Raw scraped text for reference/revert
 }
 
 export interface Venue {
@@ -253,6 +261,7 @@ export interface Venue {
         score: number;
         lastUpdated: number;
     };
+    projectedVibe?: VenueStatus; // [NEW] Bayesian Estimate
 
     // Events & Hours
     leagueEvent?: 'karaoke' | 'trivia' | 'arcade' | 'events' | 'openmic' | 'bingo' | 'live_music' | 'pool' | 'darts' | 'shuffleboard' | 'pinball' | null;
@@ -314,7 +323,7 @@ export interface Venue {
     googleRating?: number;
     googleReviewCount?: number;
 
-    partnerConfig?: PartnerConfig; // [NEW] Flash Bounty Tiers & Tokens
+    partnerConfig?: PartnerConfig; // MOVED TO PRIVATE DATA (But used in Admin/Owner)
 
     ownerId?: string;
     managerIds?: string[];
@@ -438,6 +447,7 @@ export interface Venue {
     auto_sync_sources?: ('facebook' | 'instagram' | 'website')[];
     wifiPassword?: string;
     posKey?: string;
+    is_manually_blocked?: boolean; // [NEW] Admin override to prevent scraping
 
     // [NEW] AI Refinery Draft
     ai_draft_profile?: {

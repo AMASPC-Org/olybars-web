@@ -29,7 +29,7 @@ export default function ClaimVenuePage() {
     const [enteredCode, setEnteredCode] = useState('');
     const [isCodeVerified, setIsCodeVerified] = useState(false);
     const [assets, setAssets] = useState<Record<string, boolean>>({});
-    const [vibe, setVibe] = useState<VenueStatus>('chill');
+    const [vibe, setVibe] = useState<VenueStatus>('trickle');
     const [managerEmail, setManagerEmail] = useState('');
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -760,9 +760,9 @@ export default function ClaimVenuePage() {
                                             <h3 className="text-lg font-black uppercase font-league text-primary leading-none">DEFAULT ATMOSPHERE</h3>
                                             <p className="text-[10px] text-slate-500 font-bold uppercase mt-1 tracking-widest">Help users find the right mood</p>
                                         </div>
-                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'mellow' ? 'text-slate-400 bg-slate-400/10' :
-                                            vibe === 'chill' ? 'text-blue-400 bg-blue-400/10' :
-                                                vibe === 'buzzing' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
+                                        <span className={`text-xs font-black uppercase tracking-widest px-3 py-1 rounded-lg ${vibe === 'trickle' ? 'text-slate-400 bg-slate-400/10' :
+                                            vibe === 'flowing' ? 'text-blue-400 bg-blue-400/10' :
+                                                vibe === 'gushing' ? 'text-primary bg-primary/10' : 'text-red-400 bg-red-400/10'
                                             }`}>
                                             {vibe.toUpperCase()}
                                         </span>
@@ -774,18 +774,18 @@ export default function ClaimVenuePage() {
                                             min="0"
                                             max="3"
                                             step="1"
-                                            value={vibe === 'mellow' ? 0 : vibe === 'chill' ? 1 : vibe === 'buzzing' ? 2 : 3}
+                                            value={vibe === 'trickle' ? 0 : vibe === 'flowing' ? 1 : vibe === 'gushing' ? 2 : 3}
                                             onChange={(e) => {
                                                 const val = parseInt(e.target.value);
-                                                setVibe(val === 0 ? 'mellow' : val === 1 ? 'chill' : val === 2 ? 'buzzing' : 'packed');
+                                                setVibe(val === 0 ? 'trickle' : val === 1 ? 'flowing' : val === 2 ? 'gushing' : 'flooded');
                                             }}
                                             className="w-full h-3 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary"
                                         />
                                         <div className="flex justify-between mt-4 text-[9px] font-black uppercase tracking-widest text-slate-600">
-                                            <span className={vibe === 'mellow' ? 'text-slate-400' : ''}>MELLOW (Quiet)</span>
-                                            <span className={vibe === 'chill' ? 'text-primary' : ''}>CHILL (Conversational)</span>
-                                            <span className={vibe === 'buzzing' ? 'text-primary' : ''}>BUZZING (Social)</span>
-                                            <span className={vibe === 'packed' ? 'text-primary' : ''}>PACKED (Party)</span>
+                                            <span className={vibe === 'trickle' ? 'text-slate-400' : ''}>TRICKLE (Quiet)</span>
+                                            <span className={vibe === 'flowing' ? 'text-primary' : ''}>FLOWING (Steady)</span>
+                                            <span className={vibe === 'gushing' ? 'text-primary' : ''}>GUSHING (Active)</span>
+                                            <span className={vibe === 'flooded' ? 'text-primary' : ''}>FLOODED (Packed)</span>
                                         </div>
                                     </div>
                                 </div>

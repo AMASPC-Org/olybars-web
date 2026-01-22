@@ -142,10 +142,10 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     };
 
     const vibeOptions: { status: VenueStatus; label: string; icon: any; color: string; desc: string }[] = [
-        { status: 'mellow', label: 'Trickle', icon: Droplets, color: 'text-emerald-400', desc: 'Low flow, easy access.' },
-        { status: 'chill', label: 'Flowing', icon: Waves, color: 'text-blue-400', desc: 'Steady stream, good vibes.' },
-        { status: 'buzzing', label: 'Gushing', icon: Flame, color: 'text-orange-500', desc: 'High pressure, active energy!' },
-        { status: 'packed', label: 'Flooded', icon: Zap, color: 'text-red-500', desc: 'Max depth, wall to wall.' },
+        { status: 'mellow', label: 'Mellow', icon: Droplets, color: 'text-emerald-400', desc: 'Low flow, easy access.' },
+        { status: 'chill', label: 'Chill', icon: Waves, color: 'text-blue-400', desc: 'Steady stream, good vibes.' },
+        { status: 'buzzing', label: 'Buzzing', icon: Flame, color: 'text-orange-500', desc: 'High pressure, active energy!' },
+        { status: 'packed', label: 'Packed', icon: Zap, color: 'text-red-500', desc: 'Max depth, wall to wall.' },
     ];
 
     if (isSuccess) {

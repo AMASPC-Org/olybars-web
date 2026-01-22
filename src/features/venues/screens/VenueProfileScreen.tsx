@@ -24,6 +24,7 @@ import { calculateDistance, metersToMiles, estimateWalkTime, getZone } from '../
 import { ArtieDistanceWarningModal } from '../components/ArtieDistanceWarningModal';
 import { GatekeeperModal } from '../components/GatekeeperModal';
 import { TapSourceModal } from '../components/TapSourceModal';
+import { HoursCard } from '../../../components/venue/HoursCard';
 import { updateUserProfile, logUserActivity } from '../../../services/userService';
 
 interface VenueProfileScreenProps {
@@ -213,7 +214,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                 {
                     "@type": "PropertyValue",
                     "name": "Oly Pulse Status",
-                    "value": venue.status || "chill",
+                    "value": venue.status || "trickle",
                     "description": "Real-time activity level from OlyBars.com"
                 }
             ],
@@ -552,43 +553,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className={`bg-surface border-[1.5px] p-4 rounded-2xl flex flex-col items-center gap-1 relative overflow-hidden group ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'border-primary shadow-[0_0_15px_rgba(251,191,36,0.15)]' :
-                        venue.status === 'chill' ? 'border-blue-400/50 shadow-[0_0_10px_rgba(59,130,246,0.1)]' :
-                            'border-slate-700 shadow-none'
-                        }`}>
-                        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'bg-primary/5' : 'bg-white/5'
-                            }`} />
-
-                        {(venue.status === 'buzzing' || venue.status === 'packed') ?
-                            <Flame className="w-5 h-5 text-orange-500 animate-pulse fill-orange-500/20" /> :
-                            venue.status === 'chill' ?
-                                <Users className="w-5 h-5 text-blue-400 fill-blue-400/20" /> :
-                                <Beer className="w-5 h-5 text-slate-500 fill-slate-500/20" />
-                        }
-
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest relative z-10">Energy</span>
-                        <span className={`text-sm font-black uppercase font-league relative z-10 ${(venue.status === 'buzzing' || venue.status === 'packed') ? 'text-white' :
-                            venue.status === 'chill' ? 'text-blue-100' :
-                                'text-slate-400'
-                            }`}>
-                            {venue.status === 'dead' ? 'TRICKLE' :
-                                venue.status === 'mellow' ? 'TRICKLE' :
-                                    venue.status === 'chill' ? 'FLOWING' :
-                                        venue.status === 'buzzing' ? 'GUSHING' :
-                                            venue.status === 'packed' ? 'FLOODED' : venue.status}
-                        </span>
-                    </div>
-                    <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
-                        <Trophy className="w-5 h-5 text-primary" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Clock Ins</span>
-                        <span className="text-sm font-black text-white font-mono">{venue.clockIns}</span>
-                    </div>
-                    <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
-                        <Clock className="w-5 h-5 text-slate-400" />
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Hours</span>
-                        <span className="text-[10px] font-bold text-white uppercase">
-                            {typeof venue.hours === 'string' ? venue.hours : 'Featured Hours'}
-                        </span>
+                    {/* Hours Card (Replaces Energy & Static Hours) */}
+                    <div className="col-span-2">
+                        <HoursCard hours={venue.hours} isOpen={isOpen} />
                     </div>
                     {/* Food Service Status */}
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
@@ -643,6 +610,13 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-300">Outdoor Seating</span>
                             </div>
                         )}
+                        {/* [NEW] Google Places Services */}
+                        {venue.services?.map((service, idx) => (
+                            <div key={idx} className="bg-slate-800/50 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                <CheckCircle2 className="w-3 h-3 text-slate-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{service}</span>
+                            </div>
+                        ))}
                     </div>
                 )}
 

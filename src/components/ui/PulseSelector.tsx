@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Users, Beer } from 'lucide-react';
+import { Flame, Waves } from 'lucide-react';
 
 interface PulseSelectorProps {
     onSelect: (vibe: 'buzzing' | 'chill') => void;
@@ -23,7 +23,7 @@ export const PulseSelector: React.FC<PulseSelectorProps> = ({ onSelect, currentV
                 className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${currentVibe === 'chill' ? 'bg-slate-700 text-white scale-105' : 'hover:bg-white/5 text-slate-400'
                     }`}
             >
-                <Beer size={20} strokeWidth={3} />
+                <Waves size={20} strokeWidth={3} />
                 <span className="text-[8px] font-black uppercase tracking-widest">Chill</span>
             </button>
         </div>

@@ -25,21 +25,26 @@ export const VibeTag: React.FC<{ label: string }> = ({ label }) => (
   </span>
 );
 
-export const HeatIndicator: React.FC<{ level: 'mellow' | 'chill' | 'buzzing' | 'packed' }> = ({ level }) => {
+export const HeatIndicator: React.FC<{ level: 'mellow' | 'chill' | 'buzzing' | 'packed' | 'trickle' | 'flowing' | 'gushing' | 'flooded' }> = ({ level }) => {
   const config = {
-    'mellow': { icon: '🍵', text: 'Mellow', color: 'bg-slate-900/30 text-slate-400' },
-    'chill': { icon: '🧊', text: 'Chill', color: 'bg-blue-200 text-black' },
-    'buzzing': { icon: '🔥', text: 'Buzzing', color: 'bg-red-500 text-white animate-pulse' },
-    'packed': { icon: '⚡', text: 'Packed', color: 'bg-pink-500 text-white animate-pulse' }
+    'trickle': { icon: '🍵', text: 'Trickle', color: 'bg-slate-900/30 text-slate-400' },
+    'flowing': { icon: '🧊', text: 'Flowing', color: 'bg-blue-200 text-black' },
+    'gushing': { icon: '🔥', text: 'Gushing', color: 'bg-red-500 text-white animate-pulse' },
+    'flooded': { icon: '⚡', text: 'Flooded', color: 'bg-pink-500 text-white animate-pulse' },
+    // Legacy mapping (if needed, otherwise can remove)
+    'mellow': { icon: '🍵', text: 'Trickle', color: 'bg-slate-900/30 text-slate-400' },
+    'chill': { icon: '🧊', text: 'Flowing', color: 'bg-blue-200 text-black' },
+    'buzzing': { icon: '🔥', text: 'Gushing', color: 'bg-red-500 text-white animate-pulse' },
+    'packed': { icon: '⚡', text: 'Flooded', color: 'bg-pink-500 text-white animate-pulse' }
   };
 
   const { icon, text, color } = config[level];
 
   return (
-    <div className={`flex items-center space-x-1 ${color} border-2 border-black px-2 py-1 shadow-[2px_2px_0px_0px_#000]`}>
+    <div className={`flex items-center space-x-1 ${color} border-2 border-black px-2 py-1 shadow-[2px_2px_0px_0px_#000]`} >
       <span className="text-lg">{icon}</span>
       <span className="text-xs font-['Bangers'] tracking-wider">{text}</span>
-    </div>
+    </div >
   );
 };
 

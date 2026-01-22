@@ -140,6 +140,10 @@ export const generateSocialFlyer = generateSocialFlyerFlow;
 export const claimVenue = claimVenueFlow;
 
 // --- DATABASE TRIGGERS ---
+export { onVenueUpdate } from './triggers/onVenueUpdate';
+// --- HTTP TOOLS ---
+export { rewriteEventDescription } from './tools/ai';
+
 export const syncUserProfile = onDocumentWritten("users/{userId}", async (event) => {
     const userId = event.params.userId;
     const newUser = event.data?.after.data();
