@@ -12,11 +12,11 @@ on:
       region:
         required: false
         type: string
-        default: 'us-west1'
+        default: "us-west1"
       repo_name:
         required: false
         type: string
-        default: 'olybars-repo'
+        default: "olybars-repo"
     secrets:
       wif_provider:
         required: true
@@ -24,6 +24,8 @@ on:
         required: true
       vite_key:
         required: true
+      internal_health_token:
+        required: false
 
 jobs:
   deploy:
@@ -31,8 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: "read"
+      id-token: "write"
 
     steps:
       - name: Checkout Code
@@ -51,8 +53,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
@@ -88,7 +90,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --project ${{ inputs.project_id }} \
-            --set-env-vars VITE_GOOGLE_BROWSER_KEY=${{ secrets.vite_key }}
+            --set-env-vars VITE_GOOGLE_BROWSER_KEY=${{ secrets.vite_key }},INTERNAL_HEALTH_TOKEN=${{ secrets.internal_health_token }}
 
       # --- 4. Firebase Deploy (Functions, Firestore, Hosting) ---
       - name: Install Firebase Tools
