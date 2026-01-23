@@ -381,7 +381,7 @@ export class GeminiService {
         1. Keep it short (2 sentences max).
         2. Enhance the vibe but keep the core facts (time, price, rules).
         3. No robotic language. Sound like a knowledgeable local.
-        4. [LCB SAFETY]: No "bottomless", "all you can drink", or "get wasted" implications.
+        4. [LCB SAFETY]: No "bottomless", "all you can drink", or "get wasted" implications. // @guardrail-ignore
 
         OUTPUT JSON: { "rewritten": "string" }
         `;
