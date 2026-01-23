@@ -10,7 +10,9 @@ import {
     where,
     getDocs,
     increment,
-    writeBatch
+    writeBatch,
+    runTransaction,
+    getDoc
 } from 'firebase/firestore';
 import { differenceInHours } from 'date-fns';
 import { Venue, FlashBounty, ScheduledDeal, TIER_CONFIG, PartnerTier } from '../types';
@@ -112,6 +114,7 @@ export class VenueOpsService {
                 isActive: true,
                 updatedAt: serverTimestamp(),
                 lastUpdatedBy: 'Schmidt', // Persona Update
+                category: bounty.category || 'other',
                 bounty_task_description: bounty.bounty_task_description || ''
             };
 
@@ -136,15 +139,25 @@ export class VenueOpsService {
      */
     static async getSlotAvailability(startTime: number, durationMinutes: number): Promise<'OPEN' | 'BUSY' | 'FULL'> {
         const endTime = startTime + (durationMinutes * 60000);
+        const now = Date.now();
+
+        // [REGISTRY_MIGRATION] We now query the flat 'scheduled_deals_registry' collection.
+        // This avoids collectionGroup index requirements and allows zero-config deployment.
+        // We filter for deals that end in the future to keep the read set small.
         const q = query(
-            collectionGroup(db, 'scheduledDeals'),
-            where('status', 'in', ['ACTIVE', 'PENDING']),
-            where('startTime', '<', endTime),
-            where('endTime', '>', startTime)
+            collection(db, 'scheduled_deals_registry'),
+            where('endTime', '>', now)
         );
 
         const snapshot = await getDocs(q);
-        const count = snapshot.size;
+
+        // Filter for true overlap in memory: (S < E_target) && (E > S_target)
+        const overlappingDeals = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            return (data.startTime < endTime) && (data.endTime > startTime);
+        });
+
+        const count = overlappingDeals.length;
 
         if (count === 0) return 'OPEN';
         if (count < 3) return 'BUSY';
@@ -203,27 +216,62 @@ export class VenueOpsService {
     static async scheduleFlashBounty(venueId: string, bounty: ScheduledDeal) {
         if (!venueId) throw new Error("Venue ID is required.");
 
-        const batch = writeBatch(db);
+        try {
+            return await runTransaction(db, async (transaction) => {
+                // 1. CONCURRENCY CHECK: Verify slot is still available within the transaction
+                const targetStartTime = bounty.startTime;
+                const targetEndTime = bounty.endTime;
 
-        // 1. Create the Scheduled Bounty in the sub-collection
-        const venueRef = doc(db, 'venues', venueId);
-        const bountyRef = doc(collection(venueRef, 'scheduledDeals'));
+                // Note: Transactions require getDoc for specific refs. 
+                // Since our availability check is a collection query, we perform it inside the trans but it's "snapshot-like".
+                // In Firestore Web SDK, transactions can only perform GETs before SETs.
+                // We use the previously verified 'trafficStatus' as a guard, but for strictness:
+                const registryRef = collection(db, 'scheduled_deals_registry');
+                const q = query(registryRef, where('endTime', '>', Date.now()));
+                const existingSnap = await getDocs(q);
 
-        batch.set(bountyRef, {
-            ...bounty,
-            venueId,
-            status: 'PENDING',
-            createdAt: serverTimestamp()
-        });
+                const overlapCount = existingSnap.docs.filter(doc => {
+                    const data = doc.data();
+                    return (data.startTime < targetEndTime) && (data.endTime > targetStartTime);
+                }).length;
 
-        // 2. Deduct Token (Increment Usage) in PRIVATE DATA
-        const configRef = doc(db, `venues/${venueId}/private_data/config`);
-        batch.update(configRef, {
-            'flashBountiesUsed': increment(1)
-        });
+                if (overlapCount >= 3) {
+                    throw new Error("This time slot just filled up! Please select another time.");
+                }
 
-        await batch.commit();
-        return { success: true, id: bountyRef.id };
+                // 2. Prepare refs
+                const venueRef = doc(db, 'venues', venueId);
+                const bountyRef = doc(collection(venueRef, 'scheduledDeals'));
+                const globalBountyRef = doc(db, 'scheduled_deals_registry', bountyRef.id);
+                const configRef = doc(db, `venues/${venueId}/private_data/config`);
+
+                // 2.5 Ensure Config Doc Exists (Initialize if missing)
+                const configSnap = await transaction.get(configRef);
+                const needsInit = !configSnap.exists();
+
+                // 3. ATOMIC DUAL-WRITE
+                const bountyData = {
+                    ...bounty,
+                    venueId,
+                    status: 'PENDING' as const,
+                    createdAt: Date.now() // Use primitive for registry sortability
+                };
+
+                transaction.set(bountyRef, { ...bountyData, createdAt: serverTimestamp() });
+                transaction.set(globalBountyRef, bountyData);
+
+                if (needsInit) {
+                    transaction.set(configRef, { 'flashBountiesUsed': 1 });
+                } else {
+                    transaction.update(configRef, { 'flashBountiesUsed': increment(1) });
+                }
+
+                return { success: true, id: bountyRef.id };
+            });
+        } catch (error: any) {
+            console.error('Transaction failed:', error);
+            throw error;
+        }
     }
 
     static async updateHours(venueId: string, hours: string) {

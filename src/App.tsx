@@ -258,9 +258,11 @@ export default function OlyBarsApp() {
           if (freshProfile) {
             // 2. [SECURITY] Re-apply Ryan Rule (Hardcoded Super Admin)
             if (freshProfile.email === 'ryan@amaspc.com') {
-
               freshProfile.role = 'super-admin' as any;
               freshProfile.systemRole = 'admin' as any;
+              if (!freshProfile.handle) {
+                freshProfile.handle = 'Ryan (Admin)';
+              }
             }
 
             // 3. Update State if different

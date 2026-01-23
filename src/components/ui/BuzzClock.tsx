@@ -73,7 +73,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             }
 
             // 3. Static Deal Tag (Matches BuzzScreen Logic)
-            if (v.deal) {
+            if (v.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(v.deal.toLowerCase())) {
                 items.push({
                     id: v.id,
                     name: v.name,
@@ -108,12 +108,32 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             return timeA - timeB;
         });
 
-    // 2. Get Upcoming Happy Hours for Today
+    // 2. Get Upcoming Happy Hours & Bounties
     const allUpcomingItems = venues
         .flatMap(v => {
             const alreadyLive = liveItems.some(l => l.id === v.id);
             if (alreadyLive) return [];
 
+            // A. Upcoming Flash Bounty
+            const upcomingBounty = v.flashBounties?.find(b => (b as any).active && b.startTime > Date.now());
+            if (upcomingBounty) {
+                return [{
+                    id: v.id,
+                    name: v.name,
+                    isHQ: v.isHQ,
+                    timeLabel: formatMinutes(Math.ceil((upcomingBounty.startTime - Date.now()) / 60000)),
+                    subLabel: 'STARTS',
+                    deal: upcomingBounty.title,
+                    isLive: false,
+                    isBounty: true,
+                    urgency: 'blue',
+                    clockIns: v.clockIns,
+                    status: v.status || 'buzzing',
+                    lastUpdated: v.currentBuzz?.lastUpdated
+                }];
+            }
+
+            // B. Upcoming Happy Hours
             const rules = getEffectiveRules(v);
             const upcomingRules = rules
                 .filter(r => {

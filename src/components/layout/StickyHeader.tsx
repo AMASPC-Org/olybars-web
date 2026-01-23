@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, User, Trophy, Crown, Info } from 'lucide-react';
 import { InfoRulesModal } from '../ui/InfoRulesModal';
-import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
+import logoIcon from '../../assets/olybars-logo-512.png';
 import { UserProfile } from '../../types';
 
 interface StickyHeaderProps {
@@ -23,10 +23,16 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
 }) => {
     const navigate = useNavigate();
     const [showInfo, setShowInfo] = useState(false);
-    const isGuest = userProfile?.role === 'guest' || !userProfile;
 
-    // Dynamic Icon based on rank/status
-    const ProfileIcon = isGuest ? User : (userRank && userRank <= 10 ? Crown : Trophy);
+    // Auth vs League Membership Logic
+    const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
+    const isLeagueMember = userProfile?.role && userProfile.role !== 'guest';
+
+    // Display handle if authenticated (even if still a guest role)
+    const displayHandle = isAuthenticated ? (userProfile.handle ? `#${userProfile.handle.slice(0, 10)}` : 'ID') : null;
+
+    // Dynamic Icon based on rank/status - only members get Crown/Trophy
+    const ProfileIcon = !isLeagueMember ? User : (userRank && userRank <= 10 ? Crown : Trophy);
 
     return (
         <div className={`sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm border-b border-white/10 transition-all duration-300 ${isScrolled ? 'py-2 shadow-md' : 'py-3 shadow-md'
@@ -50,13 +56,24 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
                 {/* Profile/League Button (Right) */}
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={onProfileClick}
-                        className={`p-2 rounded-xl border-2 transition-all active:scale-95 ${isGuest
+                        onClick={() => {
+                            if (!isAuthenticated) {
+                                onProfileClick();
+                            } else {
+                                navigate('/profile');
+                            }
+                        }}
+                        className={`p-2 rounded-xl border-2 transition-all active:scale-95 flex items-center gap-2 ${!isLeagueMember
                             ? 'border-slate-800 text-slate-400 hover:border-slate-600'
                             : 'border-primary text-primary shadow-[0_0_10px_rgba(251,191,36,0.2)] hover:bg-primary/10'
                             }`}
                     >
                         <ProfileIcon size={20} strokeWidth={2.5} />
+                        {displayHandle && (
+                            <span className="text-[10px] font-black uppercase tracking-tighter">
+                                {displayHandle}
+                            </span>
+                        )}
                     </button>
 
                     <button

@@ -106,7 +106,7 @@ const DiscoveryLayoutContent: React.FC<{
                     userProfile={userProfile}
                     onMenuClick={onToggleMenu}
                     onProfileClick={() => {
-                        if (userProfile.role === 'guest' || userProfile.uid === 'guest') {
+                        if (userProfile.uid === 'guest' || !userProfile.uid) {
                             onMemberLoginClick?.('login');
                         } else {
                             navigate('/profile');

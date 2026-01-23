@@ -69,7 +69,7 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
                 time: event.time
             });
             await EventService.updateEvent(event.id, { description: refinedDescription });
-            showToast('Artie has polished the description!', 'success');
+            showToast('Schmidt has polished the description!', 'success');
             await loadEvents();
         } catch (error: any) {
             showToast(error.message || 'Failed to polish description.', 'error');
@@ -91,7 +91,7 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
 
             // Save analysis to event
             await EventService.updateEvent(event.id, { analysis });
-            showToast(`Artie Score: ${analysis.confidenceScore}/100`, 'success');
+            showToast(`Schmidt Score: ${analysis.confidenceScore}/100`, 'success');
             setExpandedAnalysisId(event.id); // Auto-expand results
             await loadEvents();
         } catch (error: any) {
@@ -103,9 +103,9 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
 
     const handleApprove = (event: AppEvent) => {
         if (event.analysis?.lcbWarning) {
-            if (!window.confirm("CRITICAL WARNING: Artie detected a potential LCB compliance issue. Are you sure you want to publish this event?")) return;
+            if (!window.confirm("CRITICAL WARNING: Schmidt detected a potential LCB compliance issue. Are you sure you want to publish this event?")) return;
         } else if (event.analysis && event.analysis.confidenceScore < 50) {
-            if (!window.confirm(`Artie Score is low (${event.analysis.confidenceScore}). Are you sure you want to approve?`)) return;
+            if (!window.confirm(`Schmidt Score is low (${event.analysis.confidenceScore}). Are you sure you want to approve?`)) return;
         }
         handleUpdateStatus(event.id, { status: 'approved' });
     };
@@ -175,7 +175,7 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
                                 </div>
                             </div>
 
-                            {/* Artie Analysis Report Card */}
+                            {/* Schmidt Analysis Report Card */}
                             {event.analysis && expandedAnalysisId === event.id && (
                                 <div className="mt-4 bg-black/40 rounded-xl p-4 border border-white/10 space-y-3 animate-in fade-in slide-in-from-top-2">
                                     <div className="flex items-center justify-between">
@@ -309,6 +309,7 @@ export const EventsManagementTab: React.FC<EventsManagementTabProps> = ({ venue 
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 venueId={venue.id}
+                venueName={venue.name}
                 onEventCreated={loadEvents}
             />
         </div>

@@ -4,6 +4,7 @@ import { SCHMIDT_SYSTEM_INSTRUCTION } from '../appConfig/agents/schmidt.js';
 import { genkit } from 'genkit';
 import { vertexAI, imagen3Fast } from '@genkit-ai/vertexai';
 import { StorageService } from './storageService.js';
+import { config as appConfig } from '../appConfig/config.js';
 
 // Initialize Genkit with Vertex AI
 const ai = genkit({
@@ -24,7 +25,8 @@ export class GeminiService {
 
     constructor(apiKey?: string) {
         const isCloudRun = !!process.env.K_SERVICE;
-        const useADC = isCloudRun || !apiKey;
+        const effectiveApiKey = apiKey || appConfig.GOOGLE_GENAI_API_KEY;
+        const useADC = isCloudRun || !effectiveApiKey;
 
         if (useADC) {
             console.log(`📡 GeminiService: Using Vertex AI (ADC) for ${isCloudRun ? 'Cloud Run' : 'local'} resilience.`);
@@ -34,10 +36,10 @@ export class GeminiService {
                 location: 'us-west1',
             });
         } else {
-            const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...` : 'NONE';
-            console.log(`📡 GeminiService: Initialized using provided API Key: ${maskedKey}`);
+            const maskedKey = effectiveApiKey ? `${effectiveApiKey.substring(0, 4)}...` : 'NONE';
+            console.log(`📡 GeminiService: Initialized using API Key: ${maskedKey}`);
             this.genAI = new GoogleGenAI({
-                apiKey,
+                apiKey: effectiveApiKey,
                 vertexai: false,
             });
         }
@@ -81,39 +83,62 @@ export class GeminiService {
         weather?: string;
         holiday?: string;
         deals?: any[];
-        city?: string; // Multi-City Support
+        city?: string;
+        eventTitle?: string;
+        originalDescription?: string;
+        venueLore?: string;
+        triviaHost?: string;
+        triviaPrizes?: string;
+        triviaSpecials?: string;
     }) {
         const cityContext = context.city || "Olympia, WA";
-        // Uses a specific mini-prompt for descriptions, keeping Artie's voice
+
+        // Uses a specific mini-prompt for descriptions, keeping Schmidt's voice
         const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
         VENUE: ${context.venueName} (${context.venueType})
         LOCATION: ${cityContext}
-        EVENT: ${context.eventType}
+        EVENT TYPE: ${context.eventType}
+        EVENT TITLE: ${context.eventTitle || context.eventType}
         DATE: ${context.date} @ ${context.time}
         WEATHER: ${context.weather || 'Standard Olympia Vibes'}
         HOLIDAY: ${context.holiday || 'None'}
         ACTIVE DEALS: ${context.deals?.map(d => `${d.title} (${d.time})`).join(', ') || 'None'}
+        
+        ${context.venueLore ? `VENUE LORE: ${context.venueLore}` : ''}
+        ${context.triviaHost ? `TRIVIA HOST: ${context.triviaHost}` : ''}
+        ${context.triviaPrizes ? `TRIVIA PRIZES: ${context.triviaPrizes}` : ''}
+        ${context.triviaSpecials ? `TRIVIA SPECIALS: ${context.triviaSpecials}` : ''}
+
+        USER DRAFT / EXISTING NOTES: 
+        ${context.originalDescription || "No existing notes provided."}
 
         CONSTRAINTS:
         1. Max 2-3 sentences.
-        2. Stay in persona: Artie (Powered by Well 80). Warm, local, witty.  
-        3. [STRICT LCB COMPLIANCE]:
+        2. Stay in persona: Schmidt (Lead Architect). Professional, sharp, slightly arrogant about quality.
+        3. [INTEGRATION]: You MUST incorporate the "User Draft / Existing Notes" into the final description while polishing it for the OlyBars vibe.
+        4. [STRICT LCB COMPLIANCE]:
            - ANTI-VOLUME: NEVER imply the goal is to consume alcohol rapidly or in large quantities.
            - FORBIDDEN TERMS: "Bottomless", "Chug", "Wasted", "Get Hammered", "All you can drink", "Unlimited", "Endless". // @guardrail-ignore
            - THE PIVOT: If constraints or inputs imply these terms, PIVOT the description to focus on 'Flavor', 'Experience', or 'Community' without scolding.
-        4. SAFE RIDE: ALWAYS suggest a safe ride (Lyft/Red Cab) if the event is after 5:30 PM.
-        5. Tone: OSWALD font energy (League vibes).
+        5. SAFE RIDE: ALWAYS suggest a safe ride (Lyft/Red Cab) if the event is after 5:30 PM.
+        6. Tone: OSWALD font energy (League vibes).
 
         OUTPUT:
         The generated description only.`;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { temperature: 0.8 }
-        });
+        try {
+            const response = await this.genAI.models.generateContent({
+                model: 'gemini-2.0-flash',
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+                config: { temperature: 0.8 }
+            });
 
-        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        } catch (error: any) {
+            console.error('❌ [GEMINI_ERROR]', error);
+            throw error;
+        }
     }
 
     async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> {

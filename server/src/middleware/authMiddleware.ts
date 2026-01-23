@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { auth, db, appCheck } from '../firebaseAdmin.js';
+import { config } from '../appConfig/config.js';
 
 export interface AuthenticatedRequest extends Request {
     user?: {
@@ -44,14 +45,18 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.warn('[AUTH] No token provided in Authorization header');
         return res.status(401).json({ error: 'Unauthorized: No token provided' });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
 
     try {
+        console.log(`[AUTH] Verifying token (First 10 chars: ${idToken.substring(0, 10)}...)`);
         const decodedToken = await auth.verifyIdToken(idToken);
         const { uid, email, role: claimRole, isAdmin: claimIsAdmin } = decodedToken;
+
+        console.log(`[AUTH] Token verified for ${email} (${uid}). Role claim: ${claimRole}`);
 
         // Optimization: Priority 1 - Custom Claims (No Read)
         if (claimRole) {
@@ -80,8 +85,13 @@ export const verifyToken = async (req: AuthenticatedRequest, res: Response, next
         };
 
         next();
-    } catch (error) {
-        console.error('Error verifying token:', error);
+    } catch (error: any) {
+        console.error('[Auth] Error verifying token:', {
+            error: error.message,
+            code: error.code,
+            projectId: config.GOOGLE_CLOUD_PROJECT,
+            hasEmulator: !!process.env.FIREBASE_AUTH_EMULATOR_HOST
+        });
         return res.status(401).json({ error: 'Unauthorized: Invalid token' });
     }
 };
@@ -140,14 +150,20 @@ export const identifyUser = async (req: AuthenticatedRequest, res: Response, nex
 export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'staff') => {
     return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         const user = req.user;
-        if (!user) return res.status(401).json({ error: 'Unauthorized' });
+        if (!user) {
+            console.warn('[AUTH] requireVenueAccess failed: No user on request');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
 
         // Admin Bypass (Enhanced for System Admin)
         if (user.role === 'admin' || user.role === 'super-admin' || user.systemRole === 'admin' || user.isAdmin) return next();
 
         // Detect venueId from request
         const venueId = (req.params.id || req.params.venueId || req.query.venueId) as string;
-        if (!venueId) return res.status(400).json({ error: 'venueId is required' });
+        if (!venueId) {
+            console.warn('[AUTH] requireVenueAccess failed: venueId missing from request');
+            return res.status(400).json({ error: 'venueId is required' });
+        }
 
         // Check user document's venuePermissions
         const userRole = user.venuePermissions?.[venueId];
@@ -167,6 +183,8 @@ export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'sta
             const isOwner = venueData?.ownerId === user.uid;
             const isManager = venueData?.managerIds?.includes(user.uid);
 
+            console.log(`[AUTH] Checking legacy permissions for ${user.uid} on ${venueId}: owner=${isOwner}, manager=${isManager}`);
+
             if (minRole === 'staff' && (isOwner || isManager)) return next();
             if (minRole === 'manager' && (isOwner || isManager)) return next();
             if (minRole === 'owner' && isOwner) return next();
@@ -175,6 +193,7 @@ export const requireVenueAccess = (minRole: 'owner' | 'manager' | 'staff' = 'sta
             console.error('Venue access check failed:', e);
         }
 
+        console.warn(`[AUTH] requireVenueAccess denied: ${user.uid} lacks ${minRole} for ${venueId}. Has role: ${userRole}`);
         return res.status(403).json({ error: `Forbidden: Insufficient permissions for venue ${venueId}` });
     };
 };

@@ -7,62 +7,102 @@ export type HoursStatus = 'open' | 'last_call' | 'closed';
  * Accounts for "Last Call" (30 minutes before closing).
  */
 export const getVenueStatus = (venue: Venue, now: Date = new Date()): HoursStatus => {
-    if (!venue.hours) return 'open';
+    if (!venue.hours) return 'closed'; // Safety first: assume closed if unknown
 
-    const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayNameFull = now.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayNameShort = dayNameFull.substring(0, 3); // "Mon", "Tue"...
     const currentTime = now.getHours() * 60 + now.getMinutes();
 
-    const parseTime = (timeStr: string): number => {
-        const [time, modifier] = timeStr.split(' ');
-        let [hours, minutes] = time.split(':').map(Number);
-        if (modifier === 'PM' && hours < 12) hours += 12;
-        if (modifier === 'AM' && hours === 12) hours = 0;
-        return hours * 60 + (minutes || 0);
+    // Day lookup: handle full, short, and lowercase keys
+    const getHoursByDay = (hours: any, dayFull: string) => {
+        const short = dayFull.substring(0, 3);
+        const lowerFull = dayFull.toLowerCase();
+        const lowerShort = short.toLowerCase();
+
+        return hours[short] || hours[dayFull] || hours[lowerFull] || hours[lowerShort];
     };
 
-    let hoursRange: string | { open: string; close: string } | undefined;
+    const parseTime = (timeStr: string): number => {
+        if (!timeStr) return 0;
+        // Handle "Closed" or other non-time strings
+        if (timeStr.toLowerCase().includes('closed')) return -1;
 
-    if (typeof venue.hours === 'string') {
-        hoursRange = venue.hours;
-    } else {
-        hoursRange = venue.hours[currentDay];
-    }
+        const cleanTime = timeStr.replace(/\u2013|\u2014/g, '-').trim();
 
-    if (!hoursRange) return 'closed';
+        // Try matching AM/PM first
+        const ampmMatch = cleanTime.match(/(\d+):?(\d+)?\s*(AM|PM)/i);
+        if (ampmMatch) {
+            let [_, hoursStr, minutesStr, modifier] = ampmMatch;
+            let hours = parseInt(hoursStr, 10);
+            let minutes = parseInt(minutesStr || '0', 10);
 
-    let openStr, closeStr;
-    if (typeof hoursRange === 'string') {
-        const parts = hoursRange.split(' - ');
-        if (parts.length !== 2) return 'open';
-        [openStr, closeStr] = parts;
-    } else {
-        openStr = hoursRange.open;
-        closeStr = hoursRange.close;
-    }
-
-    const openTime = parseTime(openStr);
-    let closeTime = parseTime(closeStr);
-
-    // Handle midnight wrap
-    if (closeTime <= openTime) {
-        closeTime += 24 * 60;
-    }
-
-    // Adjust current time for midnight wrap context
-    // If current time is early morning (e.g., 1 AM) and close time was 2 AM (today),
-    // but the session started yesterday, we need to handle that.
-    let adjustedCurrentTime = currentTime;
-    if (currentTime < openTime && currentTime < closeTime - (24 * 60)) {
-        adjustedCurrentTime += 24 * 60;
-    }
-
-    if (adjustedCurrentTime >= openTime && adjustedCurrentTime < closeTime) {
-        // Last Call check (30 minutes before close)
-        if (closeTime - adjustedCurrentTime <= 30) {
-            return 'last_call';
+            if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12;
+            if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0;
+            return hours * 60 + minutes;
         }
-        return 'open';
-    }
+
+        // Try matching 24h format (HH:mm)
+        const h24Match = cleanTime.match(/^(\d{1,2}):(\d{2})$/);
+        if (h24Match) {
+            const hours = parseInt(h24Match[1], 10);
+            const minutes = parseInt(h24Match[2], 10);
+            return hours * 60 + minutes;
+        }
+
+        return 0;
+    };
+
+    const getStatusForDay = (dayName: string, isYesterday: boolean): HoursStatus | null => {
+        let range: string | { open: string; close: string } | undefined;
+        if (typeof venue.hours === 'string') {
+            const lines = venue.hours.split('\n');
+            const targetLine = lines.find(l => l.startsWith(dayName) || l.startsWith(dayName.substring(0, 3)));
+            if (targetLine) range = targetLine.split(': ')[1];
+        } else if (venue.hours && typeof venue.hours === 'object') {
+            range = (venue.hours as any)[dayName] || (venue.hours as any)[dayName.substring(0, 3)];
+        }
+
+        if (!range || (typeof range === 'string' && range.toLowerCase().includes('closed'))) return null;
+
+        let openStr, closeStr;
+        if (typeof range === 'string') {
+            const parts = range.replace(/\u2013|\u2014/g, '-').trim().split(/\s*-\s*/);
+            if (parts.length !== 2) return null;
+            [openStr, closeStr] = parts;
+        } else {
+            openStr = range.open;
+            closeStr = range.close;
+        }
+
+        const openTime = parseTime(openStr);
+        let closeTime = parseTime(closeStr);
+        if (openTime === -1 || closeTime === -1) return null;
+
+        // Wrap close time if it's before open time (overnight shift)
+        if (closeTime <= openTime) closeTime += 24 * 60;
+
+        let checkTime = currentTime;
+        if (isYesterday) {
+            checkTime += 24 * 60; // We are looking at "Yesterday's" shift from current day's perspective
+        }
+
+        if (checkTime >= openTime && checkTime < closeTime) {
+            return (closeTime - checkTime <= 30) ? 'last_call' : 'open';
+        }
+
+        return null;
+    };
+
+    // 1. Check if we are still in "Yesterday's" shift (e.g. 1AM Friday is Thursday's shift)
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayName = yesterdayDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const yesterdayStatus = getStatusForDay(yesterdayName, true);
+    if (yesterdayStatus) return yesterdayStatus;
+
+    // 2. Check "Today's" shift
+    const todayStatus = getStatusForDay(dayNameFull, false);
+    if (todayStatus) return todayStatus;
 
     return 'closed';
 };

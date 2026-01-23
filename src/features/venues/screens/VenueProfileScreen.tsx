@@ -14,7 +14,8 @@ import {
     Target, Mic2, HelpCircle, Box, Disc, ExternalLink, X, Crown, Key
 } from 'lucide-react';
 import { formatToAMPM } from '../../../utils/timeUtils';
-import { Venue, UserProfile } from '../../../types';
+import { Venue, UserProfile, AppEvent } from '../../../types';
+import { EventService } from '../../../services/eventService';
 import { SEO } from '../../../components/common/SEO';
 import { VenueGallery } from '../components/VenueGallery';
 import { getVenueStatus, isVenueOpen } from '../../../utils/venueUtils';
@@ -162,6 +163,26 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
             return currentMinutes >= start && currentMinutes < end;
         });
     }, [venue]);
+
+    // [NEW] Upcoming Events State
+    const [upcomingEvents, setUpcomingEvents] = useState<AppEvent[]>([]);
+    const [isEventsLoading, setIsEventsLoading] = useState(false);
+
+    useEffect(() => {
+        const loadUpcomingEvents = async () => {
+            if (!id) return;
+            setIsEventsLoading(true);
+            try {
+                const fetched = await EventService.fetchEvents({ venueId: id, status: 'approved' });
+                setUpcomingEvents(fetched);
+            } catch (err) {
+                console.error('Failed to load upcoming events', err);
+            } finally {
+                setIsEventsLoading(false);
+            }
+        };
+        loadUpcomingEvents();
+    }, [id]);
 
     // [PHASE 1] Menu & Flight Builder State
     const [flightItems, setFlightItems] = useState<any[]>([]); // Using any for now to avoid extensive type imports in this file if not present
@@ -425,7 +446,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                 {venue.isBoutique && <Sparkles className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
                             </div>
 
-                            {/* Review Score & Type */}
+                            {/* Review Score & Vibe */}
                             <div className="flex items-center gap-3 mb-2">
                                 {(venue.googleRating) && (
                                     <div className="flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-sm">
@@ -434,10 +455,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                         <span className="text-[10px] text-slate-300">({venue.googleReviewCount})</span>
                                     </div>
                                 )}
-                                <div className="flex items-center gap-2 text-xs font-bold text-slate-300 uppercase tracking-widest truncate">
-                                    <span>{venue.venueType === 'brewpub' ? 'Brewpub' : (venue.makerType || VENUE_TYPE_LABELS[venue.venueType] || venue.venueType)}</span>
-                                    <span>•</span>
-                                    <span className="text-primary italic">"{venue.vibe}"</span>
+                                <div className="flex items-center gap-2 text-xs font-bold text-primary italic uppercase tracking-widest truncate">
+                                    <span>{venue.vibe}</span>
                                 </div>
                             </div>
 
@@ -493,7 +512,13 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                 {(venue.activeFlashBounty?.title || venue.deal) && (
                     <div className="bg-red-500/10 border-2 border-red-500/50 rounded-2xl p-5 flex gap-5 animate-in zoom-in-95 duration-500 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
                         <div className="bg-red-500 p-3 h-fit rounded-xl shadow-lg shadow-red-500/40">
-                            <Zap className="w-6 h-6 text-white fill-white" />
+                            {venue.activeFlashBounty?.category === 'food' ? (
+                                <Utensils className="w-6 h-6 text-white" />
+                            ) : venue.activeFlashBounty?.category === 'drink' ? (
+                                <Beer className="w-6 h-6 text-white" />
+                            ) : (
+                                <Zap className="w-6 h-6 text-white fill-white" />
+                            )}
                         </div>
                         <div className="flex-1">
                             <div className="flex justify-between items-start mb-1">
@@ -553,10 +578,20 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {/* Hours Card (Replaces Energy & Static Hours) */}
+                    {/* Hours Card (Full Width on Mobile) */}
                     <div className="col-span-2">
                         <HoursCard hours={venue.hours} isOpen={isOpen} />
                     </div>
+
+                    {/* Clock Ins Card */}
+                    <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
+                        <Trophy className="w-5 h-5 text-primary" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Clock Ins</span>
+                        <span className="text-xl font-black text-white uppercase font-league tracking-tighter">
+                            {venue.clockIns || 0}
+                        </span>
+                    </div>
+
                     {/* Food Service Status */}
                     <div className="bg-surface border border-white/5 p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg">
                         {venue.foodService === 'full_kitchen' ? <Utensils className="w-5 h-5 text-green-400" /> :
@@ -592,12 +627,6 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                 </div>
                             </div>
                         )}
-                        {venue.isAllAges && (
-                            <div className="bg-green-900/20 border border-green-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                                <Users className="w-3 h-3 text-green-400" />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-green-300">All Ages Welcome</span>
-                            </div>
-                        )}
                         {venue.isDogFriendly && (
                             <div className="bg-purple-900/20 border border-purple-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
                                 <Sparkles className="w-3 h-3 text-purple-400" />
@@ -617,6 +646,40 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{service}</span>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* [NEW] UPCOMING EVENTS SECTION */}
+                {upcomingEvents.length > 0 && (
+                    <div className="space-y-4">
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">Upcoming Events</h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            {upcomingEvents.slice(0, 3).map((event) => (
+                                <div key={event.id} className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex items-center gap-4 group hover:border-primary/20 transition-all">
+                                    <div className="bg-surface p-3 rounded-xl border border-white/5 text-center min-w-[60px]">
+                                        <p className="text-[8px] font-black text-primary uppercase leading-none">{new Date(event.date).toLocaleDateString('en-US', { month: 'short' })}</p>
+                                        <p className="text-lg font-black text-white leading-none mt-1">{new Date(event.date).getDate()}</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="text-sm font-black text-white uppercase font-league tracking-wide">{event.title}</h4>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tight flex items-center gap-1">
+                                                <Clock size={10} /> {formatToAMPM(event.time)}
+                                            </span>
+                                            <span className="text-[9px] text-primary/70 font-black uppercase tracking-tight px-1.5 py-0.5 rounded bg-primary/5 border border-primary/10">
+                                                {event.type}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-primary transition-colors" />
+                                </div>
+                            ))}
+                            {upcomingEvents.length > 3 && (
+                                <button className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-primary transition-colors text-center w-full py-2">
+                                    + {upcomingEvents.length - 3} More Events
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -1131,7 +1194,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({ onOpenSi
                                     <Navigation className="w-5 h-5 text-blue-400" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase">Address</span>
+                                    <span className="text-[10px] font-black text-slate-500 uppercase">
+                                        Address • {venue.makerType || VENUE_TYPE_LABELS[venue.venueType] || venue.venueType || 'Venue'}
+                                    </span>
                                     <p className="text-sm font-bold text-white uppercase tracking-tight">{venue.address || 'Olympia, WA'}</p>
                                 </div>
                             </div>

@@ -9,7 +9,9 @@ export class EventService {
      */
     static async fetchEvents(params?: { venueId?: string; status?: AppEvent['status'] }): Promise<AppEvent[]> {
         try {
-            const url = new URL(API_ENDPOINTS.EVENTS.LIST);
+            const baseUrl = API_ENDPOINTS.EVENTS.LIST;
+            const url = new URL(baseUrl, window.location.origin);
+
             if (params?.venueId) url.searchParams.append('venueId', params.venueId);
             if (params?.status) url.searchParams.append('status', params.status);
 
@@ -91,7 +93,7 @@ export class EventService {
     /**
      * Generate an AI description for an event.
      */
-    static async generateDescription(context: { venueId: string; type: string; date: string; time: string }): Promise<string> {
+    static async generateDescription(context: { venueId: string; type: string; date: string; time: string; title?: string; description?: string }): Promise<string> {
         const { API_BASE_URL } = await import('../lib/api-config');
         try {
             const response = await fetch(`${API_BASE_URL}/ai/generate-description`, {

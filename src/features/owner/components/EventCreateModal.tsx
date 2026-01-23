@@ -9,12 +9,14 @@ interface EventCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     venueId: string;
+    venueName: string;
     onEventCreated: () => void;
 }
 
-export const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onClose, venueId, onEventCreated }) => {
+export const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onClose, venueId, venueName, onEventCreated }) => {
     const { showToast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isPolishing, setIsPolishing] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         type: 'other' as AppEvent['type'],
@@ -37,7 +39,7 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onCl
         try {
             await EventService.submitEvent({
                 venueId,
-                venueName: '', // Backend handles this lookup usually, or we pass it if needed. 
+                venueName,
                 // Wait, submitEvent type requires venueName? Let's check type definition.
                 // Omit<AppEvent, 'id' | 'status' | 'createdAt' | 'submittedBy'>
                 // Yes, venueName is required in AppEvent. 
@@ -62,6 +64,32 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onCl
             showToast(error.message || 'Failed to create event.', 'error');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handlePolish = async () => {
+        if (!formData.title || !formData.date || !formData.time) {
+            showToast('Fill in Title, Date, and Time first to provide context for the AI.', 'error');
+            return;
+        }
+
+        setIsPolishing(true);
+        try {
+            const polished = await EventService.generateDescription({
+                venueId,
+                type: formData.type,
+                date: formData.date,
+                time: formData.time,
+                title: formData.title,
+                description: formData.description,
+                venueName // Added venue context for better generation
+            });
+            setFormData(prev => ({ ...prev, description: polished }));
+            showToast('Description optimized!', 'success');
+        } catch (error: any) {
+            showToast(error.message || 'AI is currently unavailable. Try again later.', 'error');
+        } finally {
+            setIsPolishing(false);
         }
     };
 
@@ -139,9 +167,17 @@ export const EventCreateModal: React.FC<EventCreateModalProps> = ({ isOpen, onCl
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex justify-between">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider flex justify-between items-center">
                             <span>Description</span>
-                            <span className="text-primary flex items-center gap-1"><Sparkles size={8} /> Artie can polish this later</span>
+                            <button
+                                type="button"
+                                onClick={handlePolish}
+                                disabled={isPolishing}
+                                className="text-primary flex items-center gap-1 hover:text-white transition-colors disabled:opacity-50"
+                            >
+                                {isPolishing ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                                <span>Generate description</span>
+                            </button>
                         </label>
                         <textarea
                             placeholder="Brief details about the event..."

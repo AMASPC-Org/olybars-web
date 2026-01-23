@@ -1239,22 +1239,29 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
     const updates: Partial<Venue> = {
         googlePlaceId: placeId,
         lastGoogleSync: now,
-        updatedAt: now
+        updatedAt: now,
+        // [TRUTH_ALIGNMENT] Reset boolean features to false unless verified by Google
+        isAllAges: false,
+        isDogFriendly: false,
+        hasOutdoorSeating: false,
+        isSoberFriendly: false,
+        hasPrivateRoom: false,
+        gameFeatures: []
     };
 
     if (details.name) updates.name = details.name;
     if (details.formatted_phone_number) updates.phone = details.formatted_phone_number;
     if (details.website) updates.website = details.website;
-    if (details.formatted_address) updates.address = details.formatted_address; // [NEW] Sync address
+    if (details.formatted_address) updates.address = details.formatted_address;
 
-    // [NEW] Sync Ratings
+    // Sync Ratings
     if (details.rating) updates.googleRating = details.rating;
     if (details.user_ratings_total) updates.googleReviewCount = details.user_ratings_total;
 
     // Construct Google Photo URL if available
     if (details.photos && details.photos.length > 0) {
         const photoRef = details.photos[0].photo_reference;
-        const apiKey = process.env.GOOGLE_BACKEND_KEY;
+        const apiKey = process.env.GOOGLE_BACKEND_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
         (updates as any).googlePhotoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${photoRef}&key=${apiKey}`;
     }
 
@@ -1266,17 +1273,31 @@ export const syncVenueWithGoogle = async (venueId: string, manualPlaceId?: strin
         };
     }
 
-    // Map opening hours (simplified as a string for now, as used in ListingManagementTab)
+    // Map opening hours
     if (details.opening_hours?.weekday_text) {
         updates.hours = details.opening_hours.weekday_text.join('\n');
     }
 
-    // [NEW] Map Features to Services
-    const distinctServices = new Set<string>(venueData.services || []);
-    if (details.serves_beer) distinctServices.add('Serves Beer');
-    if (details.serves_wine) distinctServices.add('Serves Wine');
-    if (details.serves_vegetarian_food) distinctServices.add('Vegetarian Options');
-    if (details.wheelchair_accessible_entrance) distinctServices.add('Wheelchair Accessible');
+    // [TRUTH_ALIGNMENT] Map Features to Services & Flags
+    const distinctServices = new Set<string>(); // Start fresh
+    if (details.serves_beer) {
+        distinctServices.add('Serves Beer');
+    }
+    if (details.serves_wine) {
+        distinctServices.add('Serves Wine');
+    }
+    if (details.serves_vegetarian_food) {
+        distinctServices.add('Vegetarian Options');
+    }
+    if (details.wheelchair_accessible_entrance) {
+        distinctServices.add('Wheelchair Accessible');
+    }
+
+    // Map specific flags if present in Google Details
+    if (details.outdoor_seating) updates.hasOutdoorSeating = true;
+    if (details.reservations) updates.reservations = 'Accepted via Google';
+    if (details.allows_dogs) updates.isDogFriendly = true;
+    if (details.good_for_children) updates.isAllAges = true;
 
     // Convert Set back to array
     if (distinctServices.size > 0) {

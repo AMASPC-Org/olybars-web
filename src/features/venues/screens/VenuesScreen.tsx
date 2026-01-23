@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
-    Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users
+    Beer, Bot, ChevronRight, Clock, Crown, Filter, Flame, MapPin, Music, Navigation, Search, Sparkles, Star, Trophy, Users, Utensils
 } from 'lucide-react';
 import { Venue, VenueType, SceneTag, VenueStatus } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance, metersToMiles } from '../../../utils/geoUtils';
-import { isVenueOpen, getVenueStatus } from '../../../utils/venueUtils';
+import { isVenueOpen, getVenueStatus, getEffectiveRules, timeToMinutes } from '../../../utils/venueUtils';
 import { VenueGallery } from '../components/VenueGallery';
+import { format } from 'date-fns';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { VibeMugs } from '../../../components/VibeMugs';
 import { useDiscovery } from '../contexts/DiscoveryContext';
@@ -81,6 +82,13 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
         eventFilter
     } = useDiscovery();
 
+    // [RANKING] Auto-sort by distance for Deals filter
+    React.useEffect(() => {
+        if (filterKind === 'deals' && coords) {
+            setActiveSort('distance');
+        }
+    }, [filterKind, coords]);
+
     // Rotation Logic (shifts every 5 minutes) ensures global fairness
     const rotationOffset = useMemo(() => {
         const rotationInterval = 5 * 60 * 1000;
@@ -127,7 +135,31 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
             result = filteredResults;
         }
         else if (filterKind === 'deals') {
-            result = result.filter(v => !!v.deal || (v.flashBounties && v.flashBounties.length > 0));
+            const now = Date.now();
+            const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+            const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+
+            result = result.filter(v => {
+                // 1. Live Flash Bounty
+                if (v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > now) return true;
+
+                // 2. Upcoming Flash Bounty
+                if (v.flashBounties?.some(b => (b as any).active && b.startTime > now)) return true;
+
+                // 3. Active Happy Hour
+                const rules = getEffectiveRules(v);
+                const hasActiveHH = rules.some(r => {
+                    if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                    const start = timeToMinutes(r.startTime);
+                    const end = timeToMinutes(r.endTime);
+                    return currentMinutes >= start && currentMinutes < end;
+                });
+                if (hasActiveHH) return true;
+
+                // 4. Static Deal (Strict)
+                const hasValidDeal = v.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(v.deal.toLowerCase());
+                return !!hasValidDeal;
+            });
         }
         else if (filterKind === 'scene' && sceneFilter !== 'all') {
             // Basic Taxonomy Mapping or Direct Tag Match
@@ -209,7 +241,29 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
 
         // 4. Tag Filter (Vibe Tags & Functional Tags)
         if (activeTag) {
-            if (activeTag === 'Deals') result = result.filter(v => !!v.deal || (v.flashBounties && v.flashBounties.length > 0));
+            if (activeTag === 'Deals') {
+                const now = Date.now();
+                const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+                const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+
+                result = result.filter(v => {
+                    // Reuse Strict Logic
+                    if (v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > now) return true;
+                    if (v.flashBounties?.some(b => (b as any).active && b.startTime > now)) return true;
+
+                    const rules = getEffectiveRules(v);
+                    const hasActiveHH = rules.some(r => {
+                        if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                        const start = timeToMinutes(r.startTime);
+                        const end = timeToMinutes(r.endTime);
+                        return currentMinutes >= start && currentMinutes < end;
+                    });
+                    if (hasActiveHH) return true;
+
+                    const hasValidDeal = v.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(v.deal.toLowerCase());
+                    return !!hasValidDeal;
+                });
+            }
             else if (activeTag === 'Makers') {
                 result = result.filter(v =>
                     v.isHQ ||
@@ -268,16 +322,49 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                 // Priority 0: Partner Exposure Equity (League Members)
                 const isAPartner = a.isPaidLeagueMember;
                 const isBPartner = b.isPaidLeagueMember;
+
+                // Score Calculation for Content Priority
+                // 4 = Live Bounty
+                // 3 = Active HH
+                // 2 = Upcoming Bounty
+                // 1 = Static Deal
+                // 0 = None
+                const getDealScore = (v: Venue) => {
+                    const now = Date.now();
+                    // Live Bounty
+                    if (v.activeFlashBounty?.isActive && (v.activeFlashBounty.endTime || 0) > now) return 4;
+
+                    // Active HH
+                    const rules = getEffectiveRules(v);
+                    const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+                    const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+                    const isHH = rules.some(r => {
+                        if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                        const start = timeToMinutes(r.startTime);
+                        const end = timeToMinutes(r.endTime);
+                        return currentMinutes >= start && currentMinutes < end;
+                    });
+                    if (isHH) return 3;
+
+                    // Upcoming
+                    if (v.flashBounties?.some(b => (b as any).active && b.startTime > now)) return 2;
+
+                    // Static
+                    if (v.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(v.deal.toLowerCase())) return 1;
+
+                    return 0;
+                };
+
+                const scoreA = getDealScore(a);
+                const scoreB = getDealScore(b);
+
+                // Primary Sort: Content Score (Live > HH > Upcoming > Static)
+                if (scoreA !== scoreB) return scoreB - scoreA;
+
+                // Secondary Sort: Partner Status (if scores are equal, e.g. both have Live Bounty)
                 if (isAPartner !== isBPartner) return isAPartner ? -1 : 1;
 
-                // Priority 1: Has Deal?
-                const aHasDeal = !!(a.deal || (a.flashBounties && a.flashBounties.length > 0));
-                const bHasDeal = !!(b.deal || (b.flashBounties && b.flashBounties.length > 0));
-
-                if (aHasDeal && !bHasDeal) return -1;
-                if (!aHasDeal && bHasDeal) return 1;
-
-                // Priority 2: Tie-Break with Rotation
+                // Priority 3: Tie-Break with Rotation
                 if (isAPartner && isBPartner) {
                     const aHash = a.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                     const bHash = b.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -551,15 +638,93 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({ venues, handleVibeCh
                                 </div>
 
                                 <div className="space-y-3">
-                                    {venue.deal && (
-                                        <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-center gap-3">
-                                            <Beer size={16} className="text-primary" />
-                                            <div>
-                                                <p className="text-[10px] font-black text-primary uppercase leading-none mb-1 font-league">Featured Deal</p>
-                                                <p className="text-xs font-bold text-white font-body">{venue.deal}</p>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {/* Smart Deal Display */}
+                                    {(() => {
+                                        const now = Date.now();
+                                        const rules = getEffectiveRules(venue);
+                                        const currentMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+                                        const currentDay = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+
+                                        let liveBounty = venue.activeFlashBounty?.isActive && (venue.activeFlashBounty.endTime || 0) > now ? venue.activeFlashBounty : null;
+                                        let activeHH = rules.find(r => {
+                                            if (r.days && r.days.length > 0 && !r.days.includes(currentDay)) return false;
+                                            const start = timeToMinutes(r.startTime);
+                                            const end = timeToMinutes(r.endTime);
+                                            return currentMinutes >= start && currentMinutes < end;
+                                        });
+                                        let upcomingBounty = !liveBounty && venue.flashBounties?.find(b => (b as any).active && b.startTime > now);
+
+                                        // Sort upcoming bounties by time to show soonest
+                                        if (venue.flashBounties && upcomingBounty) {
+                                            const sorted = [...venue.flashBounties].filter(b => (b as any).active && b.startTime > now).sort((a, b) => a.startTime - b.startTime);
+                                            if (sorted.length > 0) upcomingBounty = sorted[0];
+                                        }
+
+                                        let staticDeal = (venue.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(venue.deal.toLowerCase())) ? venue.deal : null;
+
+                                        // 1. Live Bounty (Hero)
+                                        if (liveBounty) {
+                                            return (
+                                                <div className="bg-primary/10 border border-primary/50 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden animate-pulse-slow">
+                                                    <div className="absolute top-0 right-0 bg-primary text-black text-[8px] font-black px-1.5 py-0.5 rounded-bl-lg">LIVE NOW</div>
+                                                    <Crown size={18} className="text-primary fill-primary animate-bounce-subtle" />
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-primary uppercase leading-none mb-1 font-league">Flash Bounty</p>
+                                                        <p className="text-xs font-bold text-white font-body">{liveBounty.title}</p>
+                                                        <p className="text-[9px] text-primary/80 font-mono mt-0.5">Ends in {Math.ceil((liveBounty.endTime - now) / 60000)}m</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // 2. Active HH
+                                        if (activeHH) {
+                                            return (
+                                                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center gap-3">
+                                                    <Clock size={16} className="text-emerald-400" />
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-emerald-400 uppercase leading-none mb-1 font-league">Happy Hour Active</p>
+                                                        <p className="text-xs font-bold text-white font-body">{activeHH.specials || activeHH.description}</p>
+                                                        <p className="text-[9px] text-emerald-400/80 font-mono mt-0.5">Ends {activeHH.endTime}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // 3. Upcoming Bounty
+                                        if (upcomingBounty) {
+                                            return (
+                                                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 flex items-center gap-3">
+                                                    <Clock size={16} className="text-blue-400" />
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-blue-400 uppercase leading-none mb-1 font-league">
+                                                            Upcoming: {format(upcomingBounty.startTime, 'EEE @ h:mm a')}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-white font-body">{upcomingBounty.title}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        // 4. Static Deal
+                                        if (staticDeal) {
+                                            return (
+                                                <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex items-center gap-3">
+                                                    {venue.activeFlashBounty?.category === 'food' ? (
+                                                        <Utensils size={16} className="text-primary" />
+                                                    ) : (
+                                                        <Beer size={16} className="text-primary" />
+                                                    )}
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-primary uppercase leading-none mb-1 font-league">Featured Deal</p>
+                                                        <p className="text-xs font-bold text-white font-body">{staticDeal}</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        return null;
+                                    })()}
 
                                     {venue.leagueEvent && (
                                         <Link to={`/bars/${venue.id}`} className="block bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 flex items-center justify-between group/event cursor-pointer hover:bg-slate-800 transition-colors">

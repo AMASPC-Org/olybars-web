@@ -138,6 +138,7 @@ export const VenueUpdateSchema = z.object({
     triviaHowItWorks: z.array(z.string()).optional(),
     deal: z.string().optional(),
     dealEndsIn: z.number().optional(),
+    activeFlashBounty: z.any().optional(),
     sceneTags: z.array(z.string()).optional(),
     tier_config: z.object({
         is_directory_listed: z.boolean().optional(),
@@ -284,6 +285,7 @@ export const VenueSchema = z.object({
     historySnippet: z.string().optional(),
     flashBounties: z.array(z.any()).optional(),
     activeFlashBountyId: z.string().optional(),
+    activeFlashBounty: z.any().optional(),
     deal: z.string().optional(),
     dealEndsIn: z.number().optional(),
     vibeDefault: z.string().optional(),

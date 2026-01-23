@@ -40,7 +40,7 @@ import { Footer } from './Footer';
 import { Sidebar } from './Sidebar';
 import { BuzzClock } from '../ui/BuzzClock';
 import { InfoRulesModal } from '../ui/InfoRulesModal';
-import logoIcon from '../../assets/OlyBars.com Emblem Logo PNG Transparent (512px by 512px).png';
+import logoIcon from '../../assets/olybars-logo-512.png';
 import { FormatCurrency } from '../../utils/formatCurrency';
 import { GAMIFICATION_CONFIG } from '../../config/gamification';
 
@@ -241,8 +241,9 @@ export const AppShell: React.FC<AppShellProps> = ({
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => {
-                    // Force explicit check here to avoid routing issues
-                    if ((userProfile?.role === 'guest' || userProfile?.uid === 'guest') && onMemberLoginClick) {
+                    // Decouple authentication status from guest role
+                    const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
+                    if (!isAuthenticated && onMemberLoginClick) {
                       onMemberLoginClick('login');
                     } else if (onProfileClick) {
                       onProfileClick();
@@ -357,7 +358,14 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </p>
               </div>
               <button
-                onClick={onProfileClick}
+                onClick={() => {
+                  const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
+                  if (!isAuthenticated && onProfileClick) {
+                    onProfileClick();
+                  } else {
+                    navigate('/profile');
+                  }
+                }}
                 className="bg-primary text-black text-[11px] font-black uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[3px_3px_0px_0px_#000]"
               >
                 View League

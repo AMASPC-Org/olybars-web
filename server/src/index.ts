@@ -942,8 +942,15 @@ v1Router.patch('/users/:uid', verifyToken, async (req, res) => {
 
     const validation = UserUpdateSchema.safeParse(req.body);
     if (!validation.success) {
+        log('WARNING', '[SYNC_DEBUG] Validation failed', {
+            uid,
+            errors: validation.error.format(),
+            receivedBody: req.body
+        });
         return res.status(400).json({ error: 'Invalid update data', details: validation.error.format() });
     }
+
+    log('INFO', '[SYNC_DEBUG] Received valid update request', { uid, updates: validation.data });
 
     const { handle, email, phone, favoriteDrink, favoriteDrinks, homeBase, playerGamePreferences, hasCompletedMakerSurvey, role, weeklyBuzz, showMemberSince } = validation.data;
 
@@ -1078,23 +1085,33 @@ v1Router.get('/activity/recent', async (req, res) => {
  * @desc Fetch events (approved or user's own)
  */
 v1Router.get('/events', async (req, res) => {
-    const { venueId, status } = req.query;
+    const { venueId, status, includePast } = req.query;
     try {
         const { db } = await import('./firebaseAdmin.js');
         let query: any = db.collection('events');
 
+        // To avoid composite index requirement, we'll do basic sorting here 
+        // and filter in memory since the dataset size is small.
+        const snapshot = await query.orderBy('createdAt', 'desc').limit(500).get();
+        let events = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+        // Memory Filtering
         if (venueId) {
-            query = query.where('venueId', '==', venueId);
+            events = events.filter((e: any) => e.venueId === venueId);
         }
         if (status) {
-            query = query.where('status', '==', status);
-        } else {
-            // Default: show only approved events publicly
-            query = query.where('status', '==', 'approved');
+            events = events.filter((e: any) => e.status === status);
+        } else if (!venueId) {
+            // Default public view: only approved
+            events = events.filter((e: any) => e.status === 'approved');
         }
 
-        const snapshot = await query.orderBy('createdAt', 'desc').get();
-        const events = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+        // Filtering out past events unless requested
+        if (includePast !== 'true' && !venueId) {
+            const today = new Date().toISOString().split('T')[0];
+            events = events.filter((e: any) => e.date >= today);
+        }
+
         res.json(events);
     } catch (error: any) {
         log('ERROR', 'Failed to fetch events', { error: error.message });
@@ -1116,10 +1133,11 @@ v1Router.post('/events', identifyUser, verifyHoneypot, async (req, res) => {
         const { db } = await import('./firebaseAdmin.js');
         const user = (req as any).user;
 
-        // CRITICAL FIX: Auto-approve if Owner/Manager of the venue
+        // More robust auto-approval: Admin or Venue Manager
         const isTrusted = user && (
             ['admin', 'super-admin'].includes(user.role) ||
-            (['owner', 'manager'].includes(user.role) && user.homeBase === validation.data.venueId)
+            (['owner', 'manager'].includes(user.role) &&
+                (user.homeBase === validation.data.venueId || (user.venueIds && user.venueIds.includes(validation.data.venueId))))
         );
 
         const eventData = {
@@ -1274,7 +1292,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
 
         // Dynamically import Gemini Service
         const { GeminiService } = await import('./services/geminiService.js');
-        const gemini = new GeminiService();
+        const gemini = new GeminiService(config.GOOGLE_GENAI_API_KEY);
 
         const prompt = `You are an SEO & AI Authority specialist for OlyBars.
         Analyze this venue and produce a structured semantic profile for AI agents.
@@ -1307,7 +1325,7 @@ v1Router.get('/venues/:id/semantic', async (req, res) => {
  * @desc Generate an AI event description based on context
  */
 v1Router.post('/ai/generate-description', async (req, res) => {
-    const { venueId, type, date, time } = req.body;
+    const { venueId, type, date, time, title, description: existingDescription } = req.body;
 
     if (!venueId || !type || !date || !time) {
         return res.status(400).json({ error: 'Missing required context fields (venueId, type, date, time).' });
@@ -1326,46 +1344,68 @@ v1Router.post('/ai/generate-description', async (req, res) => {
         const venue = venueDoc.data()!;
 
         // 2. Fetch Relevant Deals (Happy Hour/Flash Bountys)
-        // For simplicity, we'll just check if the venue has registered deals
-        // In a real scenario, we might filter by time, but for now we provide the list to Artie.
         const deals = venue?.flashBounties || [];
 
         // 3. Get Knowledge Context (Holidays/Weather)
-        const context = KnowledgeService.getEventContext(date);
-        const foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.venueType || '', date);
+        let context;
+        let foodAlignment = null;
+        try {
+            context = KnowledgeService.getEventContext(date);
+            foodAlignment = KnowledgeService.getFoodOrHolidayAlignment(venue.venueType || '', date);
+        } catch (e) {
+            log('WARNING', 'Knowledge context failure', { date, error: (e as any).message });
+            context = { weatherOutlook: 'Standard Olympia vibes.', isMajorHoliday: false };
+        }
 
         // 3.5 Extract City for Multi-City Support
         let city = "Olympia, WA";
         if (venue?.address) {
             try {
-                const parts = venue.address.split(',');
-                if (parts.length >= 3) {
-                    const cityPart = parts[1].trim();
-                    const stateZipPart = parts[2].trim().split(' ')[0];
-                    city = `${cityPart}, ${stateZipPart}`;
+                // Robust Regex: Matches "City, ST" or "City, State"
+                const cityMatch = venue.address.match(/,\s*([^,]+),\s*([A-Z]{2})/);
+                if (cityMatch) {
+                    city = `${cityMatch[1].trim()}, ${cityMatch[2].trim()}`;
+                } else {
+                    // Fallback to simpler split if regex fails
+                    const parts = venue.address.split(',');
+                    if (parts.length >= 3) {
+                        city = `${parts[1].trim()}, ${parts[2].trim().split(' ')[0]}`;
+                    }
                 }
             } catch (e) {
-                // Fallback
+                log('WARNING', 'Address parsing failed', { address: venue.address });
             }
         }
 
-        // 4. Generate with Artie
-        const gemini = new GeminiService();
+        // 4. Generate with Artie (Schmidt Persona actually now)
+        const gemini = new GeminiService(config.GOOGLE_GENAI_API_KEY);
         const description = await gemini.generateEventDescription({
             venueName: venue.name,
             venueType: venue.venueType,
             eventType: type,
+            eventTitle: title,
             date,
             time,
             city,
             weather: context.weatherOutlook,
             holiday: context.holiday ? `${context.holiday}${foodAlignment ? ` (${foodAlignment})` : ''}` : foodAlignment || undefined,
-            deals
+            deals,
+            originalDescription: existingDescription,
+            venueLore: venue.insiderVibe || venue.description || venue.originStory,
+            triviaHost: venue.triviaHost,
+            triviaPrizes: venue.triviaPrizes,
+            triviaSpecials: venue.triviaSpecials
         });
 
         res.json({ description });
     } catch (error: any) {
-        log('ERROR', 'AI Description Generation Failed', { error: error.message });
+        log('ERROR', 'AI Description Generation Failed', {
+            venueId,
+            type,
+            date,
+            error: error.message,
+            stack: error.stack
+        });
         res.status(500).json({ error: 'Failed to generate description.' });
     }
 });
@@ -1383,7 +1423,7 @@ v1Router.post('/ai/analyze-event', verifyToken, async (req, res) => {
 
     try {
         const { GeminiService } = await import('./services/geminiService.js');
-        const gemini = new GeminiService();
+        const gemini = new GeminiService(config.GOOGLE_GENAI_API_KEY);
 
         const analysis = await gemini.analyzeEvent(event);
         res.json(analysis);
@@ -1579,5 +1619,6 @@ app.listen(Number(port), '0.0.0.0', () => {
     console.log(`🌍 Environment: ${config.NODE_ENV}`);
     console.log(`☁️ Platform: ${isCloudRun ? 'Cloud Run (Production)' : 'Local'}`);
     console.log(`🛡️ Rate Limiting: Active`);
+    console.log(`🎯 Target Project: ${config.GOOGLE_CLOUD_PROJECT}`);
     console.log(`🗺️ Maps Key Configured: ${config.VITE_GOOGLE_BROWSER_KEY ? 'YES ✅' : 'NO ❌'}`);
 });

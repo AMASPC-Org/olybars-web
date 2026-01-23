@@ -306,7 +306,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         const superAdminData = {
           role: 'super-admin' as UserRole,
           systemRole: 'admin' as SystemRole,
-          handle: 'Ryan (Admin)',
+          handle: profileData.handle || 'Ryan (Admin)',
           email: 'ryan@amaspc.com',
           venuePermissions: profileData.venuePermissions || {},
         };

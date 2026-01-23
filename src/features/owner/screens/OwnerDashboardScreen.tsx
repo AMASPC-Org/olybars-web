@@ -96,6 +96,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
     const [dealDescription, setDealDescription] = useState('');
     const [dealTaskDescription, setDealTaskDescription] = useState('');
     const [dealDuration, setDealDuration] = useState(60);
+    const [dealCategory, setDealCategory] = useState<'food' | 'drink' | 'other'>('drink');
     const [showArtieCommands, setShowArtieCommands] = useState(false);
     const [dashboardView, setDashboardView] = useState<'main' | 'marketing' | 'listing' | 'menu' | 'scraper' | 'maker' | 'host' | 'qr' | 'people' | 'events' | 'reports' | 'manual' | 'backroom' | 'notifications'>(initialView as any);
     const [hourlyReport, setHourlyReport] = useState<any>(null);
@@ -310,6 +311,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 description: dealDescription,
                 duration: dealDuration,
                 isActive: true,
+                category: dealCategory,
                 bounty_task_description: dealTaskDescription
             });
             setDealText('');
@@ -347,6 +349,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 startTime: start.getTime(),
                 endTime: start.getTime() + (dealDuration * 60 * 1000),
                 durationMinutes: dealDuration,
+                category: dealCategory,
                 status: 'PENDING',
                 staffBriefingConfirmed: true,
                 createdBy: 'MANUAL',
@@ -861,6 +864,22 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                                             placeholder="EX: $5 DRAFTS..."
                                             className="w-full bg-black border border-white/10 rounded-lg p-4 text-primary font-black placeholder:text-slate-900 outline-none font-league"
                                         />
+                                    </div>
+
+                                    <div className="space-y-1.5 font-league">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Bounty Category</label>
+                                        <div className="flex gap-2">
+                                            {(['drink', 'food', 'other'] as const).map(cat => (
+                                                <button
+                                                    key={cat}
+                                                    type="button"
+                                                    onClick={() => setDealCategory(cat)}
+                                                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${dealCategory === cat ? 'bg-primary text-black border-primary shadow-[2px_2px_0px_0px_#fff]' : 'bg-black text-slate-600 border-white/5 hover:border-white/20'}`}
+                                                >
+                                                    {cat === 'drink' ? '🍺 Drink bounty' : cat === 'food' ? '🍔 Food bounty' : '⚡ Other'}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">

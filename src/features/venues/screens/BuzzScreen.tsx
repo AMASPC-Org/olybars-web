@@ -6,7 +6,7 @@ import { DateContextSelector } from '../../../components/features/search/DateCon
 import {
   Flame, Beer, Star, Users, MapPin,
   Trophy, ChevronRight, Crown, Search, Filter,
-  Bot, Clock, Zap, Gamepad2, ShieldCheck, List, Map as MapIcon, Sparkles
+  Bot, Clock, Zap, Gamepad2, ShieldCheck, List, Map as MapIcon, Sparkles, Utensils
 } from 'lucide-react';
 import { Venue, VenueStatus, UserProfile, ClockInRecord, VibeCheckRecord } from '../../../types';
 import { useGeolocation } from '../../../hooks/useGeolocation';
@@ -233,12 +233,16 @@ export const BuzzScreen: React.FC = () => {
 
     // Date Context Filter
     if (!isToday) {
-      const dayName = format(selectedDate, 'eeee').toLowerCase();
-      const hasEvents = (v.weekly_schedule?.[dayName]?.length ?? 0) > 0 ||
+      const dayNameFull = format(selectedDate, 'eeee');
+      const dayNameShort = dayNameFull.substring(0, 3);
+
+      const hasEvents = (v.weekly_schedule?.[dayNameFull.toLowerCase()]?.length ?? 0) > 0 ||
+        (v.weekly_schedule?.[dayNameShort]?.length ?? 0) > 0 ||
         (v.special_events?.some(e => isSameDay(new Date(e.date), selectedDate)) ?? false);
 
       // Check if open on that day
-      const isOpenOnDay = v.hours && typeof v.hours === 'object' && (v.hours as any)[dayName];
+      const hours = v.hours as any;
+      const isOpenOnDay = hours && typeof hours === 'object' && (hours[dayNameFull] || hours[dayNameShort] || hours[dayNameFull.toLowerCase()] || hours[dayNameShort.toLowerCase()]);
 
       if (!isOpenOnDay && !hasEvents) return false;
     }
@@ -426,7 +430,11 @@ export const BuzzScreen: React.FC = () => {
 
         const scoreA = getSortMetric(a);
         const scoreB = getSortMetric(b);
-        return scoreA - scoreB;
+        if (scoreA !== scoreB) return scoreA - scoreB;
+
+        // Tie-breaker: Distance
+        if (a.distance !== null && b.distance !== null) return a.distance - b.distance;
+        return 0;
       }
 
       if (filterKind === 'events') {
@@ -513,7 +521,9 @@ export const BuzzScreen: React.FC = () => {
   const displayItems = useMemo(() => {
     if (filterKind !== 'events') return displayVenues;
 
-    const dayName = format(selectedDate, 'eeee').toLowerCase();
+    const dayNameFull = format(selectedDate, 'eeee').toLowerCase();
+    const dayNameShort = dayNameFull.substring(0, 3);
+    const dayNameShortCap = dayNameFull.charAt(0).toUpperCase() + dayNameFull.slice(1, 3);
 
     return displayVenues.flatMap(v => {
       const items: any[] = [];
@@ -531,7 +541,7 @@ export const BuzzScreen: React.FC = () => {
       });
 
       // 2. Weekly Schedule
-      const weekly = v.weekly_schedule?.[dayName] || [];
+      const weekly = v.weekly_schedule?.[dayNameFull] || v.weekly_schedule?.[dayNameShortCap] || v.weekly_schedule?.[dayNameShort] || [];
       weekly.forEach(title => {
         const matchesEventFilter = eventFilter === 'all' || title.toLowerCase().includes(eventFilter.toLowerCase());
         if (matchesEventFilter || eventFilter === 'other') {
@@ -696,8 +706,14 @@ export const BuzzScreen: React.FC = () => {
                         </div>
 
                         {bountyTitle && (
-                          <div className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${hasActiveBounty ? 'bg-red-500 text-white border-red-400 font-black' : 'text-red-500 border-transparent'}`}>
-                            <Zap size={hasActiveBounty ? 12 : 10} className={`${hasActiveBounty ? 'fill-white' : 'fill-red-500'}`} />
+                          <div className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${hasActiveBounty ? 'bg-red-500 text-white border-red-400 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]' : 'text-red-500 border-transparent'}`}>
+                            {hasActiveBounty && venue.activeFlashBounty?.category === 'food' ? (
+                              <Utensils size={12} className="fill-white" />
+                            ) : hasActiveBounty && venue.activeFlashBounty?.category === 'drink' ? (
+                              <Beer size={12} className="fill-white" />
+                            ) : (
+                              <Zap size={hasActiveBounty ? 12 : 10} className={`${hasActiveBounty ? 'fill-white' : 'fill-red-500'}`} />
+                            )}
                             <span className={`text-[10px] uppercase tracking-tighter line-clamp-1 ${hasActiveBounty ? 'font-black' : 'font-bold'}`}>
                               {hasActiveBounty ? 'FLASH BOUNTY: ' : ''}{bountyTitle.replace(/⚡/g, '').trim()}
                             </span>

@@ -36,7 +36,8 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     const { showToast } = useToast();
 
     // Form State
-    const [handle, setHandle] = useState(userProfile.handle || '');
+    const initialHandle = userProfile.handle ? `#${userProfile.handle.replace(/^#/, '')}` : '';
+    const [handle, setHandle] = useState(initialHandle);
     const [email, setEmail] = useState(userProfile.email || '');
     const [phone, setPhone] = useState(userProfile.phone || '');
     const [favoriteDrinks, setFavoriteDrinks] = useState<string[]>(userProfile.favoriteDrinks || (userProfile.favoriteDrink ? [userProfile.favoriteDrink] : []));
@@ -115,8 +116,10 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
     }, [userProfile.uid, setUserProfile]);
 
     // Unsaved Changes Guard logic
+    const currentCleanHandle = handle.replace(/^#/, '');
+    const profileCleanHandle = (userProfile.handle || '').replace(/^#/, '');
     const isDirty = (
-        handle !== (userProfile.handle || '') ||
+        currentCleanHandle !== profileCleanHandle ||
         email !== (userProfile.email || '') ||
         phone !== (userProfile.phone || '') ||
         JSON.stringify(favoriteDrinks) !== JSON.stringify(userProfile.favoriteDrinks || (userProfile.favoriteDrink ? [userProfile.favoriteDrink] : [])) ||
@@ -158,11 +161,13 @@ const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ userProfile, setU
             };
 
             // Handle change logic
-            if (handle !== userProfile.handle) {
+            const cleanHandle = handle.replace(/^#/, '');
+            const profileCleanHandle = (userProfile.handle || '').replace(/^#/, '');
+
+            if (cleanHandle !== profileCleanHandle) {
                 if (cooldownActive && !isSuperAdmin) {
                     throw new Error(`Handle change locked! Wait ${daysRemaining} more days.`);
                 }
-                const cleanHandle = handle.replace(/^#/, '');
                 updates.handle = cleanHandle;
                 updates.handleLastChanged = Date.now();
             }
