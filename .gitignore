@@ -54,3 +54,15 @@ _archive/
 # Temporary and logic artifacts
 output.txt
 prod_indexes.json
+# Security Fixes (Ignored explicitly)
+cloud_run_env*.json
+**/localEnv.ts
+**/localEnv.js
+scripts/debug-key.ts
+scripts/test-keys.ts
+
+# Local Configs & Logs
+cloud_run_config*.json
+logs*.json
+build-log*.txt
+scripts/debug*.js
