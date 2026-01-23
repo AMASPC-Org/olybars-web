@@ -16,9 +16,8 @@ jobs:
       environment: "production"
       project_id: "ama-ecosystem-prod"
       region: "us-west1"
-      vite_key: ${{ secrets.PROD_VITE_GOOGLE_BROWSER_KEY }}
+      vite_secret_name: "GOOGLE_BROWSER_KEY"
     secrets:
       wif_provider: ${{ secrets.PROD_WIF_PROVIDER }}
       wif_service_account: ${{ secrets.PROD_WIF_SERVICE_ACCOUNT }}
-      vite_key: ${{ secrets.PROD_VITE_GOOGLE_BROWSER_KEY }}
       internal_health_token: ${{ secrets.PROD_INTERNAL_HEALTH_TOKEN }}
