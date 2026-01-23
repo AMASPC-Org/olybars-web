@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@types/md5": "^2.3.6",
+    "@types/puppeteer": "^5.4.7",
     "typescript": "^5.0.0"
   },
   "scripts": {
