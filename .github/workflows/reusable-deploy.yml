@@ -58,7 +58,9 @@ jobs:
           cache: "npm"
 
       - name: Install Dependencies
-        run: npm ci
+        run: |
+          npm ci
+          cd functions && npm ci
 
       - name: Audit & Compliance Suite
         run: npm run guardrail:audit
