@@ -25,13 +25,12 @@
     "puppeteer": "^24.35.0",
     "robots-parser": "^3.0.1",
     "uuid": "^13.0.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
+    "zod": "^3.23.8",
     "@types/md5": "^2.3.6",
     "@types/puppeteer": "^5.4.7",
     "typescript": "^5.0.0"
   },
+  "devDependencies": {},
   "scripts": {
     "build": "tsc"
   },
