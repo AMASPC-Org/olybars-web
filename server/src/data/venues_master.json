@@ -3,11 +3,7 @@
     "id": "anthonys-hearthfire",
     "name": "Anthony's Hearthfire Grill",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "patio_garden",
-      "upscale",
-      "scenic"
-    ],
+    "sceneTags": ["patio_garden", "upscale", "scenic"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -36,11 +32,7 @@
     "id": "well-80",
     "name": "Well 80 Artesian Brewing",
     "venueType": "brewery_taproom",
-    "sceneTags": [
-      "sports",
-      "patio_garden",
-      "lgbtq"
-    ],
+    "sceneTags": ["sports", "patio_garden", "lgbtq"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -60,12 +52,20 @@
         "name": "Back Barrel Room",
         "capacity": 40,
         "description": "A semi-private space behind the main bar, perfect for casual gatherings.",
-        "amenities": [
-          "TV",
-          "Long Tables"
-        ],
         "price_range": "$$",
-        "bookingLink": "https://well80.com/private-events"
+        "bookingLink": "https://well80.com/private-events",
+        "features": [
+          {
+            "name": "TV",
+            "count": 1,
+            "description": "Migrated from legacy amenities"
+          },
+          {
+            "name": "Long Tables",
+            "count": 1,
+            "description": "Migrated from legacy amenities"
+          }
+        ]
       }
     ],
     "coordinates": {
@@ -103,19 +103,10 @@
       "startTime": "15:00",
       "endTime": "18:00",
       "description": "$1 Off Pints & Leopold Pretzels",
-      "days": [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri"
-      ]
+      "days": ["Mon", "Tue", "Wed", "Thu", "Fri"]
     },
-    "gameFeatures": [],
     "ownerId": "KU9KvRYzzrZfVU7BV4gaPYAFlKS2",
-    "managerIds": [
-      "KU9KvRYzzrZfVU7BV4gaPYAFlKS2"
-    ],
+    "managerIds": ["KU9KvRYzzrZfVU7BV4gaPYAFlKS2"],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -217,9 +208,7 @@
     "id": "ilk-lodge",
     "name": "Ilk Lodge",
     "venueType": "brewery_taproom",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "limited_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -243,7 +232,6 @@
     "isActive": true,
     "isVisible": true,
     "vibeDefault": "MELLOW",
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -276,7 +264,6 @@
     "isVerifiedMaker": true,
     "isLocalMaker": true,
     "physicalRoom": true,
-    "isSoberFriendly": true,
     "coordinates": {
       "x": 52,
       "y": 65
@@ -289,7 +276,6 @@
     "isActive": true,
     "isVisible": true,
     "vibeDefault": "MELLOW",
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -335,7 +321,6 @@
     "address": "728 4th Ave E, Olympia, WA 98506, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -356,9 +341,7 @@
     "id": "endless-sound-cellars",
     "name": "Endless Sound Cellars",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -381,7 +364,6 @@
     "address": "222 Capitol Way N, Olympia, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -425,7 +407,6 @@
     "address": "8036 River Dr SE #208, Tumwater, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -469,7 +450,6 @@
     "address": "8036 River Dr SE #203, Tumwater, WA 98501, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -490,11 +470,7 @@
     "id": "rainwater-brewing",
     "name": "Rainwater Brewing",
     "venueType": "brewery_taproom",
-    "sceneTags": [
-      "sports",
-      "patio_garden",
-      "lgbtq"
-    ],
+    "sceneTags": ["sports", "patio_garden", "lgbtq"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -526,33 +502,14 @@
     "phone": "(360) 915-7798",
     "website": "https://rainwaterbrewing.com/",
     "instagram": "https://www.instagram.com/rainwaterbrewing/",
-    "isAllAges": true,
-    "isDogFriendly": true,
-    "isSoberFriendly": true,
-    "hasOutdoorSeating": true,
     "weekly_schedule": {
-      "wednesday": [
-        "Trivia Night"
-      ]
+      "wednesday": ["Trivia Night"]
     },
-    "gameFeatures": [
-      {
-        "id": "trivia-1",
-        "type": "arcade_game",
-        "name": "Digital Trivia",
-        "count": 1,
-        "status": "active"
-      }
-    ],
     "happyHourRules": [
       {
         "id": "hh-rainwater-1",
         "name": "Brewer's Happy Hour",
-        "days": [
-          "Tue",
-          "Wed",
-          "Thu"
-        ],
+        "days": ["Tue", "Wed", "Thu"],
         "startTime": "16:00",
         "endTime": "18:00",
         "description": "$1 Off All Pints"
@@ -599,7 +556,6 @@
     "address": "4242 Capitol Blvd SE Suite 100, Olympia, WA 98502, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -642,7 +598,6 @@
     "address": "8343 Hogum Bay Ln NE, Lacey, WA 98516, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -663,9 +618,7 @@
     "id": "sandstone-distillery",
     "name": "Sandstone Distillery",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "cocktail_focus"
-    ],
+    "sceneTags": ["cocktail_focus"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -687,7 +640,6 @@
     "address": "842 Wright Rd SE, Tenino, WA 98589, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -730,7 +682,6 @@
     "address": "19770 Sargent Rd SW, Rochester, WA 98579, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -751,9 +702,7 @@
     "id": "axis-meads",
     "name": "Axis Meads",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "none_byof",
     "status": "mellow",
     "clockIns": 0,
@@ -775,7 +724,6 @@
     "address": "2633 Willamette Dr NE suite b, Lacey, WA 98516, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -796,9 +744,7 @@
     "id": "stottle-winery",
     "name": "Stottle Winery",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -820,7 +766,6 @@
     "address": "2641 Willamette Dr NE ste e, Lacey, WA 98516, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -841,9 +786,7 @@
     "id": "medicine-creek",
     "name": "Medicine Creek Winery",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -865,7 +808,6 @@
     "address": "947 Old Pacific Hwy SE, Olympia, WA 98513, USA",
     "isActive": true,
     "isVisible": true,
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -911,13 +853,10 @@
     "scavengerHunts": [
       {
         "title": "Find the Elk!",
-        "partnerVenues": [
-          "brotherhood-lounge"
-        ],
+        "partnerVenues": ["brotherhood-lounge"],
         "badgeId": "elk-pond-finder"
       }
     ],
-    "gameFeatures": [],
     "tier_config": {
       "is_directory_listed": true,
       "is_league_eligible": true
@@ -937,13 +876,7 @@
     "id": "brotherhood-lounge",
     "name": "The Brotherhood Lounge",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
-    "amenities": [
-      "Pool",
-      "Shuffleboard"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -975,58 +908,26 @@
       "startTime": "16:00",
       "endTime": "19:00",
       "description": "$4 Wells & $1 Off Drafts",
-      "days": [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat",
-        "Sun"
-      ]
+      "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     },
     "isHistoricalAnchor": true,
     "historySnippet": "Rumored entrance to the tunnels and Oly's oldest bar.",
     "cheatCodeUrl": "/history/tunnels-of-olympia",
     "isPaidLeagueMember": true,
     "hasGameVibeCheckEnabled": true,
-    "gameFeatures": [
-      {
-        "id": "pool_1",
-        "type": "pool_table",
-        "name": "Pool Table",
-        "count": 1,
-        "status": "active"
-      },
-      {
-        "id": "shuffleboard_1",
-        "type": "shuffleboard",
-        "name": "Shuffleboard Table",
-        "count": 1,
-        "status": "active"
-      },
-      {
-        "id": "arcade_1",
-        "type": "arcade_game",
-        "name": "Retro Arcade Game",
-        "count": 1,
-        "status": "active"
-      }
-    ],
     "liveGameStatus": {},
     "currentBuzz": {
       "score": 0,
       "lastUpdated": 1767436252597
     },
-    "googlePlaceId": "ChIJ5W607Bt1kVQR2NoFVu8QbdE"
+    "googlePlaceId": "ChIJ5W607Bt1kVQR2NoFVu8QbdE",
+    "services": ["Pool", "Shuffleboard"]
   },
   {
     "id": "mccoys-tavern",
     "name": "McCoy’s Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -1052,22 +953,6 @@
       "lng": -122.89715
     },
     "address": "418 4th Ave E, Olympia, WA 98501, USA",
-    "gameFeatures": [
-      {
-        "id": "pool_1",
-        "type": "pool_table",
-        "name": "Pool Table",
-        "count": 2,
-        "status": "active"
-      },
-      {
-        "id": "darts_1",
-        "type": "darts",
-        "name": "Darts",
-        "count": 2,
-        "status": "active"
-      }
-    ],
     "special_events": [
       {
         "id": "evt-mccoys-1",
@@ -1098,9 +983,7 @@
     "id": "eastside-club-tavern",
     "name": "The Eastside Club Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -1127,22 +1010,6 @@
       "lat": 47.0452717,
       "lng": -122.8975314
     },
-    "gameFeatures": [
-      {
-        "id": "pool_1",
-        "type": "pool_table",
-        "name": "Pool Table",
-        "count": 2,
-        "status": "active"
-      },
-      {
-        "id": "shuffleboard_1",
-        "type": "shuffleboard",
-        "name": "Shuffleboard",
-        "count": 1,
-        "status": "active"
-      }
-    ],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1154,10 +1021,7 @@
     "id": "shiny-prize",
     "name": "Shiny Prize",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "cocktail_focus",
-      "dive"
-    ],
+    "sceneTags": ["cocktail_focus", "dive"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -1185,7 +1049,6 @@
     "address": "118 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.shinyprize.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1197,11 +1060,7 @@
     "id": "nicoles-bar",
     "name": "Nicole's Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "sports",
-      "patio_garden",
-      "lgbtq"
-    ],
+    "sceneTags": ["sports", "patio_garden", "lgbtq"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1234,10 +1093,6 @@
     "website": "https://nicolesbar.com/",
     "facebook": "https://www.facebook.com/nicolesbarolympia/",
     "instagram": "https://www.instagram.com/nicolesbarolympia/",
-    "isAllAges": true,
-    "isDogFriendly": true,
-    "isSoberFriendly": true,
-    "hasOutdoorSeating": true,
     "hours": {
       "Mon": {
         "open": "11:00",
@@ -1268,26 +1123,11 @@
         "close": "00:00"
       }
     },
-    "gameFeatures": [
-      {
-        "id": "darts-1",
-        "type": "darts",
-        "name": "Steel Tip Darts",
-        "count": 2,
-        "status": "active"
-      }
-    ],
     "happyHourRules": [
       {
         "id": "hh-nicoles-1",
         "name": "Afternoon Happy Hour",
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
+        "days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
         "startTime": "15:30",
         "endTime": "18:30",
         "description": "$2 Domestic Cans & Basket Specials"
@@ -1308,12 +1148,8 @@
       }
     ],
     "weekly_schedule": {
-      "monday": [
-        "Monday Night Football (Seasonal)"
-      ],
-      "sunday": [
-        "NFL Sunday Ticket"
-      ]
+      "monday": ["Monday Night Football (Seasonal)"],
+      "sunday": ["NFL Sunday Ticket"]
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -1326,9 +1162,7 @@
     "id": "cryptatropa-bar",
     "name": "Cryptatropa Bar",
     "venueType": "lounge_club",
-    "sceneTags": [
-      "cocktail_focus"
-    ],
+    "sceneTags": ["cocktail_focus"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -1356,7 +1190,6 @@
     "address": "421 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.thecryptbar.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1368,10 +1201,7 @@
     "id": "jakes-on-4th",
     "name": "Jake’s on 4th",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive",
-      "sports"
-    ],
+    "sceneTags": ["dive", "sports"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1399,7 +1229,6 @@
     "address": "311 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.southsoundreport.com/p/jake-s-on-4th-returns-to-downtown-olympia",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1411,9 +1240,7 @@
     "id": "filibuster",
     "name": "Filibuster",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "cocktail_focus"
-    ],
+    "sceneTags": ["cocktail_focus"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -1441,7 +1268,6 @@
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://filibusterlounge.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1453,9 +1279,7 @@
     "id": "cheeky-martini-lounge",
     "name": "Cheeky Martini Lounge",
     "venueType": "lounge_club",
-    "sceneTags": [
-      "cocktail_focus"
-    ],
+    "sceneTags": ["cocktail_focus"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -1483,7 +1307,6 @@
     "address": "404 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.cheekymartinilounge.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1523,7 +1346,6 @@
     "address": "312 Columbia St NW, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.olytaproom.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1535,11 +1357,7 @@
     "id": "swing-wine-bar",
     "name": "Swing Wine Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "wine_focus",
-      "cocktail_focus",
-      "patio_garden"
-    ],
+    "sceneTags": ["wine_focus", "cocktail_focus", "patio_garden"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1575,11 +1393,6 @@
     "instagram": "https://www.instagram.com/swingwinebar/",
     "reservationUrl": "https://www.opentable.com/restref/client/?rid=105553",
     "giftCardUrl": "https://www.giftly.com/gift-card/swing-wine-bar-and-cafe-olympia",
-    "isAllAges": false,
-    "isDogFriendly": true,
-    "isSoberFriendly": true,
-    "hasOutdoorSeating": true,
-    "hasPrivateRoom": true,
     "hours": {
       "Mon": {
         "open": "16:00",
@@ -1614,12 +1427,7 @@
       {
         "id": "hh-swing-1",
         "name": "Sunset Happy Hour",
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu"
-        ],
+        "days": ["Mon", "Tue", "Wed", "Thu"],
         "startTime": "16:00",
         "endTime": "18:00",
         "description": "Select Wine & Appetizer Specials"
@@ -1640,9 +1448,7 @@
       }
     ],
     "weekly_schedule": {
-      "tuesday": [
-        "Wine Tasting Tuesday"
-      ]
+      "tuesday": ["Wine Tasting Tuesday"]
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -1655,9 +1461,7 @@
     "id": "rumors-wine-bar",
     "name": "Rumors Wine Bar",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -1685,7 +1489,6 @@
     "address": "430 Washington St SE, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.rumorswinebar.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1697,11 +1500,7 @@
     "id": "the-wine-loft",
     "name": "The Wine Loft",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "wine_focus",
-      "sophisticated",
-      "chill"
-    ],
+    "sceneTags": ["wine_focus", "sophisticated", "chill"],
     "foodService": "snacks",
     "tier_config": {
       "is_directory_listed": true,
@@ -1735,7 +1534,6 @@
     "website": "https://www.facebook.com/TheWineLoftOly",
     "facebook": "https://www.facebook.com/TheWineLoftOly",
     "newsletterUrl": "https://mailchi.mp/fe8cbe0436cc/54de54v2sn",
-    "isAllAges": true,
     "hours": {
       "Mon": {
         "open": "11:00",
@@ -1767,9 +1565,7 @@
       }
     },
     "weekly_schedule": {
-      "saturday": [
-        "Saturday Tastings (12:00 PM - 5:00 PM)"
-      ]
+      "saturday": ["Saturday Tastings (12:00 PM - 5:00 PM)"]
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -1810,29 +1606,6 @@
     "address": "109 State Ave NE, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.legends-arcade.com/",
-    "gameFeatures": [
-      {
-        "id": "arcade_1",
-        "type": "arcade_game",
-        "name": "Retro Arcade Cabinet",
-        "count": 10,
-        "status": "active"
-      },
-      {
-        "id": "pinball_1",
-        "type": "pinball_machine",
-        "name": "Pinball",
-        "count": 5,
-        "status": "active"
-      },
-      {
-        "id": "skeeball_1",
-        "type": "skeeball",
-        "name": "Skee-ball",
-        "count": 2,
-        "status": "active"
-      }
-    ],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1844,9 +1617,7 @@
     "id": "the-cove",
     "name": "The Cove",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1874,7 +1645,6 @@
     "address": "311 Capitol Way N, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.coveolympia.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1886,9 +1656,7 @@
     "id": "mcmenamins-spar-cafe",
     "name": "McMenamins Spar Cafe",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1918,7 +1686,6 @@
     "website": "https://www.mcmenamins.com/spar-cafe",
     "isHistoricalAnchor": true,
     "historySnippet": "Sit in the original booths where the loggers drank.",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -1930,10 +1697,7 @@
     "id": "hannahs",
     "name": "Hannah's Bar & Grill",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "sports",
-      "dive"
-    ],
+    "sceneTags": ["sports", "dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -1965,7 +1729,6 @@
     "phone": "(360) 357-3768",
     "website": "https://hannahsoly.com/",
     "facebook": "https://www.facebook.com/hannahsoly/",
-    "isAllAges": true,
     "hours": {
       "Mon": {
         "open": "11:00",
@@ -1996,33 +1759,11 @@
         "close": "02:00"
       }
     },
-    "gameFeatures": [
-      {
-        "id": "pool-1",
-        "type": "pool_table",
-        "name": "Valley Pool Table",
-        "count": 2,
-        "status": "active"
-      },
-      {
-        "id": "darts-1",
-        "type": "darts",
-        "name": "Electronic Darts",
-        "count": 1,
-        "status": "active"
-      }
-    ],
     "happyHourRules": [
       {
         "id": "hh-hannahs-1",
         "name": "Daily Happy Hour",
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Fri"
-        ],
+        "days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
         "startTime": "15:00",
         "endTime": "18:00",
         "description": "Classic drink and appetizer specials"
@@ -2030,13 +1771,7 @@
       {
         "id": "hh-hannahs-late",
         "name": "Late Night Pulse",
-        "days": [
-          "Mon",
-          "Tue",
-          "Wed",
-          "Thu",
-          "Sun"
-        ],
+        "days": ["Mon", "Tue", "Wed", "Thu", "Sun"],
         "startTime": "22:00",
         "endTime": "02:00",
         "description": "$5 Well Drinks"
@@ -2075,12 +1810,8 @@
       }
     ],
     "weekly_schedule": {
-      "friday": [
-        "Karaoke with DJ Mike"
-      ],
-      "saturday": [
-        "Karaoke with DJ Mike"
-      ]
+      "friday": ["Karaoke with DJ Mike"],
+      "saturday": ["Karaoke with DJ Mike"]
     },
     "hasGameVibeCheckEnabled": true,
     "liveGameStatus": {},
@@ -2090,10 +1821,7 @@
     "id": "charlies-bar-grill",
     "name": "Charlie’s Bar & Grill",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports",
-      "dive"
-    ],
+    "sceneTags": ["sports", "dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -2121,7 +1849,6 @@
     "address": "620 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.charlieson4th.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2133,9 +1860,7 @@
     "id": "wild-child",
     "name": "Wild Child",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -2163,7 +1888,6 @@
     "address": "414 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://wildchildolympia.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2175,9 +1899,7 @@
     "id": "the-bus-stop",
     "name": "The Bus Stop",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "vibe": "Wait for the bus, grab a drink.",
     "status": "mellow",
@@ -2205,7 +1927,6 @@
       "minors_allowed": false,
       "noise_level": "Loud/Music"
     },
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2217,12 +1938,7 @@
     "id": "octapas-cafe",
     "name": "Octapas Cafe",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "tapas",
-      "cocktails",
-      "live_music",
-      "artsy"
-    ],
+    "sceneTags": ["tapas", "cocktails", "live_music", "artsy"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -2250,7 +1966,6 @@
     "address": "610 Water St SW, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://octapascafe.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2263,9 +1978,7 @@
     "id": "cynara",
     "name": "Cynara Restaurant & Lounge",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -2293,7 +2006,6 @@
     "address": "202 Columbia St NW, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://cynaraolympia.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2333,7 +2045,6 @@
       "minors_allowed": true,
       "noise_level": "Social"
     },
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2373,7 +2084,6 @@
     "address": "514 Capitol Way S, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.uptowngrill514.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2385,11 +2095,7 @@
     "id": "the-china-clipper",
     "name": "The China Clipper",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive",
-      "lgbtq",
-      "karaoke"
-    ],
+    "sceneTags": ["dive", "lgbtq", "karaoke"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -2423,9 +2129,7 @@
     "id": "le-voyeur",
     "name": "Le Voyeur",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -2453,7 +2157,6 @@
     "address": "404 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "http://www.levoyeurolympia.com/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2465,9 +2168,7 @@
     "id": "double-tap-tap-house",
     "name": "Double Tap Tap House",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -2495,22 +2196,6 @@
     "address": "416 State Ave NE, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.acmebarandcompany.com/",
-    "gameFeatures": [
-      {
-        "id": "pool_1",
-        "type": "pool_table",
-        "name": "Pool Table",
-        "count": 1,
-        "status": "active"
-      },
-      {
-        "id": "pinball_1",
-        "type": "pinball_machine",
-        "name": "Pinball",
-        "count": 1,
-        "status": "active"
-      }
-    ],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2522,9 +2207,7 @@
     "id": "4th-ave-tavern",
     "name": "4th Ave Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive"
-    ],
+    "sceneTags": ["dive"],
     "foodService": "none_byof",
     "tier_config": {
       "is_directory_listed": true,
@@ -2552,7 +2235,6 @@
     "address": "210 4th Ave E, Olympia, WA 98501, USA",
     "physicalRoom": true,
     "website": "https://www.experienceolympia.com/directory/4th-ave-tavern/",
-    "gameFeatures": [],
     "isPaidLeagueMember": true,
     "currentBuzz": {
       "score": 0,
@@ -2586,7 +2268,6 @@
       "minors_allowed": false,
       "noise_level": "Conversational"
     },
-    "gameFeatures": [],
     "googlePlaceId": "ChIJu_W8Zt51kVQR6smcnpAAvaA"
   },
   {
@@ -2615,16 +2296,13 @@
       "minors_allowed": false,
       "noise_level": "Conversational"
     },
-    "gameFeatures": [],
     "googlePlaceId": "ChIJZZWf7U11kVQRKwfpFzmSSy4"
   },
   {
     "id": "madsen-family-cellars",
     "name": "Madsen Family Cellars",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "none_byof",
     "status": "mellow",
     "clockIns": 0,
@@ -2645,16 +2323,13 @@
       "minors_allowed": false,
       "noise_level": "Conversational"
     },
-    "gameFeatures": [],
     "googlePlaceId": "ChIJP6v21LcLkVQRm6ZlTQ-Sbmg"
   },
   {
     "id": "scatter-creek-winery",
     "name": "Scatter Creek Winery",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "wine_focus"
-    ],
+    "sceneTags": ["wine_focus"],
     "foodService": "none_byof",
     "status": "mellow",
     "clockIns": 0,
@@ -2675,18 +2350,13 @@
       "minors_allowed": false,
       "noise_level": "Conversational"
     },
-    "gameFeatures": [],
     "googlePlaceId": "ChIJW12LBjZkkVQRwI_Lt6RKlio"
   },
   {
     "id": "the-mark-olympia",
     "name": "The Mark Olympia",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "cocktail_focus",
-      "wine_focus",
-      "patio_garden"
-    ],
+    "sceneTags": ["cocktail_focus", "wine_focus", "patio_garden"],
     "foodService": "full_kitchen",
     "tier_config": {
       "is_directory_listed": true,
@@ -2721,11 +2391,6 @@
     "facebook": "https://www.facebook.com/themarkolympia/",
     "instagram": "https://www.instagram.com/themarkolympia/",
     "reservationUrl": "https://themarkolympia.com/reservations/",
-    "isAllAges": true,
-    "isDogFriendly": false,
-    "isSoberFriendly": true,
-    "hasOutdoorSeating": true,
-    "hasPrivateRoom": true,
     "hours": {
       "Tue": {
         "open": "17:00",
@@ -2763,9 +2428,7 @@
       }
     ],
     "weekly_schedule": {
-      "friday": [
-        "Live Jazz (Select Fridays)"
-      ]
+      "friday": ["Live Jazz (Select Fridays)"]
     },
     "isPaidLeagueMember": true,
     "currentBuzz": {
@@ -2954,11 +2617,7 @@
     "id": "charro-mexican-restaurant",
     "name": "Charro Mexican Restaurant",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "outdoor_seating",
-      "family_friendly"
-    ],
+    "sceneTags": ["mexican", "outdoor_seating", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -2972,7 +2631,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -2984,12 +2642,7 @@
     "id": "chelsea-farms-oyster-bar",
     "name": "Chelsea Farms Oyster Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "seafood",
-      "oysters",
-      "cocktails",
-      "upscale_casual"
-    ],
+    "sceneTags": ["seafood", "oysters", "cocktails", "upscale_casual"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3014,12 +2667,7 @@
     "id": "23-kitchens-lacey",
     "name": "23 Kitchens",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "pickleball",
-      "sports",
-      "rooftop_bar",
-      "activity_focus"
-    ],
+    "sceneTags": ["pickleball", "sports", "rooftop_bar", "activity_focus"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3044,12 +2692,7 @@
     "id": "insert-coin-oly-lacey",
     "name": "Insert Coin (Olympia/Lacey)",
     "venueType": "arcade_bar",
-    "sceneTags": [
-      "arcade",
-      "retro",
-      "family_friendly",
-      "craft_beer"
-    ],
+    "sceneTags": ["arcade", "retro", "family_friendly", "craft_beer"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3074,11 +2717,7 @@
     "id": "pints-barn",
     "name": "Pints Barn",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "neighborhood",
-      "outdoor_patio",
-      "sports"
-    ],
+    "sceneTags": ["neighborhood", "outdoor_patio", "sports"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3092,7 +2731,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3104,11 +2742,7 @@
     "id": "pints-and-quarts",
     "name": "Pints & Quarts",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "neighborhood",
-      "sports",
-      "taco_tuesday"
-    ],
+    "sceneTags": ["neighborhood", "sports", "taco_tuesday"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3133,11 +2767,7 @@
     "id": "rivers-edge",
     "name": "River's Edge",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "sports_bar",
-      "golf_course",
-      "breakfast"
-    ],
+    "sceneTags": ["sports_bar", "golf_course", "breakfast"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3151,7 +2781,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3163,12 +2792,7 @@
     "id": "beat-drop-kitchen",
     "name": "Beat Drop Kitchen & Event Center",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "dance_club",
-      "line_dancing",
-      "karaoke",
-      "latin_night"
-    ],
+    "sceneTags": ["dance_club", "line_dancing", "karaoke", "latin_night"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3193,12 +2817,7 @@
     "id": "cup-of-swords-tavern",
     "name": "Cup of Swords Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "renaissance",
-      "mead",
-      "dnd",
-      "pet_friendly"
-    ],
+    "sceneTags": ["renaissance", "mead", "dnd", "pet_friendly"],
     "foodService": "none_byof",
     "status": "mellow",
     "clockIns": 0,
@@ -3223,12 +2842,7 @@
     "id": "hops-on-the-hill",
     "name": "Hops on the Hill",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "bbq",
-      "craft_beer",
-      "bourbon",
-      "trivia"
-    ],
+    "sceneTags": ["bbq", "craft_beer", "bourbon", "trivia"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3242,7 +2856,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3254,12 +2867,7 @@
     "id": "the-office-tavern",
     "name": "The Office Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "neighborhood",
-      "sports",
-      "21_plus",
-      "outdoor_patio"
-    ],
+    "sceneTags": ["neighborhood", "sports", "21_plus", "outdoor_patio"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3273,7 +2881,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3305,7 +2912,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3317,12 +2923,7 @@
     "id": "boulevard-tavern",
     "name": "The Boulevard Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive_bar",
-      "community_hub",
-      "bingo",
-      "covered_patio"
-    ],
+    "sceneTags": ["dive_bar", "community_hub", "bingo", "covered_patio"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3336,7 +2937,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3348,12 +2948,7 @@
     "id": "northwest-beerwerks",
     "name": "Northwest Beerwerks",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "craft_beer",
-      "dog_friendly",
-      "outdoor_patio",
-      "board_games"
-    ],
+    "sceneTags": ["craft_beer", "dog_friendly", "outdoor_patio", "board_games"],
     "foodService": "none_byof",
     "status": "mellow",
     "clockIns": 0,
@@ -3367,7 +2962,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3409,12 +3003,7 @@
     "id": "viking-lounge",
     "name": "The Viking Lounge",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive_bar",
-      "karaoke",
-      "bingo",
-      "breakfast"
-    ],
+    "sceneTags": ["dive_bar", "karaoke", "bingo", "breakfast"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3439,12 +3028,7 @@
     "id": "oblarneys-irish-pub",
     "name": "O'Blarney's Irish Pub",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "irish_pub",
-      "sports_bar",
-      "trivia",
-      "family_friendly"
-    ],
+    "sceneTags": ["irish_pub", "sports_bar", "trivia", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3488,7 +3072,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3530,12 +3113,7 @@
     "id": "farrellis-pizza-lacey",
     "name": "Farrelli's Pizza (Lacey)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "wood_fired_pizza",
-      "heritage",
-      "sports",
-      "community_hub"
-    ],
+    "sceneTags": ["wood_fired_pizza", "heritage", "sports", "community_hub"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3560,12 +3138,7 @@
     "id": "cedar-inn",
     "name": "The Cedar Inn",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "tavern",
-      "neighborhood",
-      "bloody_marys",
-      "covered_patio"
-    ],
+    "sceneTags": ["tavern", "neighborhood", "bloody_marys", "covered_patio"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3579,7 +3152,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3591,12 +3163,7 @@
     "id": "sampan-bar-grill",
     "name": "Sampan Bar & Grill",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "japanese",
-      "karaoke",
-      "dance_floor",
-      "cocktails"
-    ],
+    "sceneTags": ["japanese", "karaoke", "dance_floor", "cocktails"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3640,7 +3207,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3671,7 +3237,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3683,12 +3248,7 @@
     "id": "puget-sound-taps",
     "name": "Puget Sound Taps",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "craft_beer",
-      "pizza",
-      "dog_friendly",
-      "flights"
-    ],
+    "sceneTags": ["craft_beer", "pizza", "dog_friendly", "flights"],
     "foodService": "limited_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3702,7 +3262,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3714,12 +3273,7 @@
     "id": "nocturnal-hound",
     "name": "The Nocturnal Hound",
     "venueType": "winery_tasting",
-    "sceneTags": [
-      "wine_bar",
-      "bottle_shop",
-      "charcuterie",
-      "upscale_casual"
-    ],
+    "sceneTags": ["wine_bar", "bottle_shop", "charcuterie", "upscale_casual"],
     "foodService": "limited_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3744,12 +3298,7 @@
     "id": "omalleys-lounge",
     "name": "O'Malley's Lounge",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports_bar",
-      "bowling_adjacent",
-      "live_music",
-      "darts"
-    ],
+    "sceneTags": ["sports_bar", "bowling_adjacent", "live_music", "darts"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3763,7 +3312,6 @@
     },
     "isActive": true,
     "isVisible": true,
-    "hasOutdoorSeating": true,
     "isPaidLeagueMember": false,
     "currentBuzz": {
       "score": 0,
@@ -3805,11 +3353,7 @@
     "id": "red-wind-pealos",
     "name": "Pealo's Bar (Nisqually Red Wind Casino)",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "casino",
-      "cocktails",
-      "upscale"
-    ],
+    "sceneTags": ["casino", "cocktails", "upscale"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -3834,11 +3378,7 @@
     "id": "red-wind-coho",
     "name": "Coho Sports Lounge (Nisqually Red Wind Casino)",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports_bar",
-      "casino",
-      "betting"
-    ],
+    "sceneTags": ["sports_bar", "casino", "betting"],
     "foodService": "limited_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3863,11 +3403,7 @@
     "id": "red-wind-river-water",
     "name": "River Water Bar and Grille (Nisqually Red Wind Casino)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "seafood",
-      "steakhouse",
-      "casino"
-    ],
+    "sceneTags": ["seafood", "steakhouse", "casino"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3892,11 +3428,7 @@
     "id": "lucky-eagle-legends",
     "name": "Legends Sports Bar (Lucky Eagle Casino)",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports_bar",
-      "casino",
-      "activity_focus"
-    ],
+    "sceneTags": ["sports_bar", "casino", "activity_focus"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3921,11 +3453,7 @@
     "id": "lucky-eagle-crafthouse",
     "name": "Crafthouse Wood Fired Pizza (Lucky Eagle Casino)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "pizza",
-      "casino",
-      "craft_beer"
-    ],
+    "sceneTags": ["pizza", "casino", "craft_beer"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -3950,12 +3478,7 @@
     "id": "bobs-bar-grill-yelm",
     "name": "Bob's Bar & Grill",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "neighborhood",
-      "historical",
-      "wings",
-      "pool_hall"
-    ],
+    "sceneTags": ["neighborhood", "historical", "wings", "pool_hall"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4040,12 +3563,7 @@
     "id": "uptown-lounge-yelm",
     "name": "Uptown Lounge",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "burgers",
-      "cocktails",
-      "21_plus",
-      "piano_bar"
-    ],
+    "sceneTags": ["burgers", "cocktails", "21_plus", "piano_bar"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4070,12 +3588,7 @@
     "id": "white-horse-tavern-yelm",
     "name": "White Horse Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive_bar",
-      "historical",
-      "biker_friendly",
-      "karaoke"
-    ],
+    "sceneTags": ["dive_bar", "historical", "biker_friendly", "karaoke"],
     "foodService": "limited_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4130,12 +3643,7 @@
     "id": "mariachi-alegre-yelm",
     "name": "Mariachi Alegre",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "margaritas",
-      "family_friendly",
-      "authentic"
-    ],
+    "sceneTags": ["mexican", "margaritas", "family_friendly", "authentic"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4160,12 +3668,7 @@
     "id": "gracious-grape-yelm",
     "name": "Gracious Grape",
     "venueType": "winery_tasting",
-    "sceneTags": [
-      "wine_bar",
-      "bottle_shop",
-      "educational",
-      "small_plates"
-    ],
+    "sceneTags": ["wine_bar", "bottle_shop", "educational", "small_plates"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -4190,12 +3693,7 @@
     "id": "farrellis-yelm",
     "name": "Farrelli's Pizza (Yelm)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "pizza",
-      "sports_bar",
-      "family_friendly",
-      "outdoor_seating"
-    ],
+    "sceneTags": ["pizza", "sports_bar", "family_friendly", "outdoor_seating"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4220,11 +3718,7 @@
     "id": "tommys-tavern-yelm",
     "name": "Tommy's Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "neighborhood",
-      "live_entertainment",
-      "sports_bar"
-    ],
+    "sceneTags": ["neighborhood", "live_entertainment", "sports_bar"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4249,11 +3743,7 @@
     "id": "fortune-casino-riverbend",
     "name": "The Riverbend Restaurant (Fortune Casino)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "casino",
-      "family_friendly",
-      "asian_fusion"
-    ],
+    "sceneTags": ["casino", "family_friendly", "asian_fusion"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4278,11 +3768,7 @@
     "id": "littlerock-saloon",
     "name": "Littlerock Saloon",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "saloon",
-      "dive_bar",
-      "neighborhood"
-    ],
+    "sceneTags": ["saloon", "dive_bar", "neighborhood"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4307,11 +3793,7 @@
     "id": "mextiza-by-el-serape",
     "name": "MEXTIZA By: El Serape",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "cocktails",
-      "family_friendly"
-    ],
+    "sceneTags": ["mexican", "cocktails", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4336,11 +3818,7 @@
     "id": "mayan-pacific",
     "name": "The Mayan Family Mexican Restaurant (Pacific Ave)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "family_friendly",
-      "neighborhood"
-    ],
+    "sceneTags": ["mexican", "family_friendly", "neighborhood"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4365,11 +3843,7 @@
     "id": "mayan-yelm",
     "name": "The Mayan Family Mexican Restaurant (Yelm Hwy)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "family_friendly",
-      "neighborhood"
-    ],
+    "sceneTags": ["mexican", "family_friendly", "neighborhood"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4394,11 +3868,7 @@
     "id": "mayan-marvin",
     "name": "The Mayan Family Mexican Restaurant (Marvin Rd)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "family_friendly",
-      "neighborhood"
-    ],
+    "sceneTags": ["mexican", "family_friendly", "neighborhood"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4423,11 +3893,7 @@
     "id": "la-patrona-tumwater",
     "name": "La Patrona",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "vibrant",
-      "family_friendly"
-    ],
+    "sceneTags": ["mexican", "vibrant", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4452,12 +3918,7 @@
     "id": "ram-lacey",
     "name": "The Ram Restaurant & Brewery (Lacey)",
     "venueType": "brewery_taproom",
-    "sceneTags": [
-      "sports_bar",
-      "family_friendly",
-      "craft_beer",
-      "burgers"
-    ],
+    "sceneTags": ["sports_bar", "family_friendly", "craft_beer", "burgers"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4482,11 +3943,7 @@
     "id": "ricardos-lacey",
     "name": "Ricardo's Kitchen and Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "steakhouse",
-      "upscale",
-      "cocktails"
-    ],
+    "sceneTags": ["steakhouse", "upscale", "cocktails"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4511,11 +3968,7 @@
     "id": "plaza-jalisco-tumwater",
     "name": "Plaza Jalisco",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "family_friendly",
-      "neighborhood"
-    ],
+    "sceneTags": ["mexican", "family_friendly", "neighborhood"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4540,11 +3993,7 @@
     "id": "nisqually-bar-grill",
     "name": "Nisqually Bar & Grill",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports_bar",
-      "family_friendly",
-      "comfort_food"
-    ],
+    "sceneTags": ["sports_bar", "family_friendly", "comfort_food"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4569,12 +4018,7 @@
     "id": "the-mark-olympia",
     "name": "The Mark",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "italian",
-      "upscale",
-      "cocktails",
-      "patio"
-    ],
+    "sceneTags": ["italian", "upscale", "cocktails", "patio"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4599,12 +4043,7 @@
     "id": "valentinas-lounge",
     "name": "Valentina's Lounge",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "latin_fusion",
-      "upscale",
-      "cocktails",
-      "vibrant"
-    ],
+    "sceneTags": ["latin_fusion", "upscale", "cocktails", "vibrant"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4629,12 +4068,7 @@
     "id": "row-olympia",
     "name": "Row",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "waterfront",
-      "seafood",
-      "upscale_casual",
-      "outdoor_seating"
-    ],
+    "sceneTags": ["waterfront", "seafood", "upscale_casual", "outdoor_seating"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4659,11 +4093,7 @@
     "id": "stack-571-olympia",
     "name": "Stack 571 Burger & Whiskey Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "burgers",
-      "whiskey_focus",
-      "upscale_casual"
-    ],
+    "sceneTags": ["burgers", "whiskey_focus", "upscale_casual"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4688,11 +4118,7 @@
     "id": "landmark-tavern-tenino",
     "name": "Landmark Tavern",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "tavern",
-      "historical",
-      "neighborhood"
-    ],
+    "sceneTags": ["tavern", "historical", "neighborhood"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -4717,11 +4143,7 @@
     "id": "hops-n-drops-lacey",
     "name": "Hops n Drops (Lacey)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "family_dining",
-      "cocktails",
-      "burgers"
-    ],
+    "sceneTags": ["family_dining", "cocktails", "burgers"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4746,11 +4168,7 @@
     "id": "brick-on-trosper",
     "name": "The Brick on Trosper",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "sports_bar",
-      "pizza",
-      "family_friendly"
-    ],
+    "sceneTags": ["sports_bar", "pizza", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4805,12 +4223,7 @@
     "id": "coopers-lacey",
     "name": "Cooper's Food & Drink",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "neighborhood",
-      "cocktails",
-      "pnw_style",
-      "brunch"
-    ],
+    "sceneTags": ["neighborhood", "cocktails", "pnw_style", "brunch"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4835,11 +4248,7 @@
     "id": "luckys-lacey",
     "name": "Lucky's Restaurant & Bar",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "breakfast_all_day",
-      "comfort_food",
-      "family_friendly"
-    ],
+    "sceneTags": ["breakfast_all_day", "comfort_food", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4864,12 +4273,7 @@
     "id": "el-itacate-lacey",
     "name": "El Itacate Mexican Restaurant",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "birria",
-      "authentic",
-      "family_friendly"
-    ],
+    "sceneTags": ["mexican", "birria", "authentic", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4894,12 +4298,7 @@
     "id": "log-cabin-olympia",
     "name": "The Log Cabin Bar & Grill",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "dive_bar",
-      "historical",
-      "burgers",
-      "karaoke"
-    ],
+    "sceneTags": ["dive_bar", "historical", "burgers", "karaoke"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -4924,12 +4323,7 @@
     "id": "percival-creek",
     "name": "Percival Creek",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "craft_beer",
-      "distillery",
-      "educational",
-      "family_friendly"
-    ],
+    "sceneTags": ["craft_beer", "distillery", "educational", "family_friendly"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -4984,12 +4378,7 @@
     "id": "wines-by-the-valley",
     "name": "Wines by the Valley",
     "venueType": "winery_tasting",
-    "sceneTags": [
-      "wine_bar",
-      "flight_focus",
-      "cozy",
-      "bottle_shop"
-    ],
+    "sceneTags": ["wine_bar", "flight_focus", "cozy", "bottle_shop"],
     "foodService": "snacks",
     "status": "mellow",
     "clockIns": 0,
@@ -5014,12 +4403,7 @@
     "id": "characters-corner",
     "name": "Character's Corner",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "sports_bar",
-      "neighborhood",
-      "karaoke",
-      "breakfast"
-    ],
+    "sceneTags": ["sports_bar", "neighborhood", "karaoke", "breakfast"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -5044,12 +4428,7 @@
     "id": "tugboat-annies",
     "name": "Tugboat Annie's",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "waterfront",
-      "seafood",
-      "kayak_rentals",
-      "family_friendly"
-    ],
+    "sceneTags": ["waterfront", "seafood", "kayak_rentals", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -5074,11 +4453,7 @@
     "id": "emperors-palace-west",
     "name": "Emperor's Palace (Westside)",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "chinese_cuisine",
-      "cocktails",
-      "family_friendly"
-    ],
+    "sceneTags": ["chinese_cuisine", "cocktails", "family_friendly"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "clockIns": 0,
@@ -5103,10 +4478,7 @@
     "id": "dos-hermanos-olympia",
     "name": "Dos Hermanos Mexican Kitchen",
     "venueType": "restaurant_bar",
-    "sceneTags": [
-      "mexican",
-      "authentic"
-    ],
+    "sceneTags": ["mexican", "authentic"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "vibe": "Authentic Mexican flavors in the heart of downtown.",
@@ -5132,10 +4504,7 @@
     "id": "oly-taproom",
     "name": "Oly Taproom",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "craft_beer",
-      "patio"
-    ],
+    "sceneTags": ["craft_beer", "patio"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "vibe": "The Waterfront Craft King.",
@@ -5163,10 +4532,7 @@
     "id": "briggs-taphouse",
     "name": "Briggs Taphouse",
     "venueType": "bar_pub",
-    "sceneTags": [
-      "craft_beer",
-      "community"
-    ],
+    "sceneTags": ["craft_beer", "community"],
     "foodService": "full_kitchen",
     "status": "mellow",
     "vibe": "Community craft beer hub.",
@@ -5268,5 +4634,46 @@
     },
     "googlePlaceId": "ChIJJe4VD1N9kVQRle5S7b5lAvU",
     "status": "mellow"
+  },
+  {
+    "id": "hannahs",
+    "name": "Hannah's Bar & Grill",
+    "venueType": "bar_pub",
+    "sceneTags": ["sports", "karaoke"],
+    "foodService": "full_kitchen",
+    "status": "mellow",
+    "clockIns": 0,
+    "capacity": 100,
+    "vibe": "Classic American grill with a thick layer of local history.",
+    "insiderVibe": "Hannah's is the definition of a 'comfortable' bar. It's where you go when you want zero pretense, a stiff drink, and some fried food.",
+    "originStory": "Opening its doors in 1935, Hannah's has survived prohibition's end, countless downtown shifts, remaining a steady beacon of hospitality in the heart of the city.",
+    "address": "123 5th Ave SW, Olympia, WA 98501, USA",
+    "location": {
+      "lat": 47.0438886,
+      "lng": -122.9025985
+    },
+    "coordinates": {
+      "x": 50,
+      "y": 50
+    },
+    "phone": "(360) 357-3768",
+    "website": "https://hannahsoly.com/",
+    "isActive": true,
+    "isVisible": true,
+    "isAllAges": false,
+    "gameFeatures": [],
+    "tier_config": {
+      "is_directory_listed": true,
+      "is_league_eligible": true
+    },
+    "attributes": {
+      "has_manned_bar": true,
+      "minors_allowed": false,
+      "noise_level": "Loud/Music"
+    },
+    "rating": 3.8,
+    "user_ratings_total": 175,
+    "googlePlaceId": "ChIJkRF79VN1kVQRSVt0h4LWAzY",
+    "ownerId": "temp-dev-owner"
   }
 ]

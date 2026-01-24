@@ -44,11 +44,8 @@ if (
 if (!admin.apps.length) {
   const serviceAccountPath = path.resolve(
     __dirname,
-    "../../functions/src/config/service-account.json.json",
+    "../../functions/src/config/service-account.json",
   );
-  // Note: The file extension in the file system seemed to be .json.json based on previous `ls` output,
-  // but usually it's .json. I will check the file existence carefully.
-  // Actually, let's normalize the path check.
 
   // Check for the double .json extension first as seen in file listing
 

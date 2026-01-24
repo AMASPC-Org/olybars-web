@@ -1,0 +1,92 @@
+[
+  {
+    "name": "New Year's Day",
+    "date": "01-01",
+    "target_tags": ["party", "hangover_cure", "brunch"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "National Stout Day",
+    "date": "11-07",
+    "target_tags": ["stout", "dark_beer", "cozy"],
+    "weather_criteria": { "isRaining": true }
+  },
+  {
+    "name": "National Tequila Day",
+    "date": "07-24",
+    "target_tags": ["tequila", "margarita", "mexican"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "IPA Day",
+    "date": "08-01",
+    "target_tags": ["ipa", "hops", "craft_beer"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "St. Patrick's Day",
+    "date": "03-17",
+    "target_tags": ["irish", "pub", "stout", "whiskey"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "Cinco de Mayo",
+    "date": "05-05",
+    "target_tags": ["tequila", "mexican", "party"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "4th of July",
+    "date": "07-04",
+    "target_tags": ["patio", "bbq", "outdoor", "summer"],
+    "weather_criteria": { "minTemp": 70 }
+  },
+  {
+    "name": "Halloween",
+    "date": "10-31",
+    "target_tags": ["costume", "party", "dark_beer"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "National Margarita Day",
+    "date": "02-22",
+    "target_tags": ["tequila", "margarita", "cocktail"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "International Beer Day",
+    "date": "08-02",
+    "target_tags": ["beer", "craft_beer", "pub"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "Winter Solstice",
+    "date": "12-21",
+    "target_tags": ["cozy", "dark_beer", "fireplace"],
+    "weather_criteria": {}
+  },
+  {
+    "name": "Summer Solstice",
+    "date": "06-21",
+    "target_tags": ["patio", "outdoor", "long_day"],
+    "weather_criteria": { "requiredConditions": ["Sunny", "Clear"] }
+  },
+  {
+    "name": "Cozy Stout Day",
+    "date": "01-23",
+    "target_tags": ["stout", "cozy", "dark_beer"],
+    "weather_criteria": { "isRaining": true }
+  },
+  {
+    "name": "Oly Patio Day",
+    "date": "05-15",
+    "target_tags": ["patio", "outdoor", "sun"],
+    "weather_criteria": { "minTemp": 65, "isRaining": false }
+  },
+  {
+    "name": "National Whiskey Day",
+    "date": "03-27",
+    "target_tags": ["whiskey", "bourbon", "scotch"],
+    "weather_criteria": {}
+  }
+]

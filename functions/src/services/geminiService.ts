@@ -1,102 +1,130 @@
-import { GoogleGenAI } from '@google/genai';
-import { ARTIE_SYSTEM_INSTRUCTION } from '../config/agents/artie';
-import { SCHMIDT_SYSTEM_INSTRUCTION } from '../config/agents/schmidt';
-import { ai } from '../genkit';
-import { imagen3Fast } from '@genkit-ai/vertexai';
-import { StorageService } from './storageService';
+import { GoogleGenAI } from "@google/genai";
+import { ARTIE_SYSTEM_INSTRUCTION } from "../config/agents/artie";
+import { SCHMIDT_SYSTEM_INSTRUCTION } from "../config/agents/schmidt";
+import { ai } from "../genkit";
+import { imagen3Fast } from "@genkit-ai/vertexai";
+import { StorageService } from "./storageService";
 
 export interface ChatMessage {
-    role: 'user' | 'model';
-    content: string;
+  role: "user" | "model";
+  content: string;
 }
 
 export class GeminiService {
-    // [ADAPTER] Expose genAI public for ArtieCacheService
-    public genAI: any;
+  // [ADAPTER] Expose genAI public for ArtieCacheService
+  public genAI: any;
 
-    // Agent Personas (Imported from Config)
-    public static ARTIE_PERSONA = ARTIE_SYSTEM_INSTRUCTION;
-    public static SCHMIDT_PERSONA = SCHMIDT_SYSTEM_INSTRUCTION;
+  // Agent Personas (Imported from Config)
+  public static ARTIE_PERSONA = ARTIE_SYSTEM_INSTRUCTION;
+  public static SCHMIDT_PERSONA = SCHMIDT_SYSTEM_INSTRUCTION;
 
-    constructor(apiKey?: string) {
-        const isCloudRun = !!process.env.K_SERVICE || !!process.env.FUNCTION_TARGET; // Also check FUNCTION_TARGET for Cloud Functions
-        const useADC = isCloudRun || !apiKey;
+  constructor(apiKey?: string) {
+    const isCloudRun = !!process.env.K_SERVICE || !!process.env.FUNCTION_TARGET; // Also check FUNCTION_TARGET for Cloud Functions
+    const useADC = isCloudRun || !apiKey;
 
-        if (useADC) {
-            console.log(`📡 GeminiService: Using Vertex AI (ADC) for environment (Functions/CloudRun).`);
-            this.genAI = new GoogleGenAI({
-                vertexai: true,
-                project: process.env.GOOGLE_CLOUD_PROJECT || 'ama-ecosystem-prod',
-                location: 'us-west1',
-            });
-        } else {
-            const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...` : 'NONE';
-            console.log(`📡 GeminiService: Initialized using provided API Key: ${maskedKey}`);
-            this.genAI = new GoogleGenAI({
-                apiKey,
-                vertexai: false,
-            });
-        }
+    if (useADC) {
+      console.log(
+        `📡 GeminiService: Using Vertex AI (ADC) for environment (Functions/CloudRun).`,
+      );
+      this.genAI = new GoogleGenAI({
+        vertexai: true,
+        project: process.env.GOOGLE_CLOUD_PROJECT || "ama-ecosystem-prod",
+        location: "us-west1",
+      });
+    } else {
+      const maskedKey = apiKey ? `${apiKey.substring(0, 4)}...` : "NONE";
+      console.log(
+        `📡 GeminiService: Initialized using provided API Key: ${maskedKey}`,
+      );
+      this.genAI = new GoogleGenAI({
+        apiKey,
+        vertexai: false,
+      });
     }
+  }
 
-    /**
-     * [ADAPTER] Static method required by ArtieChat flow
-     * Now imports from the shared config.
-     */
-    static async generateSystemPrompt(userId?: string, role?: string, venueId?: string): Promise<string> {
-        return GeminiService.ARTIE_PERSONA;
-    }
+  /**
+   * [ADAPTER] Static method required by ArtieChat flow
+   * Now imports from the shared config.
+   */
+  static async generateSystemPrompt(
+    userId?: string,
+    role?: string,
+    venueId?: string,
+  ): Promise<string> {
+    return GeminiService.ARTIE_PERSONA;
+  }
 
-    // Generic Generation Method (Used by Chat Routes)
-    async generateArtieResponse(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
-        // Default to Artie if no instruction provided, but allow overrides
-        const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
+  // Generic Generation Method (Used by Chat Routes)
+  async generateArtieResponse(
+    model: string,
+    contents: any[],
+    temperature: number = 0.7,
+    systemInstruction?: string,
+    tools?: any[],
+    cachedContent?: string,
+  ) {
+    // Default to Artie if no instruction provided, but allow overrides
+    const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
 
-        const response = await this.genAI.models.generateContent({
-            model,
-            contents,
-            systemInstruction: { parts: [{ text: instruction }] },
-            tools: tools ? [{ function_declarations: tools }] : undefined,
-            cachedContent,
-            config: { temperature }
-        });
-        return response.candidates?.[0]?.content?.parts?.[0]?.text;
-    }
+    const response = await this.genAI.models.generateContent({
+      model,
+      contents,
+      // [FINOPS] If we have a cache, the system instruction is already inside it.
+      systemInstruction: cachedContent
+        ? undefined
+        : { parts: [{ text: instruction }] },
+      tools: tools ? [{ function_declarations: tools }] : undefined,
+      cachedContent,
+      config: { temperature },
+    });
+    return response.candidates?.[0]?.content?.parts?.[0]?.text;
+  }
 
-    async generateArtieResponseStream(model: string, contents: any[], temperature: number = 0.7, systemInstruction?: string, tools?: any[], cachedContent?: string) {
-        const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
+  async generateArtieResponseStream(
+    model: string,
+    contents: any[],
+    temperature: number = 0.7,
+    systemInstruction?: string,
+    tools?: any[],
+    cachedContent?: string,
+  ) {
+    const instruction = systemInstruction || GeminiService.ARTIE_PERSONA;
 
-        return this.genAI.models.generateContentStream({
-            model,
-            contents,
-            systemInstruction: { parts: [{ text: instruction }] },
-            tools: tools ? [{ function_declarations: tools }] : undefined,
-            cachedContent,
-            config: { temperature }
-        });
-    }
+    return this.genAI.models.generateContentStream({
+      model,
+      contents,
+      // [FINOPS] If we have a cache, the system instruction is already inside it.
+      systemInstruction: cachedContent
+        ? undefined
+        : { parts: [{ text: instruction }] },
+      tools: tools ? [{ function_declarations: tools }] : undefined,
+      cachedContent,
+      config: { temperature },
+    });
+  }
 
-    async generateEventDescription(context: {
-        venueName: string;
-        venueType: string;
-        eventType: string;
-        date: string;
-        time: string;
-        weather?: string;
-        holiday?: string;
-        deals?: any[];
-        city?: string; // Multi-City Support
-    }) {
-        const cityContext = context.city || "Olympia, WA";
-        // Uses a specific mini-prompt for descriptions, keeping Artie's voice
-        const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
+  async generateEventDescription(context: {
+    venueName: string;
+    venueType: string;
+    eventType: string;
+    date: string;
+    time: string;
+    weather?: string;
+    holiday?: string;
+    deals?: any[];
+    city?: string; // Multi-City Support
+  }) {
+    const cityContext = context.city || "Olympia, WA";
+    // Uses a specific mini-prompt for descriptions, keeping Artie's voice
+    const prompt = `Generate a high-energy, contextually aware event description for OlyBars.
         VENUE: ${context.venueName} (${context.venueType})
         LOCATION: ${cityContext}
         EVENT: ${context.eventType}
         DATE: ${context.date} @ ${context.time}
-        WEATHER: ${context.weather || 'Standard Olympia Vibes'}
-        HOLIDAY: ${context.holiday || 'None'}
-        ACTIVE DEALS: ${context.deals?.map(d => `${d.title} (${d.time})`).join(', ') || 'None'}
+        WEATHER: ${context.weather || "Standard Olympia Vibes"}
+        HOLIDAY: ${context.holiday || "None"}
+        ACTIVE DEALS: ${context.deals?.map((d) => `${d.title} (${d.time})`).join(", ") || "None"}
 
         CONSTRAINTS:
         1. Max 2-3 sentences.
@@ -111,18 +139,26 @@ export class GeminiService {
         OUTPUT:
         The generated description only.`;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { temperature: 0.8 }
-        });
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.8 },
+    });
 
-        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    }
+    return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+  }
 
-    async analyzeEvent(event: any): Promise<{ confidenceScore: number; issues: string[]; lcbWarning: boolean; suggestions: string[]; summary: string }> {
-        // Event Analysis uses Artie as the "Guardian"
-        const prompt = `You are Artie, the Event Quality Guardian for OlyBars.
+  async analyzeEvent(
+    event: any,
+  ): Promise<{
+    confidenceScore: number;
+    issues: string[];
+    lcbWarning: boolean;
+    suggestions: string[];
+    summary: string;
+  }> {
+    // Event Analysis uses Artie as the "Guardian"
+    const prompt = `You are Artie, the Event Quality Guardian for OlyBars.
         Analyze this event submission for completeness, excitement ("Vibe"), and LCB Compliance.
 
         EVENT DATA:
@@ -149,43 +185,43 @@ export class GeminiService {
            "summary": string (1 sentence critique in Artie Persona)
         }`;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            config: { response_mime_type: "application/json" }
-        });
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { response_mime_type: "application/json" },
+    });
 
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Artie failed to analyze event.");
+    let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) throw new Error("Artie failed to analyze event.");
 
-        text = text.replace(/```json\n?|```/g, '').trim();
+    text = text.replace(/```json\n?|```/g, "").trim();
 
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error on Artie Analysis:", text);
-            return {
-                confidenceScore: 0,
-                issues: ["Failed to parse AI response"],
-                lcbWarning: false,
-                suggestions: [],
-                summary: "Artie is confused. Try again."
-            };
-        }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("JSON Parse Error on Artie Analysis:", text);
+      return {
+        confidenceScore: 0,
+        issues: ["Failed to parse AI response"],
+        lcbWarning: false,
+        suggestions: [],
+        summary: "Artie is confused. Try again.",
+      };
     }
+  }
 
-    async getTriage(question: string): Promise<string> {
-        return "I'm ready to serve, boss.";
-    }
+  async getTriage(question: string): Promise<string> {
+    return "I'm ready to serve, boss.";
+  }
 
-    async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
-        const prompt = `
+  async generateManagerSuggestion(stats: any, venue: any): Promise<any> {
+    const prompt = `
         TASK: Analyze venue performance and suggest a "Yield Management" action.
 
         CONTEXT:
         Venue Vibe: ${venue.insiderVibe || venue.description}
-        Amenities: ${venue.amenityDetails?.map((a: any) => a.name).join(', ')}
-        Private Spaces: ${venue.privateSpaces?.map((s: any) => `${s.name} (${s.capacity})`).join(', ') || 'None'}
+        Amenities: ${venue.amenityDetails?.map((a: any) => a.name).join(", ")}
+        Private Spaces: ${venue.privateSpaces?.map((s: any) => `${s.name} (${s.capacity})`).join(", ") || "None"}
         Last 14 Days Activity: ${JSON.stringify(stats)}
         Point Bank Balance: ${venue.pointBank || 5000}
 
@@ -213,28 +249,31 @@ export class GeminiService {
            "potentialImpact": "HIGH" | "MEDIUM" | "LOW"
         }`;
 
-        // INJECT SCHMIDT SYSTEM INSTRUCTION
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
-            config: { response_mime_type: "application/json" }
-        });
+    // INJECT SCHMIDT SYSTEM INSTRUCTION
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+      config: { response_mime_type: "application/json" },
+    });
 
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Schmidt failed to generate suggestion.");
-        text = text.replace(/```json\n?|```/g, '').trim();
+    let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) throw new Error("Schmidt failed to generate suggestion.");
+    text = text.replace(/```json\n?|```/g, "").trim();
 
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error on Schmidt Suggestion:", text);
-            return null;
-        }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("JSON Parse Error on Schmidt Suggestion:", text);
+      return null;
     }
+  }
 
-    async parseFlyerContent(imageBuffer: Buffer, contextDate: string): Promise<any> {
-        const prompt = `You are Schmidt, the Lead Architect of OlyBars.
+  async parseFlyerContent(
+    imageBuffer: Buffer,
+    contextDate: string,
+  ): Promise<any> {
+    const prompt = `You are Schmidt, the Lead Architect of OlyBars.
         TASK: Extract event details from this flyer for system entry.
         
         CONTEXT:
@@ -264,44 +303,50 @@ export class GeminiService {
         Note: Only include fields in "missingFields" if they are truly ambiguous or missing from the image.
         `;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{
-                role: 'user',
-                parts: [
-                    { text: prompt },
-                    {
-                        inlineData: {
-                            mimeType: 'image/jpeg',
-                            data: imageBuffer.toString('base64')
-                        }
-                    }
-                ]
-            }],
-            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
-            config: { response_mime_type: "application/json" }
-        });
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: imageBuffer.toString("base64"),
+              },
+            },
+          ],
+        },
+      ],
+      systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+      config: { response_mime_type: "application/json" },
+    });
 
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error("Schmidt failed to read the flyer.");
-        text = text.replace(/```json\n?|```/g, '').trim();
+    let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) throw new Error("Schmidt failed to read the flyer.");
+    text = text.replace(/```json\n?|```/g, "").trim();
 
-        try {
-            return JSON.parse(text);
-        } catch (e) {
-            console.error("JSON Parse Error on Flyer Analysis:", text);
-            throw new Error("Failed to parse flyer data.");
-        }
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error("JSON Parse Error on Flyer Analysis:", text);
+      throw new Error("Failed to parse flyer data.");
     }
+  }
 
-    async generateEventCopy(draft: any, venueContext: any, vibe: string = 'standard'): Promise<string> {
-        const prompt = `You are Schmidt, the Product Architect for OlyBars.
+  async generateEventCopy(
+    draft: any,
+    venueContext: any,
+    vibe: string = "standard",
+  ): Promise<string> {
+    const prompt = `You are Schmidt, the Product Architect for OlyBars.
         TASK: Write a creative, engaging social media / calendar blurb for this event.
         
-        VENUE: ${venueContext.name} (${venueContext.venueType || 'Local Spot'})
+        VENUE: ${venueContext.name} (${venueContext.venueType || "Local Spot"})
         EVENT: ${draft.title}
         DATE: ${draft.date} @ ${draft.time}
-        PRIZES/SPECIALS: ${draft.prizes || 'None listed'}
+        PRIZES/SPECIALS: ${draft.prizes || "None listed"}
         VIBE REQUEST: ${vibe}
         
         INSTRUCTIONS:
@@ -322,57 +367,63 @@ export class GeminiService {
         
         OUTPUT: Only the creative text.`;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
-            config: { temperature: 0.8 }
-        });
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+      config: { temperature: 0.8 },
+    });
 
-        return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Event details staged and ready!";
+    return (
+      response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+      "Event details staged and ready!"
+    );
+  }
+
+  async generateImage(prompt: string, venueId: string): Promise<string> {
+    console.log(
+      `🎨 GeminiService: Generating image for ${venueId} with prompt: "${prompt.substring(0, 50)}..."`,
+    );
+
+    try {
+      // [ADAPTER] Use shared 'ai' instance from Genkit
+      const result = await ai.generate({
+        model: imagen3Fast,
+        prompt: prompt,
+        config: {
+          aspectRatio: "1:1", // Standard square for social
+        },
+      });
+
+      if (!result || !result.media) {
+        throw new Error("No media returned from Imagen 3");
+      }
+
+      const media = result.media;
+      if (!media) throw new Error("No media in generation result");
+
+      let buffer: Buffer;
+
+      if (media.url.startsWith("data:")) {
+        const base64Data = media.url.split(",")[1];
+        buffer = Buffer.from(base64Data, "base64");
+      } else {
+        throw new Error(
+          "Unexpected media URL format from Genkit (expected data URI)",
+        );
+      }
+
+      // Upload to Persistence Layer
+      const publicUrl = await StorageService.uploadImage(buffer, venueId);
+      return publicUrl;
+    } catch (error: any) {
+      console.error("❌ GeminiService: Image Generation Failed", error);
+      throw new Error(`Image Generation Failed: ${error.message}`);
     }
+  }
 
-    async generateImage(prompt: string, venueId: string): Promise<string> {
-        console.log(`🎨 GeminiService: Generating image for ${venueId} with prompt: "${prompt.substring(0, 50)}..."`);
-
-        try {
-            // [ADAPTER] Use shared 'ai' instance from Genkit
-            const result = await ai.generate({
-                model: imagen3Fast,
-                prompt: prompt,
-                config: {
-                    aspectRatio: '1:1', // Standard square for social
-                },
-            });
-
-            if (!result || !result.media) {
-                throw new Error("No media returned from Imagen 3");
-            }
-
-            const media = result.media;
-            if (!media) throw new Error("No media in generation result");
-
-            let buffer: Buffer;
-
-            if (media.url.startsWith('data:')) {
-                const base64Data = media.url.split(',')[1];
-                buffer = Buffer.from(base64Data, 'base64');
-            } else {
-                throw new Error("Unexpected media URL format from Genkit (expected data URI)");
-            }
-
-            // Upload to Persistence Layer
-            const publicUrl = await StorageService.uploadImage(buffer, venueId);
-            return publicUrl;
-
-        } catch (error: any) {
-            console.error("❌ GeminiService: Image Generation Failed", error);
-            throw new Error(`Image Generation Failed: ${error.message}`);
-        }
-    }
-
-    async rewriteDescription(text: string, tone: string): Promise<string> {
-        const prompt = `
+  async rewriteDescription(text: string, tone: string): Promise<string> {
+    const prompt = `
         TASK: Rewrite this event description to be more engaging.
         TONE: ${tone}
         ORIGINAL TEXT: "${text}"
@@ -386,33 +437,38 @@ export class GeminiService {
         OUTPUT JSON: { "rewritten": "string" }
         `;
 
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: GeminiService.ARTIE_PERSONA }] },
-            config: { response_mime_type: "application/json" }
-        });
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      systemInstruction: { parts: [{ text: GeminiService.ARTIE_PERSONA }] },
+      config: { response_mime_type: "application/json" },
+    });
 
-        let result = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!result) throw new Error("Empty response from AI");
-        result = result.replace(/```json\n?|```/g, '').trim();
+    let result = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!result) throw new Error("Empty response from AI");
+    result = result.replace(/```json\n?|```/g, "").trim();
 
-        try {
-            const json = JSON.parse(result);
-            return json.rewritten;
-        } catch (e) {
-            return result; // Fallback to raw text if JSON parse fails
-        }
+    try {
+      const json = JSON.parse(result);
+      return json.rewritten;
+    } catch (e) {
+      return result; // Fallback to raw text if JSON parse fails
     }
+  }
 
-    async analyzeScrapedContent(rawContent: string, currentTime: string, venueContext: { city: string, timezone: string }, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
-        // Default to Olympia if missing (Safety Net)
-        const cityString = venueContext?.city || "Olympia, WA";
+  async analyzeScrapedContent(
+    rawContent: string,
+    currentTime: string,
+    venueContext: { city: string; timezone: string },
+    target: "EVENTS" | "MENU" | "NEWSLETTER" | "SOCIAL_FEED" = "EVENTS",
+  ): Promise<any> {
+    // Default to Olympia if missing (Safety Net)
+    const cityString = venueContext?.city || "Olympia, WA";
 
-        let prompt = '';
+    let prompt = "";
 
-        if (target === 'EVENTS') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+    if (target === "EVENTS") {
+      prompt = `You are Schmidt, the Lead Architect of OlyBars.
             TASK: Extract all upcoming nightlife events from the provided raw page content.
             
             CONTEXT:
@@ -442,8 +498,8 @@ export class GeminiService {
             
             Note: If no events are found, return an empty array [].
             `;
-        } else if (target === 'MENU') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+    } else if (target === "MENU") {
+      prompt = `You are Schmidt, the Lead Architect of OlyBars.
             TASK: Analyze this menu/webpage and extract "Hero Items" and "Special Deals".
             
             CONTEXT:
@@ -463,8 +519,8 @@ export class GeminiService {
                 "sourceConfidence": number
             }
             `;
-        } else if (target === 'NEWSLETTER') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
+    } else if (target === "NEWSLETTER") {
+      prompt = `You are Schmidt, the Lead Architect of OlyBars.
             TASK: Extract key announcements from this text.
             
             CONTEXT:
@@ -482,34 +538,36 @@ export class GeminiService {
                 "sourceConfidence": number
             }
             `;
-        } else {
-            // Default/Fallback
-            prompt = `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
-        }
-
-        const response = await this.genAI.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [{
-                role: 'user',
-                parts: [
-                    { text: prompt },
-                    { text: `RAW PAGE CONTENT:\n\n${rawContent.substring(0, 20000)}` } // Token clamp
-                ]
-            }],
-            systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
-            config: { response_mime_type: "application/json" }
-        });
-
-        let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) return target === 'EVENTS' ? [] : null;
-        text = text.replace(/```json\n?|```/g, '').trim();
-
-        try {
-            const result = JSON.parse(text);
-            return result;
-        } catch (e) {
-            console.error("JSON Parse Error on ScrapedContent Analysis:", text);
-            return target === 'EVENTS' ? [] : null;
-        }
+    } else {
+      // Default/Fallback
+      prompt = `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
     }
+
+    const response = await this.genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            { text: `RAW PAGE CONTENT:\n\n${rawContent.substring(0, 20000)}` }, // Token clamp
+          ],
+        },
+      ],
+      systemInstruction: { parts: [{ text: GeminiService.SCHMIDT_PERSONA }] },
+      config: { response_mime_type: "application/json" },
+    });
+
+    let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!text) return target === "EVENTS" ? [] : null;
+    text = text.replace(/```json\n?|```/g, "").trim();
+
+    try {
+      const result = JSON.parse(text);
+      return result;
+    } catch (e) {
+      console.error("JSON Parse Error on ScrapedContent Analysis:", text);
+      return target === "EVENTS" ? [] : null;
+    }
+  }
 }

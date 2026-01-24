@@ -1,18 +1,30 @@
 import React, { useState } from "react";
 
-type PostTypeKey = "launch" | "weekly" | "standings" | "joinNextSeason";
+type PostTypeKey =
+  | "launch"
+  | "weekly"
+  | "standings"
+  | "joinNextSeason"
+  | "holiday";
 
 const POST_TYPE_LABELS: Record<PostTypeKey, string> = {
   launch: "Launch Announcement",
   weekly: "Tonight at [Bar] – Weekly Post",
   standings: "Standings / Winners Post",
   joinNextSeason: "Join Next Season Post",
+  holiday: "Seasonal / Holiday Post",
 };
 
-export const OwnerMarketingPromotions: React.FC = () => {
+interface OwnerMarketingPromotionsProps {
+  initialDraft?: { type: string; content: string };
+}
+
+export const OwnerMarketingPromotions: React.FC<
+  OwnerMarketingPromotionsProps
+> = ({ initialDraft }) => {
   const [activeSection, setActiveSection] = useState<
     "overview" | "posts" | "assets" | "faq"
-  >("overview");
+  >(initialDraft ? "posts" : "overview");
 
   // Simple stub state for drafts; real implementation should load/save from Firestore.
   const [drafts, setDrafts] = useState<Record<PostTypeKey, string>>({
@@ -20,15 +32,28 @@ export const OwnerMarketingPromotions: React.FC = () => {
     weekly: "",
     standings: "",
     joinNextSeason: "",
+    holiday: "",
   });
+
+  // [NEW] Effect to pre-fill draft from other tabs
+  React.useEffect(() => {
+    if (initialDraft && initialDraft.type === "holiday") {
+      setDrafts((prev) => ({ ...prev, holiday: initialDraft.content }));
+      setActiveSection("posts");
+      // Optional: Scroll to posts
+      setTimeout(() => {
+        document
+          .getElementById("posts")
+          ?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
+  }, [initialDraft]);
 
   const handleCopy = (text: string) => {
     if (!text) return;
-    navigator.clipboard
-      .writeText(text)
-      .catch(() => {
-        // Swallow for now; real app can show toast.
-      });
+    navigator.clipboard.writeText(text).catch(() => {
+      // Swallow for now; real app can show toast.
+    });
   };
 
   const handleUpdateDraft = (key: PostTypeKey, value: string) => {
@@ -49,8 +74,8 @@ export const OwnerMarketingPromotions: React.FC = () => {
           Marketing &amp; Promotions
         </h1>
         <p className="text-sm text-slate-300 font-['Roboto_Condensed'] font-bold">
-          Plan and promote your Artesian Bar League nights with AI-drafted posts,
-          ready-to-use assets, and simple best practices.
+          Plan and promote your Artesian Bar League nights with AI-drafted
+          posts, ready-to-use assets, and simple best practices.
         </p>
 
         {/* In-page nav */}
@@ -66,9 +91,10 @@ export const OwnerMarketingPromotions: React.FC = () => {
               type="button"
               onClick={() => scrollToSection(tab.id)}
               className={`px-3 py-1.5 text-xs font-['Bangers'] tracking-wider border-2 transition uppercase
-                ${activeSection === tab.id
-                  ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#000]"
-                  : "bg-slate-800 text-slate-200 border-slate-600 hover:border-primary"
+                ${
+                  activeSection === tab.id
+                    ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#000]"
+                    : "bg-slate-800 text-slate-200 border-slate-600 hover:border-primary"
                 }`}
             >
               {tab.label}
@@ -103,7 +129,10 @@ export const OwnerMarketingPromotions: React.FC = () => {
             <p className="font-black text-primary mb-1 uppercase">
               Objective 1 – Consistency
             </p>
-            <p>Every venue tells the same story about the league, in its own voice.</p>
+            <p>
+              Every venue tells the same story about the league, in its own
+              voice.
+            </p>
           </div>
           <div className="border-2 border-slate-600 bg-slate-900 p-3">
             <p className="font-black text-primary mb-1 uppercase">
@@ -115,7 +144,10 @@ export const OwnerMarketingPromotions: React.FC = () => {
             <p className="font-black text-primary mb-1 uppercase">
               Objective 3 – Reach
             </p>
-            <p>Social posts + in-venue signage so players see the league everywhere.</p>
+            <p>
+              Social posts + in-venue signage so players see the league
+              everywhere.
+            </p>
           </div>
         </div>
       </section>
@@ -137,7 +169,8 @@ export const OwnerMarketingPromotions: React.FC = () => {
         {/* Profile summary chips (read-only placeholders) */}
         <div className="flex flex-wrap gap-2 text-xs font-['Roboto_Condensed'] font-bold">
           <span className="px-2 py-1 bg-slate-900 border border-slate-600 text-slate-300">
-            Bar: <span className="text-white">Hannah&apos;s Bar &amp; Grille</span>
+            Bar:{" "}
+            <span className="text-white">Hannah&apos;s Bar &amp; Grille</span>
           </span>
           <span className="px-2 py-1 bg-slate-900 border border-slate-600 text-slate-300">
             League Night: <span className="text-white">Wed 8–11pm</span>
@@ -146,12 +179,14 @@ export const OwnerMarketingPromotions: React.FC = () => {
             Season: <span className="text-white">Season 3 – Winter</span>
           </span>
           <span className="px-2 py-1 bg-slate-900 border border-slate-600 text-slate-300">
-            Tone: <span className="text-white">Fun, competitive, not cheesy</span>
+            Tone:{" "}
+            <span className="text-white">Fun, competitive, not cheesy</span>
           </span>
         </div>
 
         <p className="text-xs text-slate-400 font-['Roboto_Condensed'] italic">
-          These posts are generated from your bar profile. Artie drafts content for you – you just review, tweak, and approve.
+          These posts are generated from your bar profile. Artie drafts content
+          for you – you just review, tweak, and approve.
         </p>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -235,7 +270,8 @@ export const OwnerMarketingPromotions: React.FC = () => {
             Request more materials
           </button>
           <p className="text-[11px] text-slate-400 font-['Roboto_Condensed']">
-            For now, text Artie <span className="font-mono text-primary">'marketing help'</span>
+            For now, text Artie{" "}
+            <span className="font-mono text-primary">'marketing help'</span>
           </p>
         </div>
       </section>
@@ -256,7 +292,8 @@ export const OwnerMarketingPromotions: React.FC = () => {
             </h4>
             <ul className="list-disc list-inside text-sm text-slate-300 space-y-1 font-bold">
               <li>
-                Post a “Tonight at [Bar]” update the afternoon of every league night.
+                Post a “Tonight at [Bar]” update the afternoon of every league
+                night.
               </li>
               <li>
                 Use consistent hashtags like{" "}

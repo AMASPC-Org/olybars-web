@@ -1,8 +1,18 @@
-import { useState, useEffect } from 'react';
-import { db } from '../../../lib/firebase';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect } from "react";
+import { db } from "../../../lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+  doc,
+  Timestamp,
+} from "firebase/firestore";
+import { VenueNotification } from "../../../types/owner";
 
 export interface VenueNotificationState {
+  notifications: VenueNotification[];
   count: number;
   hasNotifications: boolean;
   loading: boolean;
@@ -11,42 +21,55 @@ export interface VenueNotificationState {
 
 export const useVenueNotifications = (venueId?: string) => {
   const [state, setState] = useState<VenueNotificationState>({
+    notifications: [],
     count: 0,
-    hasNotifications: false,
     loading: true,
-    error: null
+    error: null,
   });
 
   useEffect(() => {
     if (!venueId) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, loading: false }));
       return;
     }
 
-    // Subscribe to PENDING events for this venue
-    // Optimization: In the future, this could use a count() aggregation query
-    // or a dedicated 'notifications' collection if volume gets high.
-    // For now, reading the pending documents is acceptable operationally.
+    setState((prev) => ({ ...prev, loading: true }));
+
+    // Standardized Path: venues/{venueId}/notifications
+    const notificationsRef = collection(db, "venues", venueId, "notifications");
+
+    // Query: Only pending items, sorted by priority (1=Highest) then time
     const q = query(
-      collection(db, 'league_events'),
-      where('venueId', '==', venueId),
-      where('status', '==', 'PENDING')
+      notificationsRef,
+      where("status", "==", "pending"),
+      orderBy("priority", "asc"),
+      orderBy("createdAt", "desc"),
     );
 
-    const unsubscribe = onSnapshot(q,
+    const unsubscribe = onSnapshot(
+      q,
       (snapshot) => {
-        const count = snapshot.size;
+        const notifications = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as VenueNotification[];
+
         setState({
-          count,
-          hasNotifications: count > 0,
+          notifications,
+          count: notifications.length,
+          hasNotifications: notifications.length > 0,
           loading: false,
-          error: null
+          error: null,
         });
       },
       (error) => {
-        console.error("Failed to subscribe to notifications:", error);
-        setState(prev => ({ ...prev, loading: false, error: error as Error }));
-      }
+        console.error("Failed to subscribe to venue notifications:", error);
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: error as Error,
+        }));
+      },
     );
 
     return () => unsubscribe();

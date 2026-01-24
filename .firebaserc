@@ -6,9 +6,7 @@
   "targets": {
     "ama-ecosystem-prod": {
       "hosting": {
-        "dev": [
-          "olybars-dev"
-        ],
+
         "prod": [
           "olybars"
         ]
