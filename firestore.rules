@@ -76,6 +76,24 @@ service cloud.firestore {
         allow read: if true;
         allow write: if isSuperAdmin() || isOwnerOf(venueId);
       }
+
+      // Scheduled Deals (Subcollection): Public Read
+      match /scheduledDeals/{dealId} {
+        allow read: if true;
+        allow write: if isSuperAdmin() || isOwnerOf(venueId);
+      }
+      
+      // [NEW] Staff Invites (Mock Mode Logic)
+      // Secure: Only Owners can create/delete. 
+      // Open Read: Anyone with the token (ID) can read it to validate.
+      // Refinement: In production, this read should be restricted to a Cloud Function.
+      match /invites/{inviteId} {
+         allow create, delete: if isSuperAdmin() || isOwnerOf(venueId);
+         allow update: if true; // Temporary: Client-side "Accept" logic updates status. 
+         // DANGER: The above update rule is very open, but locked by "Mock" requirement. 
+         // In production, move acceptInvite() to Cloud Function.
+         allow read: if true;
+      }
     }
 
     // Signals: Managed by Backend API
@@ -87,6 +105,11 @@ service cloud.firestore {
     // System Notifications: Admin Only
     match /sys_admin_notifications/{notificationId} {
       allow create, read, update, delete: if isAdmin();
+    }
+
+    // 4. DEALS REGISTRY (Public Read)
+    match /scheduled_deals_registry/{dealId} {
+      allow read: if true;
     }
 
     // Default deny for all other collections

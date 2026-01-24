@@ -1,149 +1,287 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { SEO } from './components/common/SEO';
-import { X } from 'lucide-react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  useSearchParams,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { SEO } from "./components/common/SEO";
+import { X } from "lucide-react";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { auth } from "./lib/firebase";
 
 // --- CONFIG & TYPES ---
-import { queryClient } from './lib/queryClient';
+import { queryClient } from "./lib/queryClient";
 import {
-  Venue, PointsReason, UserProfile, ClockInRecord, UserAlertPreferences, VenueStatus, ActivityLog, GameStatus, VibeCheckRecord
-} from './types';
-import { isSystemAdmin } from './types/auth_schema';
+  Venue,
+  PointsReason,
+  UserProfile,
+  ClockInRecord,
+  UserAlertPreferences,
+  VenueStatus,
+  ActivityLog,
+  GameStatus,
+  VibeCheckRecord,
+} from "./types";
+import { isSystemAdmin } from "./types/auth_schema";
 
 // --- REAL SERVICES ---
-import { fetchVenues, updateVenueDetails } from './services/venueService';
+import { fetchVenues, updateVenueDetails } from "./services/venueService";
 import {
-  saveAlertPreferences, logUserActivity, syncClockIns,
+  saveAlertPreferences,
+  logUserActivity,
+  syncClockIns,
   fetchUserRank,
   toggleFavorite,
   updateUserProfile,
   fetchRecentActivity, // New Export
   performVibeCheck,
-  getUserProfile
-} from './services/userService';
-import { LoadingScreen } from './components/common/LoadingScreen';
-import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { AppShell } from './components/layout/AppShell';
-import { AgeGate } from './components/ui/AgeGate';
-import { useToast } from './components/ui/BrandedToast';
-import { VibeReceiptData, generateArtieHook } from './features/social/services/VibeReceiptService';
-import { BuzzScreen } from './features/venues/screens/BuzzScreen';
-import { VenuesScreen } from './features/venues/screens/VenuesScreen';
+  getUserProfile,
+} from "./services/userService";
+import { LoadingScreen } from "./components/common/LoadingScreen";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { AppShell } from "./components/layout/AppShell";
+import { AgeGate } from "./components/ui/AgeGate";
+import { useToast } from "./components/ui/BrandedToast";
+import {
+  VibeReceiptData,
+  generateArtieHook,
+} from "./features/social/services/VibeReceiptService";
+import { BuzzScreen } from "./features/venues/screens/BuzzScreen";
+import { VenuesScreen } from "./features/venues/screens/VenuesScreen";
 
 // --- LAZY COMPONENTS ---
-const EventsScreen = lazy(() => import('./features/league/screens/EventsScreen').then(m => ({ default: m.EventsScreen })));
-const KaraokeScreen = lazy(() => import('./features/league/screens/KaraokeScreen').then(m => ({ default: m.KaraokeScreen })));
-const TriviaScreen = lazy(() => import('./features/league/screens/TriviaScreen').then(m => ({ default: m.TriviaScreen })));
-const LiveMusicScreen = lazy(() => import('./features/league/screens/LiveMusicScreen').then(m => ({ default: m.LiveMusicScreen })));
-const LeagueHQScreen = lazy(() => import('./features/league/screens/LeagueHQScreen').then(m => ({ default: m.LeagueHQScreen })));
-const OwnerDashboardScreen = lazy(() => import('./features/owner/screens/OwnerDashboardScreen').then(m => ({ default: m.OwnerDashboardScreen })));
-const LoginModal = lazy(() => import('./features/auth/components/LoginModal').then(m => ({ default: m.LoginModal })));
-const ClockInModal = lazy(() => import('./features/venues/components/ClockInModal').then(m => ({ default: m.ClockInModal })));
-const VibeCheckModal = lazy(() => import('./features/venues/components/VibeCheckModal').then(m => ({ default: m.VibeCheckModal })));
-const MakerSurveyModal = lazy(() => import('./features/marketing/components/MakerSurveyModal').then(m => ({ default: m.MakerSurveyModal })));
-const VibeReceiptModal = lazy(() => import('./features/social/components/VibeReceiptModal').then(m => ({ default: m.VibeReceiptModal })));
-const OnboardingModal = lazy(() => import('./components/ui/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
-const PreferredSipsModal = lazy(() => import('./features/profile/components/PreferredSipsModal').then(m => ({ default: m.PreferredSipsModal })));
-const HomeBaseModal = lazy(() => import('./features/profile/components/HomeBaseModal').then(m => ({ default: m.HomeBaseModal })));
-const FlyerExtractor = lazy(() => import('./pages/admin/FlyerExtractor').then(m => ({ default: m.FlyerExtractor })));
-const AdminDashboardScreen = lazy(() => import('./features/admin/screens/AdminDashboardScreen').then(m => ({ default: m.AdminDashboardScreen })));
-const UserProfileScreen = lazy(() => import('./features/profile/screens/UserProfileScreen')); // Default export
-const VenueProfileScreen = lazy(() => import('./features/venues/screens/VenueProfileScreen').then(m => ({ default: m.VenueProfileScreen })));
-const ArtieBioScreen = lazy(() => import('./features/artie/screens/ArtieBioScreen')); // Default export
-const HistoryFeedScreen = lazy(() => import('./features/history/screens/HistoryFeedScreen').then(m => ({ default: m.HistoryFeedScreen })));
-const HistoryArticleScreen = lazy(() => import('./features/history/screens/HistoryArticleScreen').then(m => ({ default: m.HistoryArticleScreen })));
-const SettingsScreen = lazy(() => import('./features/profile/screens/SettingsScreen')); // Default export
-const AuthPage = lazy(() => import('./features/auth/screens/AuthPage').then(m => ({ default: m.AuthPage })));
-const PassportScreen = lazy(() => import('./features/league/screens/PassportScreen').then(m => ({ default: m.PassportScreen })));
+const EventsScreen = lazy(() =>
+  import("./features/league/screens/EventsScreen").then((m) => ({
+    default: m.EventsScreen,
+  })),
+);
+const KaraokeScreen = lazy(() =>
+  import("./features/league/screens/KaraokeScreen").then((m) => ({
+    default: m.KaraokeScreen,
+  })),
+);
+const TriviaScreen = lazy(() =>
+  import("./features/league/screens/TriviaScreen").then((m) => ({
+    default: m.TriviaScreen,
+  })),
+);
+const LiveMusicScreen = lazy(() =>
+  import("./features/league/screens/LiveMusicScreen").then((m) => ({
+    default: m.LiveMusicScreen,
+  })),
+);
+const LeagueHQScreen = lazy(() =>
+  import("./features/league/screens/LeagueHQScreen").then((m) => ({
+    default: m.LeagueHQScreen,
+  })),
+);
+const OwnerDashboardScreen = lazy(() =>
+  import("./features/owner/screens/OwnerDashboardScreen").then((m) => ({
+    default: m.OwnerDashboardScreen,
+  })),
+);
+const LoginModal = lazy(() =>
+  import("./features/auth/components/LoginModal").then((m) => ({
+    default: m.LoginModal,
+  })),
+);
+const ClockInModal = lazy(() =>
+  import("./features/venues/components/ClockInModal").then((m) => ({
+    default: m.ClockInModal,
+  })),
+);
+const VibeCheckModal = lazy(() =>
+  import("./features/venues/components/VibeCheckModal").then((m) => ({
+    default: m.VibeCheckModal,
+  })),
+);
+const MakerSurveyModal = lazy(() =>
+  import("./features/marketing/components/MakerSurveyModal").then((m) => ({
+    default: m.MakerSurveyModal,
+  })),
+);
+const VibeReceiptModal = lazy(() =>
+  import("./features/social/components/VibeReceiptModal").then((m) => ({
+    default: m.VibeReceiptModal,
+  })),
+);
+const OnboardingModal = lazy(() =>
+  import("./components/ui/OnboardingModal").then((m) => ({
+    default: m.OnboardingModal,
+  })),
+);
+const PreferredSipsModal = lazy(() =>
+  import("./features/profile/components/PreferredSipsModal").then((m) => ({
+    default: m.PreferredSipsModal,
+  })),
+);
+const HomeBaseModal = lazy(() =>
+  import("./features/profile/components/HomeBaseModal").then((m) => ({
+    default: m.HomeBaseModal,
+  })),
+);
+const FlyerExtractor = lazy(() =>
+  import("./pages/admin/FlyerExtractor").then((m) => ({
+    default: m.FlyerExtractor,
+  })),
+);
+const AdminDashboardScreen = lazy(() =>
+  import("./features/admin/screens/AdminDashboardScreen").then((m) => ({
+    default: m.AdminDashboardScreen,
+  })),
+);
+const UserProfileScreen = lazy(
+  () => import("./features/profile/screens/UserProfileScreen"),
+); // Default export
+const VenueProfileScreen = lazy(() =>
+  import("./features/venues/screens/VenueProfileScreen").then((m) => ({
+    default: m.VenueProfileScreen,
+  })),
+);
+const ArtieBioScreen = lazy(
+  () => import("./features/artie/screens/ArtieBioScreen"),
+); // Default export
+const JoinTeamScreen = lazy(() =>
+  import("./features/admin/screens/JoinTeamScreen").then((m) => ({
+    default: m.JoinTeamScreen,
+  })),
+);
+
+const HistoryFeedScreen = lazy(() =>
+  import("./features/history/screens/HistoryFeedScreen").then((m) => ({
+    default: m.HistoryFeedScreen,
+  })),
+);
+const HistoryArticleScreen = lazy(() =>
+  import("./features/history/screens/HistoryArticleScreen").then((m) => ({
+    default: m.HistoryArticleScreen,
+  })),
+);
+const SettingsScreen = lazy(
+  () => import("./features/profile/screens/SettingsScreen"),
+); // Default export
+const AuthPage = lazy(() =>
+  import("./features/auth/screens/AuthPage").then((m) => ({
+    default: m.AuthPage,
+  })),
+);
+const PassportScreen = lazy(() =>
+  import("./features/league/screens/PassportScreen").then((m) => ({
+    default: m.PassportScreen,
+  })),
+);
 
 // --- UTILS & HELPERS ---
-import { cookieService } from './services/cookieService';
-import { calculateDistance, metersToMiles } from './utils/geoUtils';
+import { cookieService } from "./services/cookieService";
+import { calculateDistance, metersToMiles } from "./utils/geoUtils";
 
 // --- RELOCATED SCREENS ---
 
-
 // --- RELOCATED SCREENS (LAYZY) ---
-import TermsScreen from './features/marketing/screens/TermsScreen';
-import PrivacyScreen from './features/marketing/screens/PrivacyScreen';
-import CookiePolicyScreen from './features/marketing/screens/CookiePolicyScreen';
-import PartnerSecurityScreen from './features/marketing/screens/PartnerSecurityScreen';
-import FAQScreen from './features/marketing/screens/FAQScreen';
-import AboutPage from './features/marketing/screens/About';
-import { DiscoveryLayout } from './features/venues/screens/DiscoveryLayout';
-import { DiscoveryProvider } from './features/venues/contexts/DiscoveryContext';
-import OwnerPortal from './features/owner/screens/OwnerPortal';
-import { PointHistoryScreen } from './features/profile/screens/PointHistoryScreen';
-import { QRVibeCheckScreen } from './features/vibe-check/screens/QRVibeCheckScreen';
-import MerchStandScreen from './features/merch/screens/MerchStandScreen';
-import MerchDetailScreen from './features/merch/screens/MerchDetailScreen';
-import VoucherRedemptionScreen from './features/merch/screens/VoucherRedemptionScreen';
-import ScrollToTop from './components/layout/ScrollToTop';
-import { PulsePlaybookScreen } from './features/marketing/screens/PulsePlaybookScreen';
-import { PlayGatewayScreen } from './features/play/screens/PlayGatewayScreen';
-import { LeaguePerksScreen } from './features/league/screens/LeaguePerksScreen';
-import AIGatewayScreen from './features/marketing/screens/AIGatewayScreen';
-import AIFeedGuideScreen from './features/marketing/screens/AIFeedGuideScreen';
-import AIConductScreen from './features/marketing/screens/AIConductScreen';
-import ClaimVenuePage from './features/owner/screens/ClaimVenuePage';
-import GlossaryScreen from './features/marketing/screens/GlossaryScreen';
-import PointsGuideScreen from './features/league/screens/PointsGuideScreen';
-import LeagueMembershipPage from './features/marketing/LeagueMembershipPage';
-import OnboardingHandoverPage from './features/marketing/screens/OnboardingHandoverPage';
-import { FlightSchoolScreen } from './features/flights/screens/FlightSchoolScreen';
-import { MetaOAuthCallback } from './features/owner/components/MetaOAuthCallback';
-import { BackRoomScreen } from './features/venues/screens/BackRoomScreen';
+import TermsScreen from "./features/marketing/screens/TermsScreen";
+import PrivacyScreen from "./features/marketing/screens/PrivacyScreen";
+import CookiePolicyScreen from "./features/marketing/screens/CookiePolicyScreen";
+import PartnerSecurityScreen from "./features/marketing/screens/PartnerSecurityScreen";
+import FAQScreen from "./features/marketing/screens/FAQScreen";
+import AboutPage from "./features/marketing/screens/About";
+import { DiscoveryLayout } from "./features/venues/screens/DiscoveryLayout";
+import { DiscoveryProvider } from "./features/venues/contexts/DiscoveryContext";
+import OwnerPortal from "./features/owner/screens/OwnerPortal";
 
+import { PointHistoryScreen } from "./features/profile/screens/PointHistoryScreen";
+import { QRVibeCheckScreen } from "./features/vibe-check/screens/QRVibeCheckScreen";
+import MerchStandScreen from "./features/merch/screens/MerchStandScreen";
+import MerchDetailScreen from "./features/merch/screens/MerchDetailScreen";
+import VoucherRedemptionScreen from "./features/merch/screens/VoucherRedemptionScreen";
+import ScrollToTop from "./components/layout/ScrollToTop";
+import { PulsePlaybookScreen } from "./features/marketing/screens/PulsePlaybookScreen";
+import { PlayGatewayScreen } from "./features/play/screens/PlayGatewayScreen";
+import { LeaguePerksScreen } from "./features/league/screens/LeaguePerksScreen";
+import AIGatewayScreen from "./features/marketing/screens/AIGatewayScreen";
+import AIFeedGuideScreen from "./features/marketing/screens/AIFeedGuideScreen";
+import AIConductScreen from "./features/marketing/screens/AIConductScreen";
+import ClaimVenuePage from "./features/owner/screens/ClaimVenuePage";
+import GlossaryScreen from "./features/marketing/screens/GlossaryScreen";
+import PointsGuideScreen from "./features/league/screens/PointsGuideScreen";
+import LeagueMembershipPage from "./features/marketing/LeagueMembershipPage";
+import OnboardingHandoverPage from "./features/marketing/screens/OnboardingHandoverPage";
+import { FlightSchoolScreen } from "./features/flights/screens/FlightSchoolScreen";
+import { MetaOAuthCallback } from "./features/owner/components/MetaOAuthCallback";
+import { BackRoomScreen } from "./features/venues/screens/BackRoomScreen";
 
 const InfoPopup = ({ infoContent, setInfoContent }: any) => {
   if (!infoContent) return null;
   return (
-    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setInfoContent(null)}>
-      <div className="bg-surface border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full relative" onClick={e => e.stopPropagation()}>
-        <h3 className="text-xl font-black text-primary uppercase tracking-wide mb-3 font-league">{infoContent.title}</h3>
-        <p className="text-sm text-slate-300 font-medium leading-relaxed font-body">{infoContent.text}</p>
-        <button onClick={() => setInfoContent(null)} className="absolute top-3 right-3 text-slate-500 hover:text-white"><X className="w-5 h-5" /></button>
+    <div
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+      onClick={() => setInfoContent(null)}
+    >
+      <div
+        className="bg-surface border border-white/10 p-6 rounded-2xl shadow-2xl max-w-sm w-full relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-xl font-black text-primary uppercase tracking-wide mb-3 font-league">
+          {infoContent.title}
+        </h3>
+        <p className="text-sm text-slate-300 font-medium leading-relaxed font-body">
+          {infoContent.text}
+        </p>
+        <button
+          onClick={() => setInfoContent(null)}
+          className="absolute top-3 right-3 text-slate-500 hover:text-white"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
 };
 
-const SmartOwnerRoute = ({ venues, handleUpdateVenue, userProfile, isLoading }: any) => {
-  const [searchParams] = useSearchParams();
-  const venueIdParam = searchParams.get('venueId');
-  const tabParam = searchParams.get('tab');
+const SmartOwnerRoute = ({
+  venues,
+  handleUpdateVenue,
+  userProfile,
+  isLoading,
+}: any) => {
+  const { venueId, tab } = useParams();
   const navigate = useNavigate();
 
-  // [FIX] Relax Auth Check: If Loading, we just wait to see what venues come back.
-  // Unless we know for sure they are a GUEST with no permissions.
-  const isAuthorized = isLoading || isSystemAdmin(userProfile) || (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0);
+  // [DIAGNOSTIC] Check Auth
+  const isAuthorized =
+    isLoading ||
+    isSystemAdmin(userProfile) ||
+    (userProfile.venuePermissions &&
+      Object.keys(userProfile.venuePermissions).length > 0);
 
-  if (!isAuthorized) {
+  if (!isAuthorized && !isLoading) {
     return <OwnerPortal />;
   }
 
-  // Determine initial view based on tab param
-  let initialView: any = 'main';
-  if (tabParam === 'menu') initialView = 'menu';
-  if (tabParam === 'listing') initialView = 'listing';
-  if (tabParam === 'marketing') initialView = 'marketing';
-  if (tabParam === 'events') initialView = 'events';
-
-  const defaultVenueId = venueIdParam || (isSystemAdmin(userProfile) && (!userProfile.venuePermissions || Object.keys(userProfile.venuePermissions).length === 0)
-    ? 'hannahs'
-    : (userProfile.venuePermissions ? Object.keys(userProfile.venuePermissions)[0] : null));
+  const defaultVenueId =
+    venueId ||
+    (isSystemAdmin(userProfile) &&
+    (!userProfile.venuePermissions ||
+      Object.keys(userProfile.venuePermissions).length === 0)
+      ? "hannahs"
+      : userProfile.venuePermissions
+        ? Object.keys(userProfile.venuePermissions)[0]
+        : "hannahs");
 
   return (
     <OwnerDashboardScreen
       isOpen={true}
-      onClose={() => navigate('/')}
+      onClose={() => navigate("/")}
       venues={venues}
       updateVenue={handleUpdateVenue}
       userProfile={userProfile}
       initialVenueId={defaultVenueId}
-      initialView={initialView}
-      isLoading={isLoading} // [pass prop]
+      initialView={(tab as any) || "operations"}
+      isLoading={isLoading}
     />
   );
 };
@@ -153,56 +291,77 @@ export default function OlyBarsApp() {
   const { showToast } = useToast();
 
   const { data: venues = [], isLoading } = useQuery({
-    queryKey: ['venues-brief'],
+    queryKey: ["venues-brief"],
     queryFn: () => fetchVenues(true), // Fetch brief mode for the list
     staleTime: 60 * 1000,
     gcTime: 10 * 60 * 1000,
     initialData: () => {
       // Instant hydration for Returning Users [OPTIMIZATION]
       try {
-        const cached = localStorage.getItem('oly_venues_cache');
+        const cached = localStorage.getItem("oly_venues_cache");
         if (cached) return JSON.parse(cached);
       } catch (e) {
-        console.error('[OlyBars] Hydration failed:', e);
+        console.error("[OlyBars] Hydration failed:", e);
       }
       return [];
-    }
+    },
   });
 
   // Sync Venues to LocalStorage for next boot
   useEffect(() => {
     if (venues && venues.length > 0) {
-      localStorage.setItem('oly_venues_cache', JSON.stringify(venues));
+      localStorage.setItem("oly_venues_cache", JSON.stringify(venues));
     }
   }, [venues]);
 
-  const [userPoints, setUserPoints] = useState(() => parseInt(localStorage.getItem('oly_points') || '0'));
-  const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() => JSON.parse(localStorage.getItem('oly_clockins') || '[]'));
-  const [vibeCheckHistory, setVibeCheckHistory] = useState<VibeCheckRecord[]>(() => JSON.parse(localStorage.getItem('oly_vibe_history') || '[]'));
-  const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() => JSON.parse(localStorage.getItem('oly_prefs') || '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}'));
+  const [userPoints, setUserPoints] = useState(() =>
+    parseInt(localStorage.getItem("oly_points") || "0"),
+  );
+  const [clockInHistory, setClockInHistory] = useState<ClockInRecord[]>(() =>
+    JSON.parse(localStorage.getItem("oly_clockins") || "[]"),
+  );
+  const [vibeCheckHistory, setVibeCheckHistory] = useState<VibeCheckRecord[]>(
+    () => JSON.parse(localStorage.getItem("oly_vibe_history") || "[]"),
+  );
+  const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() =>
+    JSON.parse(
+      localStorage.getItem("oly_prefs") ||
+        '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}',
+    ),
+  );
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
-      const stored = localStorage.getItem('oly_profile');
-      if (!stored || stored === 'null' || stored === 'undefined') {
-        return { uid: 'guest', role: 'guest' };
+      const stored = localStorage.getItem("oly_profile");
+      if (!stored || stored === "null" || stored === "undefined") {
+        return { uid: "guest", role: "guest" };
       }
       return JSON.parse(stored);
     } catch {
-      return { uid: 'guest', role: 'guest' };
+      return { uid: "guest", role: "guest" };
     }
   });
 
   const userId = userProfile?.uid || "guest_user_123";
 
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginMode, setLoginMode] = useState<'user' | 'owner'>('user');
-  const [userSubMode, setUserSubMode] = useState<'login' | 'signup'>('signup');
+  const [loginMode, setLoginMode] = useState<"user" | "owner">("user");
+  const [userSubMode, setUserSubMode] = useState<"login" | "signup">("signup");
   const [showOwnerDashboard, setShowOwnerDashboard] = useState(false);
-  const [ownerDashboardInitialVenueId, setOwnerDashboardInitialVenueId] = useState<string | null>(null);
-  const [ownerDashboardInitialView, setOwnerDashboardInitialView] = useState<'main' | 'marketing' | 'listing'>('main');
-  const [hasAcceptedAgeGate, setHasAcceptedAgeGate] = useState(() => cookieService.get('oly_age_gate') === 'true');
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => cookieService.get('oly_terms') === 'true');
-  const [infoContent, setInfoContent] = useState<{ title: string, text: string } | null>(null);
+  const [ownerDashboardInitialVenueId, setOwnerDashboardInitialVenueId] =
+    useState<string | null>(null);
+  const [ownerDashboardInitialView, setOwnerDashboardInitialView] = useState<
+    "main" | "marketing" | "listing"
+  >("main");
+  const [hasAcceptedAgeGate, setHasAcceptedAgeGate] = useState(
+    () => cookieService.get("oly_age_gate") === "true",
+  );
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(
+    () => cookieService.get("oly_terms") === "true",
+  );
+  const [infoContent, setInfoContent] = useState<{
+    title: string;
+    text: string;
+  } | null>(null);
   const [showClockInModal, setShowClockInModal] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [vibeVenue, setVibeVenue] = useState<Venue | null>(null);
@@ -211,14 +370,83 @@ export default function OlyBarsApp() {
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [showArtie, setShowArtie] = useState(false);
-  const [chatInput, setChatInput] = useState('');
+  const [chatInput, setChatInput] = useState("");
   const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
-  const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(null);
+  const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(
+    null,
+  );
+  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
+
+  // --- AUTH LISTENER (Authoritative Source of Truth) ---
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log(
+        "[Auth] State Change Detected:",
+        firebaseUser?.email || "No User",
+      );
+
+      if (firebaseUser) {
+        // [HYDRATION] If we have a session but state is Guest OR stale, refresh it
+        if (
+          userProfile.uid === "guest" ||
+          userProfile.uid !== firebaseUser.uid
+        ) {
+          try {
+            const freshProfile = await getUserProfile(firebaseUser.uid);
+            if (freshProfile) {
+              // Apply Super Admin overrides if necessary (Ryan Rule)
+              if (freshProfile.email === "ryan@amaspc.com") {
+                freshProfile.role = "super-admin" as any;
+                freshProfile.systemRole = "admin" as any;
+              }
+              setUserProfile(freshProfile);
+            } else {
+              // Minimal profile if Firestore sync hasn't happened yet
+              setUserProfile({
+                uid: firebaseUser.uid,
+                role: "guest",
+                email: firebaseUser.email || "",
+              });
+            }
+          } catch (e) {
+            console.error("[Auth] Hydration failed:", e);
+          }
+        }
+      } else {
+        // [SANITIZATION] No session -> Revert to Guest
+        if (userProfile.uid !== "guest") {
+          setUserProfile({ uid: "guest", role: "guest" });
+          localStorage.removeItem("oly_profile");
+          localStorage.removeItem("oly_points");
+          localStorage.removeItem("oly_clockins");
+          // NOTE: We do NOT remove oly_age_gate or oly_terms to preserve UX
+        }
+      }
+      setIsAuthInitializing(false);
+    });
+
+    // [INTERVENTION] Handle Session Expiry from API 401s
+    const handleSessionExpiry = () => {
+      console.warn("[App] Session Expired Event Received. Signing out.");
+      auth.signOut();
+      showToast("SESSION EXPIRED", "error");
+    };
+
+    window.addEventListener("auth:session_expired", handleSessionExpiry);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("auth:session_expired", handleSessionExpiry);
+    };
+  }, [userProfile.uid]);
 
   // Progressive Profiling State
   const [showPreferredSipsModal, setShowPreferredSipsModal] = useState(false);
   const [showHomeBaseModal, setShowHomeBaseModal] = useState(false);
-  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{ id: string, name: string } | null>(null);
+  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   // const { showToast } = useToast(); // Moved to top
   // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
@@ -228,7 +456,7 @@ export default function OlyBarsApp() {
 
   useEffect(() => {
     const getRank = async () => {
-      if (userProfile.uid !== 'guest' && userPoints !== undefined) {
+      if (userProfile.uid !== "guest" && userPoints !== undefined) {
         const rank = await fetchUserRank(userPoints);
         setUserRank(rank);
       }
@@ -239,40 +467,40 @@ export default function OlyBarsApp() {
   // Persistence Layer (Sync State to LocalStorage)
   useEffect(() => {
     if (userProfile) {
-      localStorage.setItem('oly_profile', JSON.stringify(userProfile));
+      localStorage.setItem("oly_profile", JSON.stringify(userProfile));
     }
   }, [userProfile]);
 
   useEffect(() => {
-    localStorage.setItem('oly_points', userPoints.toString());
+    localStorage.setItem("oly_points", userPoints.toString());
   }, [userPoints]);
 
   // [HYDRATION] Refresh User Profile from Backend on Load
   useEffect(() => {
     const hydrateProfile = async () => {
-      if (userProfile.uid && userProfile.uid !== 'guest') {
+      if (userProfile.uid && userProfile.uid !== "guest") {
         try {
           // 1. Fetch fresh data
           const freshProfile = await getUserProfile(userProfile.uid);
 
           if (freshProfile) {
             // 2. [SECURITY] Re-apply Ryan Rule (Hardcoded Super Admin)
-            if (freshProfile.email === 'ryan@amaspc.com') {
-              freshProfile.role = 'super-admin' as any;
-              freshProfile.systemRole = 'admin' as any;
+            if (freshProfile.email === "ryan@amaspc.com") {
+              freshProfile.role = "super-admin" as any;
+              freshProfile.systemRole = "admin" as any;
               if (!freshProfile.handle) {
-                freshProfile.handle = 'Ryan (Admin)';
+                freshProfile.handle = "Ryan (Admin)";
               }
             }
 
             // 3. Update State if different
-            setUserProfile(prev => ({
+            setUserProfile((prev) => ({
               ...prev,
               ...freshProfile,
             }));
           }
         } catch (e) {
-          console.error('[App] Failed to hydrate profile:', e);
+          console.error("[App] Failed to hydrate profile:", e);
         }
       }
     };
@@ -281,80 +509,121 @@ export default function OlyBarsApp() {
   }, [userProfile.uid]);
 
   useEffect(() => {
-    localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory));
+    localStorage.setItem("oly_clockins", JSON.stringify(clockInHistory));
   }, [clockInHistory]);
 
   useEffect(() => {
-    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+    localStorage.setItem("oly_vibe_history", JSON.stringify(vibeCheckHistory));
   }, [vibeCheckHistory]);
 
   useEffect(() => {
-    localStorage.setItem('oly_vibe_history', JSON.stringify(vibeCheckHistory));
+    localStorage.setItem("oly_vibe_history", JSON.stringify(vibeCheckHistory));
   }, [vibeCheckHistory]);
 
   useEffect(() => {
-    localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs));
+    localStorage.setItem("oly_prefs", JSON.stringify(alertPrefs));
   }, [alertPrefs]);
 
   // Maker's Trail Survey Trigger: 3 Local Clock Ins and Survey Not Done
   useEffect(() => {
-    if (userProfile.uid !== 'guest' &&
+    if (
+      userProfile.uid !== "guest" &&
       userProfile.makersTrailProgress &&
       userProfile.makersTrailProgress >= 3 &&
       !userProfile.hasCompletedMakerSurvey &&
-      !showMakerSurvey) {
+      !showMakerSurvey
+    ) {
       // Add a small delay for UX so it doesn't pop immediately after action
       const timer = setTimeout(() => setShowMakerSurvey(true), 2000);
       return () => clearTimeout(timer);
     }
-  }, [userProfile.makersTrailProgress, userProfile.hasCompletedMakerSurvey, userProfile.uid]);
+  }, [
+    userProfile.makersTrailProgress,
+    userProfile.hasCompletedMakerSurvey,
+    userProfile.uid,
+  ]);
 
-  const openInfo = (title: string, text: string) => { setInfoContent({ title, text }); };
+  const openInfo = (title: string, text: string) => {
+    setInfoContent({ title, text });
+  };
 
-  const awardPoints = (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints: number = 0, skipBackend: boolean = false) => {
+  const awardPoints = (
+    reason: PointsReason,
+    venueId?: string,
+    hasConsent?: boolean,
+    verificationMethod?: "gps" | "qr",
+    bonusPoints: number = 0,
+    skipBackend: boolean = false,
+  ) => {
     let delta = 0;
-    if (reason === 'clockin' || reason === 'photo') delta = 10;
-    else if (reason === 'share' || reason === 'social_share') delta = 5;
-    else if (reason === 'vibe') delta = hasConsent ? 20 : 5;
+    if (reason === "clockin" || reason === "photo") delta = 10;
+    else if (reason === "share" || reason === "social_share") delta = 5;
+    else if (reason === "vibe") delta = hasConsent ? 20 : 5;
 
-    if (hasConsent && (reason as string) !== 'vibe') delta += 15; // Generic bonus for consent if not vibe
+    if (hasConsent && (reason as string) !== "vibe") delta += 15; // Generic bonus for consent if not vibe
 
     delta += bonusPoints;
 
-    setUserPoints(prev => prev + delta);
+    setUserPoints((prev) => prev + delta);
 
-    if (reason === 'vibe' && venueId) {
+    if (reason === "vibe" && venueId) {
       const now = Date.now();
-      setUserProfile(prev => ({
+      setUserProfile((prev) => ({
         ...prev,
         lastGlobalVibeCheck: now,
         lastVibeChecks: {
           ...prev.lastVibeChecks,
-          [venueId]: now
-        }
+          [venueId]: now,
+        },
       }));
     }
 
     if (!skipBackend) {
-      logUserActivity(userId, { type: reason, venueId, hasConsent, points: delta, verificationMethod });
+      logUserActivity(userId, {
+        type: reason,
+        venueId,
+        hasConsent,
+        points: delta,
+        verificationMethod,
+      });
     }
   };
 
-  const handleUpdateVenue = async (venueId: string, updates: Partial<Venue>) => {
+  const handleUpdateVenue = async (
+    venueId: string,
+    updates: Partial<Venue>,
+  ) => {
+    // [AUTH GUARD] Prevent Guests from triggering 401s
+    if (userProfile.uid === "guest") {
+      showToast("Session Expired. Please Login to save changes.", "error");
+      // Optional: Prompt login
+      setLoginMode("owner");
+      setShowLoginModal(true);
+      return;
+    }
+
     // 1. Optimistic UI Update (TanStack Query Cache)
-    queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
-      if (!oldVenues) return [];
-      return oldVenues.map(v => v.id === venueId ? { ...v, ...updates } : v);
-    });
+    queryClient.setQueryData(
+      ["venues-brief"],
+      (oldVenues: Venue[] | undefined) => {
+        if (!oldVenues) return [];
+        return oldVenues.map((v) =>
+          v.id === venueId ? { ...v, ...updates } : v,
+        );
+      },
+    );
 
     // 2. Persist to Backend
     try {
       await updateVenueDetails(venueId, updates, userProfile.uid);
     } catch (err: any) {
-      console.error('[OlyBars] Failed to persist venue update:', err);
-      showToast(err.message || 'Connection issue: Update might not be permanent.', 'error');
+      console.error("[OlyBars] Failed to persist venue update:", err);
+      showToast(
+        err.message || "Connection issue: Update might not be permanent.",
+        "error",
+      );
       // Invalidate on error to revert to server state
-      queryClient.invalidateQueries({ queryKey: ['venues-brief'] });
+      queryClient.invalidateQueries({ queryKey: ["venues-brief"] });
       throw err; // Re-throw so callers can manage their own UI state (e.g. isSaving)
     }
   };
@@ -364,7 +633,7 @@ export default function OlyBarsApp() {
 
     // 1. Calculate OlyBars Business Day Start (4:00 AM)
     if (clockedInVenue === venue.id) {
-      showToast("You're already clocked in here!", 'info');
+      showToast("You're already clocked in here!", "info");
       return;
     }
 
@@ -379,30 +648,47 @@ export default function OlyBarsApp() {
 
     // 1. Global Cooldown (30m)
     const lastGlobal = userProfile.lastGlobalVibeCheck;
-    if (lastGlobal && (now - lastGlobal) < 30 * 60 * 1000) {
+    if (lastGlobal && now - lastGlobal < 30 * 60 * 1000) {
       const minsLeft = Math.ceil((30 * 60 * 1000 - (now - lastGlobal)) / 60000);
-      showToast(`Global Cooldown! Wait ${minsLeft}m before clocking another vibe.`, 'info');
+      showToast(
+        `Global Cooldown! Wait ${minsLeft}m before clocking another vibe.`,
+        "info",
+      );
       return;
     }
 
     // 2. Per-Venue Cooldown (60m)
     const lastCheck = userProfile.lastVibeChecks?.[venue.id];
-    if (lastCheck && (now - lastCheck) < 60 * 60 * 1000) {
+    if (lastCheck && now - lastCheck < 60 * 60 * 1000) {
       const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
-      showToast(`${venue.name} Vibe Check locked! Available in ${minsLeft}m`, 'info');
+      showToast(
+        `${venue.name} Vibe Check locked! Available in ${minsLeft}m`,
+        "info",
+      );
       return;
     }
 
     setVibeVenue(venue);
     setShowVibeCheckModal(true);
   };
-  const confirmVibeCheck = async (venue: Venue, status: VenueStatus, hasConsent: boolean, photoUrl?: string, verificationMethod: 'gps' | 'qr' = 'gps', gameStatus?: Record<string, GameStatus>, soberFriendlyCheck?: { isGood: boolean; reason?: string }) => {
+  const confirmVibeCheck = async (
+    venue: Venue,
+    status: VenueStatus,
+    hasConsent: boolean,
+    photoUrl?: string,
+    verificationMethod: "gps" | "qr" = "gps",
+    gameStatus?: Record<string, GameStatus>,
+    soberFriendlyCheck?: { isGood: boolean; reason?: string },
+  ) => {
     const now = Date.now();
 
     // 1. If not already clocked in, perform a background Clock In to unify signals
     if (!clockedInVenue || clockedInVenue !== venue.id) {
       setClockedInVenue(venue.id);
-      setClockInHistory(prev => [...prev, { venueId: venue.id, timestamp: now }]);
+      setClockInHistory((prev) => [
+        ...prev,
+        { venueId: venue.id, timestamp: now },
+      ]);
     }
 
     setVibeCheckedVenue(venue.id);
@@ -418,45 +704,64 @@ export default function OlyBarsApp() {
     // Update Venue Status and Photos (Attempt for all, handle guest auth errors)
     let backendResult: any = null;
     try {
-      backendResult = await performVibeCheck(venue.id, userProfile.uid, status, hasConsent, photoUrl, verificationMethod, gameStatus, soberFriendlyCheck);
+      backendResult = await performVibeCheck(
+        venue.id,
+        userProfile.uid,
+        status,
+        hasConsent,
+        photoUrl,
+        verificationMethod,
+        gameStatus,
+        soberFriendlyCheck,
+      );
     } catch (err: any) {
       // Honest Gate: Propagate Auth Errors for Guest UI handling
-      if (userProfile.uid === 'guest' && (err.status === 401 || err.status === 403)) {
+      if (
+        userProfile.uid === "guest" &&
+        (err.status === 401 || err.status === 403)
+      ) {
         throw err;
       }
-      console.error('[OlyBars] Vibe Check Backend Error:', err);
-      showToast('Vibe Check recorded offline (points may be delayed)', 'info');
+      console.error("[OlyBars] Vibe Check Backend Error:", err);
+      showToast("Vibe Check recorded offline (points may be delayed)", "info");
     }
 
-    awardPoints('vibe', venue.id, hasConsent, verificationMethod, gameBonus, userProfile.uid !== 'guest');
+    awardPoints(
+      "vibe",
+      venue.id,
+      hasConsent,
+      verificationMethod,
+      gameBonus,
+      userProfile.uid !== "guest",
+    );
 
     // Generate Vibe Receipt
     const receipt: VibeReceiptData = {
-      type: 'vibe',
+      type: "vibe",
       venueName: venue.name,
       venueId: venue.id,
       pointsEarned: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus,
       vibeStatus: status,
-      artieHook: generateArtieHook('vibe', status, { gameBonus }),
-      username: userProfile.handle || userProfile.displayName || 'Member',
+      artieHook: generateArtieHook("vibe", status, { gameBonus }),
+      username: userProfile.handle || userProfile.displayName || "Member",
       userId: userProfile.uid,
       timestamp: new Date().toISOString(),
       metadata: {
         gameBonus,
-        gamesUpdated: gameStatus ? Object.keys(gameStatus) : []
-      }
+        gamesUpdated: gameStatus ? Object.keys(gameStatus) : [],
+      },
     };
     setCurrentReceipt(receipt);
 
     // Persist to Local History (optimistic)
-    setVibeCheckHistory(prev => [
+    setVibeCheckHistory((prev) => [
       {
         venueId: venue.id,
         timestamp: Date.now(),
         status,
-        points: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus
+        points: (hasConsent ? 20 : 5) + (photoUrl ? 10 : 0) + gameBonus,
       },
-      ...prev
+      ...prev,
     ]);
 
     return backendResult;
@@ -466,40 +771,49 @@ export default function OlyBarsApp() {
     const newVal = !userProfile.weeklyBuzz;
 
     // 1. Update Profile (Local + Remote)
-    setUserProfile(prev => ({ ...prev, weeklyBuzz: newVal }));
+    setUserProfile((prev) => ({ ...prev, weeklyBuzz: newVal }));
 
     // 2. Update Alert Prefs (Local) to keep synced
-    setAlertPrefs(prev => ({ ...prev, weeklyDigest: newVal }));
+    setAlertPrefs((prev) => ({ ...prev, weeklyDigest: newVal }));
 
     // 3. Persist to Firestore
-    if (userProfile.uid !== 'guest') {
+    if (userProfile.uid !== "guest") {
       try {
         await updateUserProfile(userProfile.uid, { weeklyBuzz: newVal });
       } catch (e) {
-        showToast('Sync failed, retrying...', 'error');
+        showToast("Sync failed, retrying...", "error");
       }
     }
   };
 
-  const handleMemberLoginClick = (mode: 'login' | 'signup' = 'signup') => {
+  const handleMemberLoginClick = (mode: "login" | "signup" = "signup") => {
     setUserSubMode(mode);
-    setLoginMode('user');
+    setLoginMode("user");
     setShowLoginModal(true);
   };
 
   const handleToggleFavorite = async (venueId: string) => {
-    if (userProfile.uid === 'guest') {
+    if (userProfile.uid === "guest") {
       // Allow local toggle without login modal
     }
 
     try {
-      const result = await toggleFavorite(userProfile.uid, venueId, userProfile.favorites || []);
+      const result = await toggleFavorite(
+        userProfile.uid,
+        venueId,
+        userProfile.favorites || [],
+      );
       if (result.success) {
-        setUserProfile(prev => ({ ...prev, favorites: result.favorites }));
-        showToast(userProfile.favorites?.includes(venueId) ? 'Removed from Favorites' : 'Added to Favorites', 'success');
+        setUserProfile((prev) => ({ ...prev, favorites: result.favorites }));
+        showToast(
+          userProfile.favorites?.includes(venueId)
+            ? "Removed from Favorites"
+            : "Added to Favorites",
+          "success",
+        );
       }
     } catch (e) {
-      showToast('Error updating favorites', 'error');
+      showToast("Error updating favorites", "error");
     }
   };
 
@@ -510,32 +824,46 @@ export default function OlyBarsApp() {
   };
 
   const handleAcceptAgeGate = () => {
-    cookieService.set('oly_age_gate', 'true');
-    cookieService.set('oly_terms', 'true');
+    cookieService.set("oly_age_gate", "true");
+    cookieService.set("oly_terms", "true");
     setHasAcceptedAgeGate(true);
     setHasAcceptedTerms(true);
   };
 
   const handleAcceptTerms = () => {
-    cookieService.set('oly_terms', 'true');
+    cookieService.set("oly_terms", "true");
     // We don't set oly_cookies here automatically so the banner shows up separately
     setHasAcceptedTerms(true);
   };
 
-  useEffect(() => { localStorage.setItem('oly_points', userPoints.toString()); }, [userPoints]);
-  useEffect(() => { localStorage.setItem('oly_clockins', JSON.stringify(clockInHistory)); }, [clockInHistory]);
-  useEffect(() => { localStorage.setItem('oly_profile', JSON.stringify(userProfile)); }, [userProfile]);
-  useEffect(() => { localStorage.setItem('oly_prefs', JSON.stringify(alertPrefs)); if (userId !== 'guest') saveAlertPreferences(userId, alertPrefs); }, [alertPrefs]);
+  useEffect(() => {
+    localStorage.setItem("oly_points", userPoints.toString());
+  }, [userPoints]);
+  useEffect(() => {
+    localStorage.setItem("oly_clockins", JSON.stringify(clockInHistory));
+  }, [clockInHistory]);
+  useEffect(() => {
+    localStorage.setItem("oly_profile", JSON.stringify(userProfile));
+  }, [userProfile]);
+  useEffect(() => {
+    localStorage.setItem("oly_prefs", JSON.stringify(alertPrefs));
+    if (userId !== "guest") saveAlertPreferences(userId, alertPrefs);
+  }, [alertPrefs]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('oly_profile');
-    localStorage.removeItem('oly_points');
-    localStorage.removeItem('oly_clockins');
-    setUserProfile({ uid: 'guest', role: 'guest' });
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+    } catch (error) {
+      console.error("[App] Logout failed:", error);
+    }
+    localStorage.removeItem("oly_profile");
+    localStorage.removeItem("oly_points");
+    localStorage.removeItem("oly_clockins");
+    setUserProfile({ uid: "guest", role: "guest" });
     setUserPoints(1250);
     setClockInHistory([]);
     setShowOwnerDashboard(false);
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   // Sync points when profile changes (e.g. after login)
@@ -545,12 +873,22 @@ export default function OlyBarsApp() {
     }
   }, [userProfile.uid, userProfile.stats?.seasonPoints]);
 
+  if (isAuthInitializing) {
+    return <LoadingScreen message="Verifying Identity..." />;
+  }
+
   if (!hasAcceptedAgeGate) {
     return <AgeGate onAccept={handleAcceptAgeGate} />;
   }
 
-  if (!hasAcceptedTerms && userProfile.role !== 'guest') {
-    return <OnboardingModal isOpen={true} onClose={handleAcceptTerms} userRole={userProfile.role} />;
+  if (!hasAcceptedTerms && userProfile.role !== "guest") {
+    return (
+      <OnboardingModal
+        isOpen={true}
+        onClose={handleAcceptTerms}
+        userRole={userProfile.role}
+      />
+    );
   }
 
   return (
@@ -572,33 +910,33 @@ export default function OlyBarsApp() {
                     <AppShell
                       venues={venues}
                       userPoints={userPoints}
-                      isLeagueMember={userProfile.role !== 'guest'}
+                      isLeagueMember={userProfile.role !== "guest"}
                       alertPrefs={alertPrefs}
                       setAlertPrefs={setAlertPrefs}
                       onToggleWeeklyBuzz={handleToggleWeeklyBuzz}
                       onProfileClick={() => {
-                        if (userProfile.uid === 'guest') {
-                          setLoginMode('user');
-                          setUserSubMode('login');
+                        if (userProfile.uid === "guest") {
+                          setLoginMode("user");
+                          setUserSubMode("login");
                           setShowLoginModal(true);
                         } else {
                           // Use document location for SPA feel or navigation handler
-                          window.history.pushState({}, '', '/profile');
-                          // Since we aren't using a router hook at this level, 
+                          window.history.pushState({}, "", "/profile");
+                          // Since we aren't using a router hook at this level,
                           // we need to trigger a re-render or use a shared navigation handler.
-                          // However, routes are defined below. 
+                          // However, routes are defined below.
                           // To keep it simple and fix the "reload" issue:
-                          const popStateEvent = new PopStateEvent('popstate');
+                          const popStateEvent = new PopStateEvent("popstate");
                           window.dispatchEvent(popStateEvent);
                         }
                       }}
                       onOwnerLoginClick={() => {
-                        setLoginMode('owner');
-                        setUserSubMode('login');
+                        setLoginMode("owner");
+                        setUserSubMode("login");
                         setShowLoginModal(true);
                       }}
-                      onMemberLoginClick={(mode?: 'login' | 'signup') => {
-                        setLoginMode('user');
+                      onMemberLoginClick={(mode?: "login" | "signup") => {
+                        setLoginMode("user");
                         if (mode) setUserSubMode(mode);
                         setShowLoginModal(true);
                       }}
@@ -613,7 +951,7 @@ export default function OlyBarsApp() {
                       clockedInVenue={clockedInVenue}
                       onEditVenue={(vid) => {
                         setOwnerDashboardInitialVenueId(vid);
-                        setOwnerDashboardInitialView('listing');
+                        setOwnerDashboardInitialView("listing");
                         setShowOwnerDashboard(true);
                       }}
                       onVenueDashboardClick={() => setShowOwnerDashboard(true)}
@@ -641,7 +979,10 @@ export default function OlyBarsApp() {
                       path="bars"
                       element={
                         <>
-                          <SEO title="Bar Directory" description="The complete index of bars, taprooms, and lounges in Thurston County." />
+                          <SEO
+                            title="Bar Directory"
+                            description="The complete index of bars, taprooms, and lounges in Thurston County."
+                          />
                           <VenuesScreen venues={venues} />
                         </>
                       }
@@ -657,36 +998,98 @@ export default function OlyBarsApp() {
                     />
                     <Route
                       path="bars/:id/events"
-                      element={
-                        <EventsScreen venues={venues} />
-                      }
+                      element={<EventsScreen venues={venues} />}
                     />
                     <Route
                       path="back-room"
                       element={
                         <>
-                          <SEO title="The Back Room" description="Private inventory for squads & parties." />
+                          <SEO
+                            title="The Back Room"
+                            description="Private inventory for squads & parties."
+                          />
                           <BackRoomScreen />
                         </>
                       }
                     />
                   </Route>
-                  <Route path="karaoke" element={<><SEO title="Karaoke Guide" description="Find the best karaoke spots in Thurston County tonight." /><KaraokeScreen venues={venues} /></>} />
-                  <Route path="play" element={<><SEO title="The Arcade & Arena" description="The central hub for games, events, and activities in Thurston County." /><PlayGatewayScreen venues={venues} /></>} />
-                  <Route path="trivia" element={<><SEO title="Trivia & Games" description="Your guide to trivia nights and bar games in Thurston County." /><TriviaScreen venues={venues} userProfile={userProfile} /></>} />
-                  <Route path="live" element={<><SEO title="Live Music" description="Live shows and concerts happening tonight in Thurston County." /><LiveMusicScreen venues={venues} /></>} />
-                  <Route path="events" element={<><SEO title="Event Wire" description="The chronological feed of everything happening in the Thurston County bar scene." /><EventsScreen venues={venues} /></>} />
+                  <Route
+                    path="karaoke"
+                    element={
+                      <>
+                        <SEO
+                          title="Karaoke Guide"
+                          description="Find the best karaoke spots in Thurston County tonight."
+                        />
+                        <KaraokeScreen venues={venues} />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="play"
+                    element={
+                      <>
+                        <SEO
+                          title="The Arcade & Arena"
+                          description="The central hub for games, events, and activities in Thurston County."
+                        />
+                        <PlayGatewayScreen venues={venues} />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="trivia"
+                    element={
+                      <>
+                        <SEO
+                          title="Trivia & Games"
+                          description="Your guide to trivia nights and bar games in Thurston County."
+                        />
+                        <TriviaScreen
+                          venues={venues}
+                          userProfile={userProfile}
+                        />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="live"
+                    element={
+                      <>
+                        <SEO
+                          title="Live Music"
+                          description="Live shows and concerts happening tonight in Thurston County."
+                        />
+                        <LiveMusicScreen venues={venues} />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="events"
+                    element={
+                      <>
+                        <SEO
+                          title="Event Wire"
+                          description="The chronological feed of everything happening in the Thurston County bar scene."
+                        />
+                        <EventsScreen venues={venues} />
+                      </>
+                    }
+                  />
                   <Route
                     path="league"
                     element={
                       <>
-                        <SEO title="Bar League HQ" description="Join the official Artesian Bar League. Track your points, rankings, and rewards." />
+                        <SEO
+                          title="Bar League HQ"
+                          description="Join the official Artesian Bar League. Track your points, rankings, and rewards."
+                        />
                         <LeagueHQScreen
                           venues={venues}
-                          isLeagueMember={userProfile.role !== 'guest'}
+                          isLeagueMember={userProfile.role !== "guest"}
                           onJoinClick={(mode) => {
-                            setUserSubMode(mode || 'login');
-                            setLoginMode('user');
+                            setUserSubMode(mode || "login");
+                            setLoginMode("user");
                             setShowLoginModal(true);
                           }}
                           onAskArtie={() => setShowArtie(true)}
@@ -706,13 +1109,76 @@ export default function OlyBarsApp() {
                     }
                   />
                   <Route path="partners/claim" element={<ClaimVenuePage />} />
-                  <Route path="merch" element={<MerchStandScreen venues={venues} />} />
-                  <Route path="merch/:itemId" element={<MerchDetailScreen venues={venues} userProfile={userProfile} setUserProfile={setUserProfile} />} />
-                  <Route path="vouchers" element={<VoucherRedemptionScreen userProfile={userProfile} venues={venues} />} />
+                  <Route
+                    path="merch"
+                    element={<MerchStandScreen venues={venues} />}
+                  />
+                  <Route
+                    path="merch/:itemId"
+                    element={
+                      <MerchDetailScreen
+                        venues={venues}
+                        userProfile={userProfile}
+                        setUserProfile={setUserProfile}
+                      />
+                    }
+                  />
+                  <Route
+                    path="vouchers"
+                    element={
+                      <VoucherRedemptionScreen
+                        userProfile={userProfile}
+                        venues={venues}
+                      />
+                    }
+                  />
                   <Route path="meet-artie" element={<ArtieBioScreen />} />
                   <Route path="artie-bio" element={<ArtieBioScreen />} />
                   <Route path="artie" element={<ArtieBioScreen />} />
-                  <Route path="owner" element={<SmartOwnerRoute venues={venues} handleUpdateVenue={handleUpdateVenue} userProfile={userProfile} isLoading={isLoading} />} />
+                  <Route
+                    path="owner"
+                    element={
+                      <SmartOwnerRoute
+                        venues={venues}
+                        handleUpdateVenue={handleUpdateVenue}
+                        userProfile={userProfile}
+                        isLoading={isLoading}
+                      />
+                    }
+                  />
+                  <Route
+                    path="admin/brewhouse"
+                    element={
+                      <SmartOwnerRoute
+                        venues={venues}
+                        handleUpdateVenue={handleUpdateVenue}
+                        userProfile={userProfile}
+                        isLoading={isLoading}
+                      />
+                    }
+                  />
+                  <Route
+                    path="admin/brewhouse/:venueId"
+                    element={
+                      <SmartOwnerRoute
+                        venues={venues}
+                        handleUpdateVenue={handleUpdateVenue}
+                        userProfile={userProfile}
+                        isLoading={isLoading}
+                      />
+                    }
+                  />
+                  <Route
+                    path="admin/brewhouse/:venueId/:tab"
+                    element={
+                      <SmartOwnerRoute
+                        venues={venues}
+                        handleUpdateVenue={handleUpdateVenue}
+                        userProfile={userProfile}
+                        isLoading={isLoading}
+                      />
+                    }
+                  />
                   <Route
                     path="vc/:venueId"
                     element={
@@ -725,60 +1191,217 @@ export default function OlyBarsApp() {
                   <Route
                     path="profile"
                     element={
-                      userProfile.uid !== 'guest'
-                        ? <UserProfileScreen userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} />
-                        : <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
+                      userProfile.uid !== "guest" ? (
+                        <UserProfileScreen
+                          userProfile={userProfile}
+                          setUserProfile={setUserProfile}
+                          venues={venues}
+                        />
+                      ) : (
+                        <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
                           Access Denied: Please Login to View Your League ID
-                          <button onClick={() => setShowLoginModal(true)} className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg">Login</button>
+                          <button
+                            onClick={() => setShowLoginModal(true)}
+                            className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg"
+                          >
+                            Login
+                          </button>
                         </div>
+                      )
                     }
                   />
                   <Route
                     path="settings"
                     element={
-                      <SettingsScreen userProfile={userProfile} setUserProfile={setUserProfile} />
+                      <SettingsScreen
+                        userProfile={userProfile}
+                        setUserProfile={setUserProfile}
+                      />
                     }
                   />
-                  <Route path="terms" element={<><SEO title="Terms of Service" /><TermsScreen /></>} />
-                  <Route path="privacy" element={<><SEO title="Privacy Policy" /><PrivacyScreen /></>} />
-                  <Route path="cookies" element={<><SEO title="Cookie Policy" /><CookiePolicyScreen /></>} />
-                  <Route path="security" element={<><SEO title="Security & Data Protection" /><PartnerSecurityScreen /></>} />
-                  <Route path="faq" element={<><SEO title="The Manual (FAQ)" description="Everything you need to know about the OlyBars league, pins, and etiquette." /><FAQScreen /></>} />
-                  <Route path="about" element={<><SEO title="Welcome to the League (Thurston County)" description="The mission and story behind Thurston County's nightlife operating system." /><AboutPage /></>} />
+                  <Route
+                    path="terms"
+                    element={
+                      <>
+                        <SEO title="Terms of Service" />
+                        <TermsScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="privacy"
+                    element={
+                      <>
+                        <SEO title="Privacy Policy" />
+                        <PrivacyScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="cookies"
+                    element={
+                      <>
+                        <SEO title="Cookie Policy" />
+                        <CookiePolicyScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="security"
+                    element={
+                      <>
+                        <SEO title="Security & Data Protection" />
+                        <PartnerSecurityScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="faq"
+                    element={
+                      <>
+                        <SEO
+                          title="The Manual (FAQ)"
+                          description="Everything you need to know about the OlyBars league, pins, and etiquette."
+                        />
+                        <FAQScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="about"
+                    element={
+                      <>
+                        <SEO
+                          title="Welcome to the League (Thurston County)"
+                          description="The mission and story behind Thurston County's nightlife operating system."
+                        />
+                        <AboutPage />
+                      </>
+                    }
+                  />
                   <Route
                     path="admin"
                     element={
-                      isSystemAdmin(userProfile)
-                        ? <AdminDashboardScreen userProfile={userProfile} />
-                        : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                      isSystemAdmin(userProfile) ? (
+                        <AdminDashboardScreen userProfile={userProfile} />
+                      ) : (
+                        <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">
+                          403: League Integrity Violation - Restricted Access
+                        </div>
+                      )
                     }
                   />
                   <Route
                     path="admin/extractor"
                     element={
-                      isSystemAdmin(userProfile)
-                        ? <FlyerExtractor />
-                        : <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">403: League Integrity Violation - Restricted Access</div>
+                      isSystemAdmin(userProfile) ? (
+                        <FlyerExtractor />
+                      ) : (
+                        <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">
+                          403: League Integrity Violation - Restricted Access
+                        </div>
+                      )
                     }
                   />
+                  <Route
+                    path="admin/join"
+                    element={<JoinTeamScreen userProfile={userProfile} />}
+                  />
                   <Route path="history" element={<HistoryFeedScreen />} />
-                  <Route path="history/:slug" element={<HistoryArticleScreen venues={venues} />} />
+                  <Route
+                    path="history/:slug"
+                    element={<HistoryArticleScreen venues={venues} />}
+                  />
                   <Route path="playbook" element={<PulsePlaybookScreen />} />
-                  <Route path="pulse-playbook" element={<PulsePlaybookScreen />} />
+                  <Route
+                    path="pulse-playbook"
+                    element={<PulsePlaybookScreen />}
+                  />
                   <Route path="perks" element={<LeaguePerksScreen />} />
                   <Route path="glossary" element={<GlossaryScreen />} />
                   <Route path="points" element={<PointsGuideScreen />} />
-                  <Route path="points/history" element={<PointHistoryScreen onBack={() => window.history.back()} userProfile={userProfile} onLogin={handleMemberLoginClick} />} />
-                  <Route path="league-membership" element={<LeagueMembershipPage />} />
-                  <Route path="onboarding-guide" element={<OnboardingHandoverPage />} />
-                  <Route path="flight-school" element={<FlightSchoolScreen />} />
-                  <Route path="oauth/callback" element={<MetaOAuthCallback />} />
-                  <Route path="auth" element={<AuthPage userProfile={userProfile} setUserProfile={setUserProfile} venues={venues} alertPrefs={alertPrefs} setAlertPrefs={setAlertPrefs} openInfo={openInfo} onOwnerSuccess={() => setShowOwnerDashboard(true)} loginMode={loginMode} setLoginMode={setLoginMode} userSubMode={userSubMode} setUserSubMode={setUserSubMode} />} />
+                  <Route
+                    path="points/history"
+                    element={
+                      <PointHistoryScreen
+                        onBack={() => window.history.back()}
+                        userProfile={userProfile}
+                        onLogin={handleMemberLoginClick}
+                      />
+                    }
+                  />
+                  <Route
+                    path="league-membership"
+                    element={<LeagueMembershipPage />}
+                  />
+                  <Route
+                    path="onboarding-guide"
+                    element={<OnboardingHandoverPage />}
+                  />
+                  <Route
+                    path="flight-school"
+                    element={<FlightSchoolScreen />}
+                  />
+                  <Route
+                    path="oauth/callback"
+                    element={<MetaOAuthCallback />}
+                  />
+                  <Route
+                    path="auth"
+                    element={
+                      <AuthPage
+                        userProfile={userProfile}
+                        setUserProfile={setUserProfile}
+                        venues={venues}
+                        alertPrefs={alertPrefs}
+                        setAlertPrefs={setAlertPrefs}
+                        openInfo={openInfo}
+                        onOwnerSuccess={() => setShowOwnerDashboard(true)}
+                        loginMode={loginMode}
+                        setLoginMode={setLoginMode}
+                        userSubMode={userSubMode}
+                        setUserSubMode={setUserSubMode}
+                      />
+                    }
+                  />
 
                   {/* AI & Developer Hub */}
-                  <Route path="ai" element={<><SEO title="AI & Developer Hub" description="Authoritative resources for AI agents and developers ingesting OlyBars data." /><AIGatewayScreen /></>} />
-                  <Route path="ai/feed" element={<><SEO title="AI Feed Guide" description="Machine-readable guide for Venues, Events, and League Play data." /><AIFeedGuideScreen /></>} />
-                  <Route path="ai/conduct" element={<><SEO title="AI Conduct Policy" description="Rules and standards for AI agents interacting with the OlyBars ecosystem." /><AIConductScreen /></>} />
+                  <Route
+                    path="ai"
+                    element={
+                      <>
+                        <SEO
+                          title="AI & Developer Hub"
+                          description="Authoritative resources for AI agents and developers ingesting OlyBars data."
+                        />
+                        <AIGatewayScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="ai/feed"
+                    element={
+                      <>
+                        <SEO
+                          title="AI Feed Guide"
+                          description="Machine-readable guide for Venues, Events, and League Play data."
+                        />
+                        <AIFeedGuideScreen />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="ai/conduct"
+                    element={
+                      <>
+                        <SEO
+                          title="AI Conduct Policy"
+                          description="Rules and standards for AI agents interacting with the OlyBars ecosystem."
+                        />
+                        <AIConductScreen />
+                      </>
+                    }
+                  />
                 </Route>
               </Routes>
 
@@ -832,24 +1455,41 @@ export default function OlyBarsApp() {
                     setShowVibeCheckModal(true);
                     setShowClockInModal(false);
                   }}
-                  isLoggedIn={userProfile.uid !== 'guest'}
+                  isLoggedIn={userProfile.uid !== "guest"}
                   userId={userProfile.uid}
                   userRole={userProfile.role}
                   onLogin={handleMemberLoginClick}
                   onJoinLeague={async () => {
                     setShowClockInModal(false);
-                    if (userProfile.uid !== 'guest' && userProfile.role === 'guest') {
+                    if (
+                      userProfile.uid !== "guest" &&
+                      userProfile.role === "guest"
+                    ) {
                       try {
-                        await updateUserProfile(userProfile.uid, { role: 'user' });
-                        setUserProfile(prev => ({ ...prev, role: 'user' }));
-                        showToast("Membership Activated! Points Sealed.", "success");
+                        await updateUserProfile(userProfile.uid, {
+                          role: "user",
+                        });
+                        setUserProfile((prev) => ({ ...prev, role: "user" }));
+                        showToast(
+                          "Membership Activated! Points Sealed.",
+                          "success",
+                        );
                         // Trigger Sips if needed
-                        if (!userProfile.favoriteDrinks || userProfile.favoriteDrinks.length === 0) {
-                          setTimeout(() => setShowPreferredSipsModal(true), 500);
+                        if (
+                          !userProfile.favoriteDrinks ||
+                          userProfile.favoriteDrinks.length === 0
+                        ) {
+                          setTimeout(
+                            () => setShowPreferredSipsModal(true),
+                            500,
+                          );
                         }
                       } catch (e) {
                         console.error(e);
-                        showToast("Activation failed. Please try again.", "error");
+                        showToast(
+                          "Activation failed. Please try again.",
+                          "error",
+                        );
                       }
                     } else {
                       setShowOnboarding(true);
@@ -870,7 +1510,7 @@ export default function OlyBarsApp() {
                     setShowClockInModal(true);
                     setShowVibeCheckModal(false);
                   }}
-                  isLoggedIn={userProfile.uid !== 'guest'}
+                  isLoggedIn={userProfile.uid !== "guest"}
                   userRole={userProfile.role}
                   onLogin={handleMemberLoginClick}
                 />
@@ -902,7 +1542,10 @@ export default function OlyBarsApp() {
                   onClose={() => {
                     setShowMakerSurvey(false);
                     // Optimistic update to prevent re-trigger in this session
-                    setUserProfile(prev => ({ ...prev, hasCompletedMakerSurvey: true }));
+                    setUserProfile((prev) => ({
+                      ...prev,
+                      hasCompletedMakerSurvey: true,
+                    }));
                   }}
                   userId={userProfile.uid}
                 />
@@ -912,17 +1555,19 @@ export default function OlyBarsApp() {
                 <VibeReceiptModal
                   data={currentReceipt}
                   onClose={() => setCurrentReceipt(null)}
-                  isLoggedIn={userProfile.uid !== 'guest'}
+                  isLoggedIn={userProfile.uid !== "guest"}
                   onLogin={handleMemberLoginClick}
                 />
               )}
 
-              <InfoPopup infoContent={infoContent} setInfoContent={setInfoContent} />
+              <InfoPopup
+                infoContent={infoContent}
+                setInfoContent={setInfoContent}
+              />
             </div>
           </Suspense>
         </DiscoveryProvider>
       </Router>
-    </ErrorBoundary >
-
+    </ErrorBoundary>
   );
 }
