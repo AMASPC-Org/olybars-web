@@ -1,5 +1,5 @@
 ---
-status: open
+status: Complete
 type: feature
 priority: low
 created: 2026-01-24

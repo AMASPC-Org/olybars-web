@@ -1,5 +1,5 @@
 ---
-status: open-for-review
+status: Complete
 notes: Fixed Export/Import mismatch in MarketingTab. Verified by User.
 notes: Fixed TS export issue and cleaned up imports. Growth tab functioning.
 type: feature

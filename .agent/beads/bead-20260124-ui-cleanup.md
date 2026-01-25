@@ -1,5 +1,5 @@
 ---
-status: done
+status: Complete
 agent: AGV1
 type: ui
 priority: medium

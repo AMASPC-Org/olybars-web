@@ -1,5 +1,5 @@
 ---
-status: done
+status: Complete
 agent: H4X0
 type: feature
 priority: critical

@@ -18,17 +18,14 @@ import {
   Landmark,
 } from "lucide-react";
 import { Venue, UserProfile } from "../../../types";
-import { format } from "date-fns";
 
 import { ListingManagementTab } from "../components/ListingManagementTab";
 import { isVenueManager, isSystemAdmin } from "../../../types/auth_schema";
 import { UserManagementTab } from "../components/UserManagementTab";
 import { EventsManagementTab } from "../components/EventsManagementTab";
 import { VenueOpsService } from "../../../services/VenueOpsService";
-import { MfaService } from "../../../services/mfaService";
-import { auth } from "../../../lib/firebase";
-
 import { MenuManagementTab } from "../components/MenuManagementTab";
+import ReportsTab from "../components/dashboard/ReportsTab";
 import { ScraperManagementTab } from "../components/ScraperManagementTab";
 import { PartnerManualTab } from "../components/PartnerManualTab";
 import { BackRoomManagementTab } from "../components/BackRoomManagementTab";
@@ -104,7 +101,6 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
       : (initialView as any) || "operations",
   );
 
-  const [selectedReportDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [privateData, setPrivateData] = useState<any>(null);
 
   const [showArtieCommands, setShowArtieCommands] = useState(false);
@@ -366,16 +362,7 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
               )}
 
               {myVenue && dashboardView === "reports" && (
-                <div className="bg-surface p-6 rounded-2xl border border-white/5">
-                  <h3 className="text-xl font-black uppercase tracking-tighter mb-6">
-                    Engagement Reports
-                  </h3>
-                  <div className="aspect-video bg-black/40 rounded-xl border border-dashed border-white/10 flex items-center justify-center">
-                    <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest font-league">
-                      Data for {selectedReportDate}
-                    </p>
-                  </div>
-                </div>
+                <ReportsTab venue={myVenue} />
               )}
 
               {myVenue && dashboardView === "qr" && (

@@ -1,6 +1,6 @@
 ---
-status: open
-agent: unassigned
+status: Complete
+agent: AGV2
 type: security
 priority: medium
 created: 2026-01-24
