@@ -14,8 +14,9 @@ export const loadLocalEnv = () => {
 
   try {
     // Resolve path relative to THIS file (helpers/envLoader.ts)
-    // Adjust ".." segments based on where this file is located relative to the root .env
-    const envPath = path.resolve(__dirname, "../../../../.env");
+    // Compiled to: functions/dist/config/envLoader.js
+    // Path to root .env: ../../../.env
+    const envPath = path.resolve(__dirname, "../../../.env");
 
     if (fs.existsSync(envPath)) {
       const result = dotenv.config({ path: envPath });

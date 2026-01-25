@@ -60,8 +60,12 @@ cloud_run_env*.json
 **/localEnv.js
 scripts/debug-key.ts
 scripts/test-keys.ts
+.agent/tmp/cloudrun.prod.json
 
 # Local Configs & Logs
+service-account.json
+**/service-account.json
+**/service-account.json.json.bak
 cloud_run_config*.json
 logs*.json
 build-log*.txt
