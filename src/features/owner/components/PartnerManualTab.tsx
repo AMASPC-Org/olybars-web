@@ -158,7 +158,7 @@ export const PartnerManualTab: React.FC<PartnerManualTabProps> = ({
                 <div className="bg-black/40 p-4 rounded-xl border border-yellow-500/20 text-xs text-yellow-100 font-mono">
                   "I, as a representative of {venue.name}, agree to enforce the
                   3-Drink/Hour limit (PIT Rule) and will not use OlyBars
-                  gamification to encourage binge drinking."
+                  gamification to encourage excessive drinking."
                 </div>
                 <button
                   onClick={handleAcceptStandards}
