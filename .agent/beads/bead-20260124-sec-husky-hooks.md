@@ -1,5 +1,5 @@
 ---
-status: Complete
+status: done
 agent: AGV2
 type: security
 priority: medium

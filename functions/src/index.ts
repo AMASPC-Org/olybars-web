@@ -1,4 +1,3 @@
-import { onCall } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { artieChatLogic } from "./flows/artieChat";
 import { extractBrandDnaFlow } from "./flows/extractBrandDna";
@@ -37,12 +36,10 @@ const corsHandler = cors({
 export const artieChat = onRequest(
   {
     secrets: [
-      "GOOGLE_API_KEY",
       "GOOGLE_GENAI_API_KEY",
       "GOOGLE_BACKEND_KEY",
       "VITE_GOOGLE_BROWSER_KEY",
       "INTERNAL_HEALTH_TOKEN",
-      "GOOGLE_MAPS_API_KEY",
     ],
     region: "us-west1",
     memory: "1GiB",
@@ -102,12 +99,10 @@ export const artieChat = onRequest(
 export const schmidtChat = onRequest(
   {
     secrets: [
-      "GOOGLE_API_KEY",
       "GOOGLE_GENAI_API_KEY",
       "GOOGLE_BACKEND_KEY",
       "VITE_GOOGLE_BROWSER_KEY",
       "INTERNAL_HEALTH_TOKEN",
-      "GOOGLE_MAPS_API_KEY",
     ],
     region: "us-west1",
     memory: "1GiB",

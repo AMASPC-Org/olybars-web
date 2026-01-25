@@ -803,6 +803,35 @@ export class VenueOpsService {
   }
 
   /**
+   * [COMPLIANCE] Venue Owner accepts the 98501 Standards (PIT Rule).
+   * Unlocks Flash Bounties.
+   */
+  static async acceptStandards(venueId: string) {
+    if (!venueId) throw new Error("Venue ID is required");
+
+    // We store this in the secured private_data/config doc
+    const configRef = doc(db, `venues/${venueId}/private_data/config`);
+
+    try {
+      await setDoc(
+        configRef,
+        {
+          compliance: {
+            pitRuleAccepted: true,
+            acceptedAt: serverTimestamp(),
+            version: "1.0.0",
+          },
+        },
+        { merge: true },
+      );
+      return { success: true };
+    } catch (error: any) {
+      console.error("Error accepting standards:", error);
+      throw new Error("Failed to record acceptance.");
+    }
+  }
+
+  /**
    * [AUTO] Trigger specific scraper
    * Rate limited by backend usually, but here we just set the trigger flag
    */

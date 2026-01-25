@@ -5,13 +5,10 @@ import {
   Trash2,
   ExternalLink,
   Info,
-  MessageSquare,
-  Save,
-  X,
   Maximize2,
+  X,
 } from "lucide-react";
-import { Venue, UserProfile } from "../../../types";
-import { VenueOpsService } from "../../../services/VenueOpsService";
+import { Venue } from "../../../types";
 
 interface BackRoomManagementTabProps {
   venue: Venue;
@@ -24,6 +21,7 @@ interface NewSpace {
   description: string;
   bookingLink: string;
   features: { name: string; count: number }[];
+  photos?: string[];
 }
 
 export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
@@ -40,6 +38,7 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
     features: [],
   });
   const [tempFeature, setTempFeature] = useState({ name: "", count: 1 });
+  const [tempPhoto, setTempPhoto] = useState("");
 
   const handleAddFeature = () => {
     if (!tempFeature.name) return;
@@ -50,10 +49,26 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
     setTempFeature({ name: "", count: 1 });
   };
 
+  const handleAddPhoto = () => {
+    if (!tempPhoto) return;
+    setNewSpace((prev) => ({
+      ...prev,
+      photos: [...(prev.photos || []), tempPhoto],
+    }));
+    setTempPhoto("");
+  };
+
   const removeFeature = (idx: number) => {
     setNewSpace((prev) => ({
       ...prev,
       features: prev.features.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const removePhoto = (idx: number) => {
+    setNewSpace((prev) => ({
+      ...prev,
+      photos: (prev.photos || []).filter((_, i) => i !== idx),
     }));
   };
 
@@ -83,6 +98,7 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
         description: "",
         bookingLink: "",
         features: [],
+        photos: [],
       });
       setIsAdding(false);
     } catch (error) {
@@ -185,6 +201,48 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
                 }
               />
             </div>
+
+            {/* Photos Section */}
+            <div className="space-y-2 md:col-span-2 bg-black/20 p-4 rounded-xl border border-white/5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                Space Photos (URLs)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  placeholder="https://example.com/photo.jpg"
+                  className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                  value={tempPhoto}
+                  onChange={(e) => setTempPhoto(e.target.value)}
+                />
+                <button
+                  onClick={handleAddPhoto}
+                  className="bg-slate-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-slate-600 transition-colors"
+                >
+                  Add Photo
+                </button>
+              </div>
+              {newSpace.photos && newSpace.photos.length > 0 && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
+                  {newSpace.photos.map((url, i) => (
+                    <div key={i} className="relative group aspect-square">
+                      <img
+                        src={url}
+                        alt="Space preview"
+                        className="w-full h-full object-cover rounded-lg border border-white/10"
+                      />
+                      <button
+                        onClick={() => removePhoto(i)}
+                        className="absolute top-1 right-1 bg-black/80 p-1 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Features Section */}
             <div className="space-y-2 md:col-span-2 bg-black/20 p-4 rounded-xl border border-white/5">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
@@ -310,17 +368,33 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
           >
             <button
               onClick={() => handleDeleteSpace(idx)}
-              className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="absolute top-4 right-4 p-2 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10"
             >
               <Trash2 size={16} />
             </button>
 
+            {/* Photo Preview if available */}
+            {space.photos && space.photos.length > 0 && (
+              <div className="w-full h-32 mb-4 rounded-xl overflow-hidden relative">
+                <img
+                  src={space.photos[0]}
+                  alt={space.name}
+                  className="w-full h-full object-cover"
+                />
+                {space.photos.length > 1 && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-[10px] font-bold text-white backdrop-blur-sm">
+                    +{space.photos.length - 1} more
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
                 <Maximize2 size={20} />
               </div>
               <div>
-                <h4 className="font-black text-white italic tracking-tight">
+                <h4 className="font-black text-white italic tracking-tight line-clamp-1">
                   {space.name}
                 </h4>
                 <div className="flex items-center gap-1.5 text-primary text-[10px] font-black uppercase tracking-widest">
@@ -328,22 +402,27 @@ export const BackRoomManagementTab: React.FC<BackRoomManagementTabProps> = ({
                   <span>Cap: {space.capacity}</span>
                 </div>
               </div>
-
-              {/* Features Display */}
-              {space.features && space.features.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {space.features.map((f, i) => (
-                    <span
-                      key={i}
-                      className="text-[9px] font-bold bg-white/5 text-slate-400 px-1.5 py-0.5 rounded border border-white/5"
-                    >
-                      {f.count > 1 ? `${f.count}x ` : ""}
-                      {f.name}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
+
+            {/* Features Display */}
+            {space.features && space.features.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {space.features.slice(0, 4).map((f, i) => (
+                  <span
+                    key={i}
+                    className="text-[9px] font-bold bg-white/5 text-slate-400 px-1.5 py-0.5 rounded border border-white/5"
+                  >
+                    {f.count > 1 ? `${f.count}x ` : ""}
+                    {f.name}
+                  </span>
+                ))}
+                {space.features.length > 4 && (
+                  <span className="text-[9px] font-bold text-slate-500 px-1.5 py-0.5">
+                    +{space.features.length - 4}
+                  </span>
+                )}
+              </div>
+            )}
 
             <p className="text-xs text-slate-400 line-clamp-3 mb-4 leading-relaxed h-[3.75rem]">
               {space.description || "No description provided."}

@@ -247,6 +247,7 @@ export interface PrivateSpace {
   features: SpaceFeature[];
   price_range?: "$$" | "$$$" | "$$$$";
   bookingLink?: string;
+  photos?: string[];
 }
 
 export interface GameStatus {

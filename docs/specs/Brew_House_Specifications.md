@@ -12,7 +12,8 @@ The dashboard follows a strict prioritization hierarchy from left-to-right, ensu
 | 2        | **Operations**    | The Pulse        | "How is my venue performing live?"         |
 | 3        | **Marketing**     | Growth Engine    | "How do I get more people in the door?"    |
 | 4        | **Events**        | Schedule Manager | "What is happening this week?"             |
-| 5-12     | (Auxiliary)       | Infrastructure   | Maintenance, People, and structural setup. |
+| 13       | **The Vault**     | Treasury         | "Do I have enough points for Bounties?"    |
+| 5-13     | (Auxiliary)       | Infrastructure   | Maintenance, People, and structural setup. |
 
 ---
 
@@ -296,50 +297,81 @@ The dashboard follows a strict prioritization hierarchy from left-to-right, ensu
 
 ### [10] THE MANUAL (Knowledge Base)
 
-- **Role:** Onboarding and educational resources for partners.
+- **Role:** Interactive Onboarding and "Coach" Capability Guide.
 - **Key Sections:**
-  - **Operational FAQ:** How points work, how to handle "binge" checks, etc.
-  - **League Standards:** The "98501" code of conduct for partners.
+  - **Coach vs Manual:** Comparative cards showing how to perform tasks via AI Voice vs Manual UI.
+  - **Skill Matrix:** A searchable list of all capabilities Artie/Coach possesses.
+  - **League Standards:** A mandatory "Acknowledgement" screen for the 98501 Code of Conduct.
 
 #### Technical Implementation Notes:
 
-- **Content Source:** Managed via `docs/manual/*.md` in the codebase or a dedicated `manual_content` Firestore collection for live updates.
-- **Search Logic:** Uses a simple keyword filter in the FE for MVP; future phase will include "Ask Artie" RAG search over these documents.
+- **Content Source:** React components with mapped "Coach" prompts vs "Manual" instructions.
 - **Logic Constraints:**
-  - **Version Control:** Owners must "Acknowledge" the latest version of the "League Standards" (Tab [10]) before unlocking "Flash Bounties" (Tab [3]).
-- **UI Components:** `ArticleList`, `SearchInput`, `AcknowledgementBanner`.
+  - **Version Control:** Owners must "Acknowledge" the latest version of the "League Standards" before unlocking "Flash Bounties" (Tab [3]).
+  - **Skill Discovery:** The "View Skills List" modal renders the `ARTIE_SKILLS` config.
+- **UI Components:** `CoachVsManualCard`, `SkillMatrixModal`, `AcknowledgementBanner`.
 
-### [11] Back Room (Structural Settings)
+### [11] Back Room (Space Rental)
 
-- **Role:** High-level venue configuration (Gated).
+- **Role:** Management of private inventory and rentable spaces.
+- **Key Sections:**
+  - **Space Inventory:** CRUD for "The Barrel Room", "VIP Booths", etc.
+  - **Booking Requests:** Toggle accepting inquiries for specific spaces.
+  - **Vibe Integration:** Associating specific vibes with specific rooms.
+
+#### Technical Implementation Notes:
+
+- **Firestore Path:** `venues/{venueId}/spaces/{spaceId}`
+- **Space Schema:**
+  ```typescript
+  interface VenuePrivateSpace {
+    id: string;
+    name: string; // e.g. "The Barrel Room"
+    capacity: number;
+    description: string;
+    photos: string[]; // URL array
+    isAvailable: boolean;
+    bookingLink?: string; // External link (Tock/Resy)
+    features: { name: string; count: number }[]; // [{ name: "Projector", count: 1 }]
+  }
+  ```
+- **Logic Constraints:**
+  - **Capacity Rollup:** These capacities do NOT automatically add to the main venue capacity unless explicitly configured.
+- **UI Components:** `SpaceCard`, `AmenityTag`, `AvailabilityToggle`.
+
+### [13] The Vault (Treasury & Points)
+
+- **Role:** Financial command center for the Point Reservoir.
 - **Key Sections:**
   - **Point Bank Settings:** Managing the point reservoir.
-  - **Staff Briefing Rules:** Confirmation of "PIT-Rule" compliance.
+  - **Transaction Log:** History of Bounty payouts and Refills.
+  - **Compliance:** "PIT-Rule" acceptance status.
 
 #### Technical Implementation Notes:
 
-- **Firestore Path:** `venues/{venueId}/config/structural` (Highest Security Gating)
-- **Structural Schema:**
+- **Firestore Path:** `venues/{venueId}/treasury/config` (Highest Security Gating)
+- **Treasury Schema:**
   ```typescript
-  interface VenueStructuralConfig {
+  interface VenueTreasuryConfig {
     pointBank: {
       currentReservoir: number;
       refillRate: number; // Points per week
       isAutoRefill: boolean;
+      lastRefillAt: Timestamp;
     };
     compliance: {
       pitRuleAccepted: boolean;
       lastSafetyAudit: Timestamp;
     };
     gating: {
-      requireNFC?: boolean; // Future Phase hardware req
+      autoPauseThreshold: number; // Default 100
     };
   }
   ```
 - **Logic Constraints:**
   - **Hard Gate:** If `pointBank.currentReservoir < 100`, all "Flash Bounties" (Tab [3]) are automatically paused to prevent "Negative Point" state.
   - **Role Enforcement:** This tab's API routes must enforce `owner` role exclusively (Managers cannot see/edit).
-- **UI Components:** `PointReservoirGauge`, `AuditHistoryLog`, `DangerZonePanel`.
+- **UI Components:** `PointReservoirGauge`, `AuditHistoryLog`, `RefillSettings`.
 
 ### [12] Scrapers (The Automation Layer)
 

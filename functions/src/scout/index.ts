@@ -7,17 +7,39 @@ import robotsParser from "robots-parser";
 import md5 from "md5";
 import { GeminiService } from "../services/geminiService";
 // Import shared types
-import { Venue, ScraperSource } from "../types/venue";
+import { Venue, ScraperSource, PartnerTier } from "../types/venue";
 
 const db = admin.firestore();
 const pubsub = new PubSub();
 const TOPIC_NAME = "venue-scrape-queue";
 
+const ONE_DAY = 24 * 60 * 60 * 1000;
+const ONE_WEEK = 7 * ONE_DAY;
+const ONE_MONTH = 30 * ONE_DAY;
+
+function getScrapeInterval(
+  tier: PartnerTier | undefined,
+  sourceFreq?: string,
+): number {
+  // 1. Minimums based on Tier (The Floor)
+  let minInterval = ONE_DAY; // Default to Daily for paid tiers/unknown
+  if (tier === PartnerTier.LOCAL) minInterval = ONE_WEEK; // Local is weekly max
+
+  // 2. User Preference
+  let userInterval = minInterval;
+  if (sourceFreq === "weekly") userInterval = ONE_WEEK;
+  if (sourceFreq === "monthly") userInterval = ONE_MONTH;
+  if (sourceFreq === "daily") userInterval = ONE_DAY;
+
+  // 3. The effective interval is the Stricter (Larger) of the two
+  return Math.max(minInterval, userInterval);
+}
+
 // --- DISPATCHER ---
 
 export const scoutDispatcher = onSchedule(
   {
-    schedule: "every wed,fri 09:00", // Keeps legacy schedule, but effectively acts as a safety net for "stale" items
+    schedule: "every day 09:00", // Updated to support Daily scraping frequency
     timeZone: "America/Los_Angeles",
     retryCount: 3,
     memory: "512MiB",
@@ -38,7 +60,6 @@ export const scoutDispatcher = onSchedule(
     const batchPublisher = pubsub.topic(TOPIC_NAME);
     const publishPromises: Promise<any>[] = [];
     const now = Date.now();
-    const STALE_THRESHOLD = 24 * 60 * 60 * 1000; // 24 Hours
 
     for (const doc of venuesSnap.docs) {
       const venue = doc.data() as Venue;
@@ -48,23 +69,23 @@ export const scoutDispatcher = onSchedule(
         // FILTER: Only Active Sources
         if (!source.isEnabled) continue;
 
-        // FILTER: Only Sources that are Stale or have never been run
-        // NOTE: We do NOT pick up 'pending' items here. Realtime triggers handle those.
-        // We mainly want to catch 'active' items that haven't updated in a while.
-        // Also retry 'error' items if they are old enough (backoff)? For now, let's stick to active/stale.
-
+        // FILTER: Check Stale status based on Tier and Preference
         const lastRun = source.lastScraped || 0;
-        const isStale = now - lastRun > STALE_THRESHOLD;
+        const requiredInterval = getScrapeInterval(
+          venue.partner_tier,
+          source.frequency,
+        );
+        const isStale = now - lastRun > requiredInterval;
 
-        // Also pick up if it's 'active' but somehow missed a run (e.g. manual toggle on but no trigger fired?)
-        // Just strictly using STALE check for now to avoid thundering herd on every run.
-
+        // Note: We use strict stale check here to respect the schedule.
+        // Pending items are handled by onScraperRequest/onVenueUpdate.
         if (isStale && source.status !== "pending") {
           const messageData = {
             venueId: venue.id,
             sourceId: source.id,
             url: source.url,
             previousHash: source.contentHash || "",
+            tier: venue.partner_tier || "local",
           };
           const dataBuffer = Buffer.from(JSON.stringify(messageData));
           publishPromises.push(
@@ -88,12 +109,10 @@ export const scoutWorker = onMessagePublished(
     memory: "2GiB", // Puppeteer needs RAM
     cpu: 1,
     secrets: [
-      "GOOGLE_API_KEY",
       "GOOGLE_GENAI_API_KEY",
       "GOOGLE_BACKEND_KEY",
       "VITE_GOOGLE_BROWSER_KEY",
       "INTERNAL_HEALTH_TOKEN",
-      "GOOGLE_MAPS_API_KEY",
     ],
   },
   async (event) => {
@@ -104,16 +123,7 @@ export const scoutWorker = onMessagePublished(
 
     const venueRef = db.collection("venues").doc(venueId);
 
-    // Step 1: Pre-Flight Checks (Read-only first to save writes)
-    // Actually, we need to read the config to check robots cache and status before launching browser
-    // But since we need to update status eventually, we'll do a transactional flow or optimistic locking?
-    // Firestore transactions are good but Puppeteer is slow. DON'T put Puppeteer inside a transaction.
-    // Pattern:
-    // 1. Fetch Venue.
-    // 2. Validate Source exists & rules.
-    // 3. Scrape (Outside Transaction).
-    // 4. Update Venue (Transaction/Merge).
-
+    // Step 1: Pre-Flight Checks
     const venueDoc = await venueRef.get();
     if (!venueDoc.exists) return;
     const venueData = venueDoc.data() as Venue;
@@ -132,7 +142,6 @@ export const scoutWorker = onMessagePublished(
     }
 
     // Robots Check (Politeness)
-    // If we have a cached verdict < 7 days old, verify it
     const now = Date.now();
     const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 
@@ -140,7 +149,6 @@ export const scoutWorker = onMessagePublished(
     let canScrape = true;
     let newRobotsCache = source.robotsCache;
 
-    // Check if we need to refresh robots.txt
     const cacheAge = now - (source.robotsCache?.checkedAt || 0);
     const needsRefresh = !source.robotsCache || cacheAge > CACHE_TTL;
 
@@ -163,7 +171,7 @@ export const scoutWorker = onMessagePublished(
           newRobotsCache = { verdict: "allow", checkedAt: now };
         }
       } catch (e) {
-        // Fail Open on Network Error (assuming site is up but robots.txt unreachable)
+        // Fail Open on Network Error
         newRobotsCache = { verdict: "allow", checkedAt: now };
       }
     } else if (source.robotsCache?.verdict === "disallow") {
@@ -171,8 +179,10 @@ export const scoutWorker = onMessagePublished(
     }
 
     if (!canScrape) {
+      // Calculate next retry (maybe 24h?)
       await updateSourceStatus(
         venueRef,
+        venueData, // Pass full data to avoid re-fetch in transaction if possible, or just ref
         sourceId,
         "error",
         "Blocked by robots.txt",
@@ -197,7 +207,6 @@ export const scoutWorker = onMessagePublished(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 (Compatible; OlyBarsBot/1.0; +https://olybars.com/bot)",
       );
 
-      // Racing navigation against timeout
       await Promise.race([
         page.goto(url, { waitUntil: "networkidle2", timeout: 30000 }),
         new Promise((_, reject) =>
@@ -214,6 +223,7 @@ export const scoutWorker = onMessagePublished(
         );
         await updateSourceStatus(
           venueRef,
+          venueData,
           sourceId,
           "active",
           undefined,
@@ -225,17 +235,15 @@ export const scoutWorker = onMessagePublished(
     } catch (e: any) {
       console.error(`[Worker] Scrape Failed: ${e.message}`);
       scrapeError = e.message;
-      // Don't return yet, we need to update status
     } finally {
       if (browser) await browser.close();
     }
 
     if (scrapeError) {
       const failures = (source.consecutiveFailures || 0) + 1;
-      // Backoff? For now just log failure.
-      // If failures > 5, maybe disable? keeping it simple for now.
       await updateSourceStatus(
         venueRef,
+        venueData,
         sourceId,
         "error",
         scrapeError,
@@ -251,7 +259,7 @@ export const scoutWorker = onMessagePublished(
       const gemini = new GeminiService();
 
       // Context Prep
-      let city = "Olympia, WA"; // Default
+      let city = "Olympia, WA";
       if (venueData?.address) {
         const parts = venueData.address.split(",");
         if (parts.length >= 3) {
@@ -266,13 +274,7 @@ export const scoutWorker = onMessagePublished(
         timeZone: "America/Los_Angeles",
       });
 
-      // Analyze
-      // Note: Using 'EVENTS' as default target type for now, but source.target should drive this
       const targetType = source.target || "EVENTS";
-      // Only run analysis if it's an event or menu scrape?
-      // Logic supports EVENTS, MENU, NEWSLETTER.
-
-      // We map explicit target types to what GeminiService expects
       let geminiTarget: "EVENTS" | "MENU" | "NEWSLETTER" | "SOCIAL_FEED" =
         "EVENTS";
       if (targetType === "MENU") geminiTarget = "MENU";
@@ -308,14 +310,13 @@ export const scoutWorker = onMessagePublished(
             );
           }
         }
-        // Handle other types later (Menu/Newsletter updates to venue doc?)
-
         await batch.commit();
       }
 
       // Success Update
       await updateSourceStatus(
         venueRef,
+        venueData,
         sourceId,
         "active",
         undefined,
@@ -327,6 +328,7 @@ export const scoutWorker = onMessagePublished(
       console.error(`[Worker] Analysis Failed: ${e.message}`);
       await updateSourceStatus(
         venueRef,
+        venueData,
         sourceId,
         "error",
         `Analysis Failed: ${e.message}`,
@@ -340,6 +342,7 @@ export const scoutWorker = onMessagePublished(
 // Helper to reliably update a specific item in the array
 async function updateSourceStatus(
   venueRef: FirebaseFirestore.DocumentReference,
+  venueData: Venue, // Need PartnerTier to calc nextRun
   sourceId: string,
   status: "active" | "error" | "pending",
   errorMsg?: string,
@@ -359,12 +362,21 @@ async function updateSourceStatus(
     );
     if (idx === -1) return;
 
+    // Calc Next Run
+    const interval = getScrapeInterval(
+      data.partner_tier,
+      data.scraper_config[idx].frequency,
+    );
+    const now = Date.now();
+    const nextRun = now + interval;
+
     const sources = [...data.scraper_config];
     sources[idx] = {
       ...sources[idx],
       status,
-      lastScraped: Date.now(),
-      errorMsg: errorMsg || undefined, // Clear if undefined
+      lastScraped: now,
+      nextRun, // [NEW] Saved for UI
+      errorMsg: errorMsg || undefined,
       consecutiveFailures, // Reset or Increment
       ...(contentHash ? { contentHash } : {}),
       ...(robotsCache ? { robotsCache } : {}),

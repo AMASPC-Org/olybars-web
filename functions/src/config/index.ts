@@ -44,4 +44,14 @@ export const config = new Proxy({} as Config, {
   },
 });
 
+export const isLocal = (): boolean => {
+  // Cloud Run sets K_SERVICE, Cloud Functions sets FUNCTION_TARGET
+  // Local development usually has neither, or NODE_ENV != production
+  const isCloud =
+    !!process.env.K_SERVICE ||
+    !!process.env.FUNCTION_TARGET ||
+    process.env.NODE_ENV === "production";
+  return !isCloud;
+};
+
 export default config;

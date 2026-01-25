@@ -40,9 +40,18 @@ Implement the backend Cloud Functions and logic to handle:
 
 ## Deliverables
 
-- [ ] `functions/src/scrapes/scheduler.ts`: The gating logic.
-- [ ] `functions/src/scrapes/strategies/*.ts`: The specific extractors.
-- [ ] `functions/src/triggers/onScraperRequest.ts`: The Cloud Function listening to `venues/{id}/automation/status`.
+- [x] `functions/src/scout/index.ts`: The gating logic (Dispatcher) & Worker.
+- [x] `functions/src/scout/index.ts`: Generic Scout + Gemini Analysis strategy.
+- [x] `functions/src/triggers/onScraperRequest.ts`: The Cloud Function listening to `venues/{id}/automation/status`.
+
+## Implementation Notes
+
+- **Architecture**: Implemented a `scoutDispatcher` (Scheduler) and `scoutWorker` (Pub/Sub Worker) model.
+- **Tier Logic**: Logic resides in `scoutDispatcher`.
+  - **Local**: Limited to Weekly (Max).
+  - **DIY/Pro/Agency**: Defaults to Daily, respects user preference (Weekly/Monthly).
+- **Strategy**: Instead of brittle selectors, we use a "Universal Scout" (Puppeteer) to fetch raw text, followed by "The Brain" (Gemini 1.5 Flash) to parse structured data (Events). This simplifies maintenance.
+- **Manual Sync**: `onScraperRequest` trigger handles manual overrides.
 
 ## Context
 

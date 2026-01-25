@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { config, isLocal } from "../config";
 import { ARTIE_SYSTEM_INSTRUCTION } from "../config/agents/artie";
 import { SCHMIDT_SYSTEM_INSTRUCTION } from "../config/agents/schmidt";
 import { ai } from "../genkit";
@@ -19,8 +20,7 @@ export class GeminiService {
   public static SCHMIDT_PERSONA = SCHMIDT_SYSTEM_INSTRUCTION;
 
   constructor(apiKey?: string) {
-    const isCloudRun = !!process.env.K_SERVICE || !!process.env.FUNCTION_TARGET; // Also check FUNCTION_TARGET for Cloud Functions
-    const useADC = isCloudRun || !apiKey;
+    const useADC = !isLocal() || !apiKey;
 
     if (useADC) {
       console.log(
@@ -28,7 +28,7 @@ export class GeminiService {
       );
       this.genAI = new GoogleGenAI({
         vertexai: true,
-        project: process.env.GOOGLE_CLOUD_PROJECT || "ama-ecosystem-prod",
+        project: config.GOOGLE_CLOUD_PROJECT,
         location: "us-west1",
       });
     } else {
@@ -148,9 +148,7 @@ export class GeminiService {
     return response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
   }
 
-  async analyzeEvent(
-    event: any,
-  ): Promise<{
+  async analyzeEvent(event: any): Promise<{
     confidenceScore: number;
     issues: string[];
     lcbWarning: boolean;

@@ -11,8 +11,6 @@ import {
   Globe,
   Bell,
   Book,
-  Download,
-  Printer,
   QrCode,
   Info,
   Landmark,
@@ -24,6 +22,8 @@ import { isVenueManager, isSystemAdmin } from "../../../types/auth_schema";
 import { UserManagementTab } from "../components/UserManagementTab";
 import { EventsManagementTab } from "../components/EventsManagementTab";
 import { VenueOpsService } from "../../../services/VenueOpsService";
+import { MfaService } from "../../../services/mfaService";
+import { auth } from "../../../lib/firebase";
 import { MenuManagementTab } from "../components/MenuManagementTab";
 import ReportsTab from "../components/dashboard/ReportsTab";
 import { ScraperManagementTab } from "../components/ScraperManagementTab";
@@ -36,6 +36,7 @@ import { TreasuryManagementTab } from "../components/TreasuryManagementTab";
 import { NotificationsTab } from "../components/NotificationsTab";
 import { useVenueNotifications } from "../hooks/useVenueNotifications";
 import { InfinityNavRail } from "../../../components/ui/InfinityNavRail";
+import { QrAssetsTab } from "../components/QrAssetsTab";
 
 interface OwnerDashboardProps {
   isOpen: boolean;
@@ -366,23 +367,16 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
               )}
 
               {myVenue && dashboardView === "qr" && (
-                <div className="bg-surface p-8 rounded-3xl border-2 border-primary/20 text-center">
-                  <QrCode className="w-16 h-16 text-primary mx-auto mb-4" />
-                  <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">
-                    Venue QR Assets
-                  </h3>
-                  <div className="flex gap-4 justify-center">
-                    <button className="bg-primary text-black px-6 py-3 rounded-xl font-black uppercase text-xs flex items-center gap-2">
-                      <Download size={16} /> PNG
-                    </button>
-                    <button className="bg-white/10 text-white px-6 py-3 rounded-xl font-black uppercase text-xs flex items-center gap-2">
-                      <Printer size={16} /> Print
-                    </button>
-                  </div>
-                </div>
+                <QrAssetsTab venue={myVenue} />
               )}
 
-              {myVenue && dashboardView === "manual" && <PartnerManualTab />}
+              {myVenue && dashboardView === "manual" && (
+                <PartnerManualTab
+                  venue={myVenue}
+                  privateData={privateData}
+                  onUpdate={(updates) => updateVenue(myVenue.id, updates)}
+                />
+              )}
               {myVenue && dashboardView === "backroom" && (
                 <BackRoomManagementTab
                   venue={myVenue}
