@@ -1,6 +1,6 @@
 ---
-status: open
-agent: unassigned
+status: done
+agent: AGV2
 type: security
 priority: medium
 created: 2026-01-24
@@ -14,10 +14,10 @@ Update agent rules to explicitly forbid unsafe git practices.
 
 ## Acceptance Criteria
 
-- [ ] Update `.agent/rules/ops-and-discovery.md`.
-- [ ] Explicitly forbid `git add .` without prior `git status`.
-- [ ] Mandate explicit file argument for `git add` when near sensitive directories.
-- [ ] **Verification:** Verify the rule exists in the markdown file.
+- [x] Update `.agent/rules/ops-and-discovery.md`.
+- [x] Explicitly forbid `git add .` without prior `git status`.
+- [x] Mandate explicit file argument for `git add` when near sensitive directories.
+- [x] **Verification:** Verify the rule exists in the markdown file.
 
 ## Resources
 
