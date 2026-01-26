@@ -21,6 +21,7 @@ import { BADGES } from "../../src/config/badges.js";
 
 // In-memory cache for venues (TTL: 60 seconds)
 let venueCache: { data: Venue[]; lastFetched: number } | null = null;
+let isRefreshing = false; // [FINOPS] Thundering Herd Protection Lock
 const CACHE_TTL = 60 * 1000;
 
 /**
@@ -217,6 +218,23 @@ export const updateVenueBuzz = async (venueId: string) => {
       ? venueData.manualClockIns
       : activeUserIds.size;
 
+  // 4.5 [VOLATILE REDIRECTION] Write to dedicated live sub-document
+  // This bypasses contention on the root document (metadata)
+  const volatileUpdate = {
+    score,
+    status: finalStatus,
+    clockIns: finalClockIns,
+    lastUpdated: now,
+  };
+
+  await db
+    .collection("venues")
+    .doc(venueId)
+    .collection("status")
+    .doc("live")
+    .set(volatileUpdate, { merge: true });
+
+  // 4.6 [UI REDUNDANCY] Still update root for basic list visibility (but we could eventually move away)
   await db.collection("venues").doc(venueId).update({
     "currentBuzz.score": score,
     "currentBuzz.lastUpdated": now,
@@ -248,8 +266,21 @@ export const updateVenueBuzz = async (venueId: string) => {
     });
   }
 
-  // Invalidate cache
-  venueCache = null;
+  // [GRANULAR INVALIDATION] Update in-memory cache in-place
+  if (venueCache) {
+    const venueIndex = venueCache.data.findIndex((v) => v.id === venueId);
+    if (venueIndex !== -1) {
+      venueCache.data[venueIndex] = {
+        ...venueCache.data[venueIndex],
+        status: finalStatus,
+        clockIns: finalClockIns,
+        currentBuzz: {
+          score,
+          lastUpdated: now,
+        },
+      };
+    }
+  }
 };
 
 /**
@@ -317,10 +348,10 @@ const applyVirtualDecay = (venue: Venue): Venue => {
   };
 };
 
-/**
- * Background Refresh for Venue Cache (SWR Pattern)
- */
 const refreshVenueCache = async (): Promise<Venue[]> => {
+  if (isRefreshing) return venueCache?.data || [];
+  isRefreshing = true;
+
   const now = Date.now();
   try {
     const snapshot = await db.collection("venues").get();
@@ -345,6 +376,8 @@ const refreshVenueCache = async (): Promise<Venue[]> => {
   } catch (error) {
     console.error("Error refreshing venue cache:", error);
     throw error;
+  } finally {
+    isRefreshing = false;
   }
 };
 

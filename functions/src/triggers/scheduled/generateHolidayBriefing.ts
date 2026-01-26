@@ -1,6 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { getFirestore } from "firebase-admin/firestore";
-import { ArtieContextService } from "../../services/ArtieContextService";
+import { SchmidtContextService } from "../../services/SchmidtContextService";
 
 const db = getFirestore();
 
@@ -22,10 +22,10 @@ export const generateHolidayBriefing = onSchedule(
     console.log("[HolidayBriefing] Starting daily scan...");
 
     try {
-      // 1. Get Context
-      const context = ArtieContextService.getUpcomingContext();
+      // 2. Drive the Briefing using Schmidt's upcoming context
+      const upcoming = SchmidtContextService.getUpcomingContext();
 
-      if (!context.hasUpcomingHoliday) {
+      if (!upcoming.hasUpcomingHoliday) {
         console.log(
           "[HolidayBriefing] No upcoming holidays detected within window. Exiting.",
         );
@@ -33,7 +33,7 @@ export const generateHolidayBriefing = onSchedule(
       }
 
       console.log(
-        `[HolidayBriefing] Holiday Detected: ${context.holidayName} in ${context.daysUntil} days.`,
+        `[HolidayBriefing] Holiday Detected: ${upcoming.holidayName} in ${upcoming.daysUntil} days.`,
       );
 
       // 2. Fetch Active Venues
@@ -58,11 +58,11 @@ export const generateHolidayBriefing = onSchedule(
         // Notification Payload
         batch.set(notificationRef, {
           type: "upcoming_holiday",
-          title: `Plan Ahead: ${context.holidayName}`,
-          message: `The big day is ${context.daysUntil} days away. Users are already making plans—schedule your event and marketing now!`,
+          title: `Plan Ahead: ${upcoming.holidayName}`,
+          message: `The big day is ${upcoming.daysUntil} days away. Users are already making plans—schedule your event and marketing now!`,
           action_context: {
-            eventDate: context.eventDate,
-            recommendedVibe: context.vibe,
+            eventDate: upcoming.eventDate,
+            recommendedVibe: upcoming.vibe,
           },
           priority: "medium",
           read: false,

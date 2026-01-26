@@ -14,6 +14,20 @@ const FORBIDDEN_FILENAMES = [
   /.*\.pem$/i,
 ];
 
+/**
+ * [WSLCB COMPLIANCE] Semantic Guard
+ * Rejects code containing keywords that encourage binge consumption or over-service.
+ */
+const WSLCB_FORBIDDEN_KEYWORDS = [
+  /\bchug\b/i,
+  /\bwasted\b/i,
+  /\bbottomless\b/i,
+  /\bshwasted\b/i,
+  /\bhammered\b/i,
+  /\bshot special\b/i,
+  /\ball you can drink\b/i,
+];
+
 const ALLOWLIST_DIRECTORIES = ["src/locales/", "docs/", "server/src/data/"];
 
 const ALLOWLIST_FILES = ["package-lock.json", "package.json"];
@@ -72,12 +86,23 @@ async function scan() {
       );
     }
 
-    // Tier B: Content Override (Absolute Block)
+    // Tier B: Content Override & WSLCB Guards
     if (!normalizedPath.endsWith("scripts/security/pre-commit-scanner.ts")) {
+      // 1. Secrets Check
       for (const sig of SECRETS_SIGNATURES) {
         if (sig.test(textContent)) {
           console.error(
             `\x1b[31m[CRITICAL SECURITY BLOCK]\x1b[0m Secret signature detected in: ${normalizedPath}`,
+          );
+          hasError = true;
+        }
+      }
+
+      // 2. [WSLCB COMPLIANCE] Binge Guard
+      for (const kw of WSLCB_FORBIDDEN_KEYWORDS) {
+        if (kw.test(textContent)) {
+          console.error(
+            `\x1b[31m[COMPLIANCE BLOCK]\x1b[0m Forbidden WSLCB keyword detected (${kw}): ${normalizedPath}`,
           );
           hasError = true;
         }
