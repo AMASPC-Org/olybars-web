@@ -1,4 +1,4 @@
-import { GAMIFICATION_CONFIG } from './gamification';
+import { GAMIFICATION_CONFIG } from './gamification.js';
 export type VibeLevel = 'trickle' | 'flowing' | 'gushing' | 'flooded';
 export const PULSE_CONFIG = {
     // Scoring Weights
