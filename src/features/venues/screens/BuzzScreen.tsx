@@ -9,6 +9,7 @@ import {
   Zap,
   Sparkles,
   Clock,
+  Utensils,
 } from "lucide-react";
 import { InteractionBase as InteractionBaseComponent } from "../../../components/ui/InteractionBase";
 import {
@@ -275,6 +276,7 @@ export const BuzzScreen: React.FC = () => {
     venues,
     userProfile,
     isLoading,
+    clockedInVenue,
     clockInHistory = [],
     vibeCheckHistory = [],
   } = useOutletContext<{
