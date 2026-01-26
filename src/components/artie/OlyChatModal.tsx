@@ -327,11 +327,12 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
                         startTime: new Date(pendingAction.params.startTimeISO).getTime(),
                         endTime: new Date(pendingAction.params.startTimeISO).getTime() + (Number(pendingAction.params.duration) * 60000),
                         durationMinutes: Number(pendingAction.params.duration),
-                        status: 'PENDING',
-                        createdBy: 'ARTIE',
+                        status: 'PENDING', // [LINT] matches 'PENDING' | 'ACTIVE' | ...
+                        createdBy: 'ARTIE', // [LINT] matches 'ARTIE' | 'MANUAL'
                         staffBriefingConfirmed: true,
                         offerDetails: pendingAction.params.summary,
-                        terms: pendingAction.params.details
+                        terms: pendingAction.params.details,
+                        category: pendingAction.params.category || 'other'
                     });
                     successMessage = "Flash Bounty Scheduled!";
                     opsSchmidt.processAction('confirm_post'); // Advance state machine

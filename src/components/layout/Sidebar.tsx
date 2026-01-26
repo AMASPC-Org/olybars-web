@@ -1,41 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    X,
     User,
-    Crown,
-    Info,
-    HelpCircle,
-    Shield,
-    Eye,
     LogOut,
     ChevronRight,
     Zap,
-    Bot,
-    Coffee,
-    BookOpen,
     LayoutDashboard,
-    Beer,
-    Scan,
-    Percent,
-    List,
-    PlusCircle,
     Store,
-    Key,
     Activity
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
 import { FormatCurrency } from '../../utils/formatCurrency';
 import { GAMIFICATION_CONFIG } from '../../config/gamification';
+import { BouncerService, AdmissionStatus } from '../../services/BouncerService';
+import { useUser } from '../../contexts/UserContext';
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
-    userProfile: UserProfile;
     viewMode: 'player' | 'owner';
     setViewMode: (mode: 'player' | 'owner') => void;
-    onLogout: () => void;
     onLogin: (mode?: 'login' | 'signup') => void;
     onProfileClick: () => void;
     userPoints?: number;
@@ -44,19 +29,18 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
     isOpen,
     onClose,
-    userProfile,
     viewMode,
     setViewMode,
-    onLogout,
     onLogin,
     onProfileClick,
     userPoints = 0
 }) => {
     const navigate = useNavigate();
     const [legalOpen, setLegalOpen] = useState(false);
+    const { userProfile, logout } = useUser();
 
     // --- DERIVED STATE ---
-    const isOwner = ['owner', 'admin', 'super-admin'].includes(userProfile.role);
+    const isOwner = BouncerService.validateOwnerAccess(userProfile) === AdmissionStatus.ALLOWED;
     const isSuperAdmin = isSystemAdmin(userProfile);
 
     // --- NAVIGATION CONFIG ---
@@ -204,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <button
                         onClick={() => {
                             onClose();
-                            onLogout();
+                            logout();
                         }}
                         className="w-full py-4 flex items-center justify-center gap-3 text-red-500 font-black uppercase tracking-widest text-[10px] bg-red-500/5 rounded-xl border border-red-500/20 hover:bg-red-500/10 transition-colors"
                     >

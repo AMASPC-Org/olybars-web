@@ -11,7 +11,9 @@ import {
 import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
+import { useSchmidtOps } from '../../hooks/useSchmidtOps';
 import { usePersona } from '../../contexts/PersonaContext';
+import { useUser } from '../../contexts/UserContext';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -25,13 +27,11 @@ import { GAMIFICATION_CONFIG } from '../../config/gamification';
 
 interface AppShellProps {
   venues: Venue[];
-  userProfile: UserProfile;
   userPoints: number;
   userRank?: number;
   isLeagueMember?: boolean;
   onProfileClick?: () => void;
   onMemberLoginClick?: (mode?: 'login' | 'signup') => void;
-  onLogout?: () => void;
   onToggleFavorite?: (venueId: string) => void;
   onToggleWeeklyBuzz?: () => void;
   onClockIn?: (venue: Venue) => void;
@@ -47,13 +47,11 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({
   venues,
-  userProfile,
   userPoints,
   userRank,
   isLeagueMember,
   onProfileClick,
   onMemberLoginClick,
-  onLogout,
   onToggleFavorite,
   onToggleWeeklyBuzz,
   onClockIn,
@@ -100,6 +98,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const opsSchmidt = useSchmidtOps();
   const { activePersona } = usePersona();
   const persona = activePersona; // Alias for compatibility with existing code
+  const { userProfile, logout } = useUser();
 
   const activeDeals = venues
     .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
@@ -245,7 +244,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         </div>
       </div>
 
-      <Sidebar isOpen={showMenu} onClose={() => setShowMenu(false)} userProfile={userProfile} viewMode={viewMode} setViewMode={setViewMode} onLogout={onLogout || (() => { })} onLogin={onMemberLoginClick || (() => { })} onProfileClick={onProfileClick || (() => { })} userPoints={userPoints} />
+      <Sidebar isOpen={showMenu} onClose={() => setShowMenu(false)} viewMode={viewMode} setViewMode={setViewMode} onLogin={onMemberLoginClick || (() => { })} onProfileClick={onProfileClick || (() => { })} userPoints={userPoints} />
       <ArtieHoverIcon onClick={() => { (window as any)._artie_force_guest = false; setShowArtie?.(true); }} userProfile={userProfile} />
 
       <OlyChatModal

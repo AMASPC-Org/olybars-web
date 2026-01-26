@@ -1,14 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock, Zap, Droplets } from 'lucide-react';
-import { Venue, ClockInRecord, PointsReason, VenueStatus } from '../../../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Droplets, Zap } from 'lucide-react';
+import { Venue, ClockInRecord, PointsReason, VenueStatus, UserProfile } from '../../../types';
 import { performClockIn } from '../../../services/userService';
-import { useGeolocation } from '../../../hooks/useGeolocation';
-import { calculateDistance } from '../../../utils/geoUtils';
 import { queryClient } from '../../../lib/queryClient';
 import { PULSE_CONFIG } from '../../../config/pulse';
 import { PermissionRecoveryView } from './PermissionRecoveryView';
 import { GAMIFICATION_CONFIG } from '../../../config/gamification';
 import { FormatCurrency } from '../../../utils/formatCurrency';
+import { useBouncer, AdmissionStatus } from '../../../hooks/useBouncer';
+import { useUser } from '../../../contexts/UserContext';
 
 interface ClockInModalProps {
     isOpen: boolean;
@@ -19,9 +19,6 @@ interface ClockInModalProps {
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
     onVibeCheckPrompt?: () => void;
-    isLoggedIn: boolean;
-    userId: string;
-    userRole?: string;
     onLogin: (mode: 'login' | 'signup') => void;
     onJoinLeague: () => void;
 }
@@ -35,9 +32,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     setClockedInVenue,
     vibeChecked,
     onVibeCheckPrompt,
-    isLoggedIn,
-    userId,
-    userRole,
     onLogin,
     onJoinLeague,
 }) => {
@@ -53,26 +47,42 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    const [allowMarketingUse, setAllowMarketingUse] = useState(false);
-    const { coords, loading: geoLoading, requestLocation, refresh, permissionStatus } = useGeolocation();
+    const { userProfile } = useUser();
+    const userId = userProfile.uid;
+    const userRole = userProfile.role;
+    const isLoggedIn = userId !== 'guest';
 
-    // Derived User State
-    // Visitor: Not logged in (userId is 'guest')
+    const [allowMarketingUse, setAllowMarketingUse] = useState(false);
+
+    // --- BOUNCER INTEGRATION ---
+    const {
+        canClockIn,
+        admissionStatus,
+        estimatePoints,
+        location
+    } = useBouncer(userProfile, selectedVenue || undefined);
+
+    // Destructure location setup from Bouncer
+    const { coords, loading: geoLoading, refresh: refreshLocation, permission: permissionStatus } = location;
+
+    // Derived User State (Legacy props kept for now, but logical check relies on admissionStatus)
+    // The Bouncer Service handles "Guest" checks, returning SHADOW_MODE check result
+    // But specific UI variant (Visitor vs Guest) might still rely on local checks?
     const isVisitor = userId === 'guest';
-    // Guest: Logged in but role is 'guest' (not a member)
     const isAuthGuest = !isVisitor && userRole === 'guest';
+
+    // Debug Access
+    useEffect(() => {
+        if (admissionStatus === AdmissionStatus.ALLOWED) {
+            // console.log("Bouncer Access Granted");
+        }
+    }, [admissionStatus]);
 
     if (!isOpen || !selectedVenue) return null;
 
     if (permissionStatus === 'denied') {
         return <PermissionRecoveryView onCancel={onClose} onRetry={() => window.location.reload()} />;
     }
-
-    const currentDistance = coords && selectedVenue.location
-        ? calculateDistance(coords.latitude, coords.longitude, selectedVenue.location.lat, selectedVenue.location.lng)
-        : null;
-
-    const isAtVenue = currentDistance !== null && currentDistance <= PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS;
 
     const startCamera = async () => {
         setCameraError(false);
@@ -119,35 +129,38 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     };
 
     const confirmClockIn = async () => {
-        if (!isAtVenue || !coords) {
+        // [BOUNCER CHECK]
+        if (!canClockIn || canClockIn.status === AdmissionStatus.LOCKED_DISTANCE) {
             const limit = PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS;
-            const distMsg = currentDistance ? `You are ${Math.round(currentDistance)}m away (Limit: ${limit}m).` : "Unable to verify distance.";
-            setErrorMessage(`Coordinate Verification Failed. ${distMsg} Please move closer to clock in.`);
+            const distMsg = canClockIn?.metadata?.distance
+                ? `You are ${Math.round(canClockIn.metadata.distance)}m away (Limit: ${limit}m).`
+                : "Unable to verify distance.";
+            setErrorMessage(`Coordinate Verification Failed. ${distMsg} Please move closer.`);
+            return;
+        }
+
+        if (canClockIn.status === AdmissionStatus.LOCKED_COOLDOWN) {
+            setErrorMessage(canClockIn.reason || "Cooldown active.");
             return;
         }
 
         setIsClockingIn(true);
         setErrorMessage(null);
 
-
         try {
-            const { latitude, longitude } = coords;
+            const { latitude, longitude } = coords!; // Safe due to Bouncer Check
 
             // [HONEST GATE LOGIC]
-            // Attempt generic Clock In first
-            // If success -> Shadow Success (Guest) or Standard Success (User)
-            // If 401/403 -> Shadow Locked (Guest)
             const result = await performClockIn(selectedVenue.id, userId, latitude, longitude);
 
             setClockInResult({
-                basePoints: result.basePoints || 10,
+                basePoints: result.basePoints || estimatePoints('clockin'),
                 eventBonus: result.eventBonus || 0,
-                total: result.pointsAwarded || 10
+                total: result.pointsAwarded || estimatePoints('clockin')
             });
 
-            // If we get here, the call succeeded (200 OK)
-            // Handle Guest (Anonymous) OR Authenticated Guest (Non-Member)
-            if (isVisitor || isAuthGuest) {
+            // Handle Guest (Shadow Mode)
+            if (admissionStatus === AdmissionStatus.SHADOW_MODE) {
                 setShadowVariant('success');
             } else {
                 setClockInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
@@ -155,8 +168,8 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 setIsSuccess(true);
             }
 
-            // Always award points locally for UI feedback (skipped for guest if locked, handled below)
-            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, !isVisitor, selectedVenue.status, result.pointsAwarded);
+            // Always award points locally for UI feedback
+            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, admissionStatus === AdmissionStatus.SHADOW_MODE, selectedVenue.status, result.pointsAwarded);
 
             // Optimistic UI Update (TanStack Query Cache)
             queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
@@ -164,29 +177,21 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                 return oldVenues.map(v => v.id === selectedVenue.id ? { ...v, clockIns: (v.clockIns || 0) + 1 } : v);
             });
 
-            if (!isVisitor && !isAuthGuest && vibeChecked) {
+            if (admissionStatus !== AdmissionStatus.SHADOW_MODE && vibeChecked) {
                 setTimeout(onClose, 3000);
             }
             setIsClockingIn(false);
         } catch (err: any) {
             // Honest Gate: Handle Auth Errors or Guest Role Limitations
-            if ((isVisitor || isAuthGuest) && (err.status === 401 || err.status === 403)) {
-
-                // Fallback for Guest/Visitor who gets rejected by backend
+            if ((admissionStatus === AdmissionStatus.SHADOW_MODE) && (err.status === 401 || err.status === 403)) {
                 setClockInResult({
-                    basePoints: 10,
+                    basePoints: estimatePoints('clockin'),
                     eventBonus: 0,
-                    total: 10
+                    total: estimatePoints('clockin')
                 });
 
-                // If it was a 401/403, we treat it as "Locked" (Shadow Points)
-                // BUT for Auth Guest, we might want 'success' variant but different message?
-                // The requirements say:
-                // Visitor -> "Signal Verified! +10 Pts... Save My Points Now"
-                // Guest -> "Thanks! ... Activate League Membership"
-
-                // If the backend REJECTS them, we simulate success (Shadow)
-                setShadowVariant(isAuthGuest ? 'success' : 'locked');
+                // 401/403 -> Shadow Locked
+                setShadowVariant('locked');
                 setIsClockingIn(false);
                 return;
             }
@@ -251,10 +256,8 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         </div>
                     )}
 
-                    {/* Double Dip / Partner Growth Section (Only show if NO bounty, to simplify flow) */}
                     {!selectedVenue.activeFlashBounty && (selectedVenue.loyalty_signup_url || selectedVenue.hero_item) && (
                         <div className="space-y-3 pt-2 text-center">
-                            {/* Flow A: External Loyalty */}
                             {selectedVenue.loyalty_signup_url && (
                                 <div className="bg-primary/10 border border-primary/30 p-4 rounded-xl relative overflow-hidden group animate-in zoom-in-95 duration-500">
                                     <div className="absolute top-0 right-0 p-1">
@@ -273,7 +276,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 </div>
                             )}
 
-                            {/* Flow B: Hero Item Upsell */}
                             {!selectedVenue.loyalty_signup_url && selectedVenue.hero_item && (
                                 <div className="bg-slate-900 border border-white/10 p-3 rounded-xl flex gap-3 text-left animate-in slide-in-from-bottom-2 duration-500">
                                     <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-white/10">
@@ -322,7 +324,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     }
 
     if (shadowVariant) {
-        const isLocked = shadowVariant === 'locked';
 
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -375,6 +376,10 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
         );
     }
 
+    // UI HELPER: Get status message based on Bouncer logic
+    const distanceStatus = canClockIn?.metadata?.distance;
+    const isAllowed = canClockIn?.status === AdmissionStatus.ALLOWED || canClockIn?.status === AdmissionStatus.SHADOW_MODE; // Guest also counts as 'at venue'
+
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
             <div className="bg-surface w-full max-w-sm overflow-hidden rounded-xl border border-slate-700 shadow-lg relative">
@@ -405,17 +410,21 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 animate-pulse">
                                     Finding you...
                                 </p>
-                            ) : isAtVenue ? (
+                            ) : isAllowed ? (
                                 <p className="text-[10px] font-black uppercase tracking-widest text-primary">
                                     📍 Verified At Venue
                                 </p>
                             ) : (
                                 <div className="space-y-2 mb-2">
-                                    <p className={`text-[10px] font-black uppercase tracking-widest ${currentDistance !== null ? 'text-red-400' : 'text-slate-500'}`}>
-                                        {currentDistance !== null ? `${Math.round(currentDistance)}m FROM VENUE (TOO FAR)` : 'Location Check REQUIRED'}
+                                    <p className={`text-[10px] font-black uppercase tracking-widest ${distanceStatus !== undefined && distanceStatus <= PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS ? 'text-green-400' : 'text-red-400'}`}>
+                                        {distanceStatus !== undefined
+                                            ? distanceStatus <= PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS
+                                                ? `${Math.round(distanceStatus)}m FROM VENUE (VERIFIED)`
+                                                : `${Math.round(distanceStatus)}m FROM VENUE (TOO FAR)`
+                                            : 'Location Check REQUIRED'}
                                     </p>
                                     <button
-                                        onClick={refresh}
+                                        onClick={refreshLocation}
                                         className="text-[10px] bg-primary/20 text-primary font-black px-4 py-2 rounded-full border border-primary/30 hover:bg-primary/30 transition-all uppercase tracking-widest"
                                     >
                                         {coords ? 'Verify Again' : 'Verify My Location'}
@@ -470,7 +479,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 ) : (
                                     <>
                                         <div className="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-primary/10 transition-colors border border-slate-700"><Camera className="w-7 h-7 text-slate-400 group-hover:text-primary" /></div>
-                                        <p className="text-sm font-bold text-white uppercase tracking-wide">Take Vibe Photo (+10 Pts)</p>
+                                        <p className="text-sm font-bold text-white uppercase tracking-wide">Take Vibe Photo (+{estimatePoints('photo')} Pts)</p>
                                         <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase">Logo, Menu, or Selfie</p>
                                     </>
                                 )}
@@ -478,7 +487,6 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         )}
                     </div>
 
-                    {/* Marketing Consent & Total Rewards */}
                     <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -487,7 +495,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                                 </div>
                                 <div className="ml-1">
                                     <p className="text-[10px] font-black text-white uppercase tracking-wider font-league leading-none mb-1">Marketing Consent</p>
-                                    <p className="text-[8px] text-slate-500 font-bold uppercase italic">Earn +15 Bonus Points!</p>
+                                    <p className="text-[8px] text-slate-500 font-bold uppercase italic">Earn +{GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT} Bonus Points!</p>
                                 </div>
                             </div>
                             <button
@@ -513,7 +521,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
                             <span className="text-[10px] font-black text-slate-500 uppercase font-league">Total Reward Preview</span>
                             <span className="text-sm font-black text-primary uppercase font-league">
-                                +{10 + (allowMarketingUse ? 15 : 0)} POINTS
+                                +{estimatePoints('clockin') + (allowMarketingUse ? GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT : 0)} POINTS
                             </span>
                         </div>
                     </div>
@@ -523,7 +531,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
                         <div className="space-y-1">
                             <p className="font-black uppercase tracking-widest text-white">GPS Verification Disclosure</p>
                             <p className="font-medium italic text-[9px]">
-                                OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a 100-foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
+                                OlyBars utilizes real-time GPS verification to ensure League integrity. To "Clock In," users must be physically present within a {Math.round(PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS * 3.28084)} -foot radius of the participating venue. This location data is used solely for point verification and is not stored or shared for advertising purposes.
                             </p>
                         </div>
                     </div>
@@ -536,8 +544,8 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
                     <button
                         onClick={confirmClockIn}
-                        disabled={isClockingIn || !isAtVenue}
-                        className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAtVenue
+                        disabled={isClockingIn || !isAllowed}
+                        className={`w-full py-4 rounded-lg text-lg font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none ${isAllowed
                             ? 'bg-primary text-black shadow-md hover:bg-yellow-400 active:scale-95'
                             : 'bg-slate-700 text-slate-400 cursor-not-allowed'
                             }`}

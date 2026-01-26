@@ -93,7 +93,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({
   };
 
   const baseChipClasses =
-    "px-3 py-1.5 text-xs font-bold rounded-full border transition-all whitespace-nowrap";
+    "px-4 py-3 text-xs font-bold rounded-full border transition-all whitespace-nowrap min-h-[44px] flex items-center";
   const statusActive = filterKind === "status" || filterKind === "all";
   const sceneActive = filterKind === "scene";
   const playActive = filterKind === "play";
@@ -204,11 +204,10 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({
                 setShowFeatureMenu(false);
                 setShowEventMenu(false);
               }}
-              className={`${baseChipClasses} ${
-                statusActive && filterKind !== "all"
+              className={`${baseChipClasses} ${statusActive && filterKind !== "all"
                   ? "bg-primary text-black border-primary"
                   : "bg-transparent text-white border-primary shadow-[0_0_10px_rgba(251,191,36,0.2)]"
-              } flex items-center gap-1.5 border-2`}
+                } flex items-center gap-1.5 border-2`}
             >
               <Sparkles className="w-3 h-3" /> Vibe{" "}
               <ChevronRight
@@ -341,177 +340,177 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({
           showPlayMenu ||
           showFeatureMenu ||
           showEventMenu) && (
-          <div className="pt-2 animate-in slide-in-from-top-2 fade-in duration-200 border-t border-white/5 mx-2">
-            <div className="flex flex-wrap gap-2">
-              {/* VIBE OPTIONS */}
-              {showVibeMenu &&
-                [
-                  { id: "flooded", label: "Flooded", icon: Zap },
-                  { id: "gushing", label: "Gushing", icon: Flame },
-                  { id: "flowing", label: "Flowing", icon: Beer },
-                  { id: "trickle", label: "Trickle", icon: Clock },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      handleInteraction();
-                      setStatusFilter(option.id as VenueStatus);
-                      setFilterKind("status");
-                      setShowVibeMenu(false);
-                    }}
-                    className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${statusFilter === option.id && filterKind === "status" ? "border-primary text-primary" : ""}`}
-                  >
-                    {option.icon && <option.icon className="w-3.5 h-3.5" />}
-                    {option.label}
-                  </button>
-                ))}
-
-              {/* SCENE OPTIONS */}
-              {showSceneMenu &&
-                [
-                  { id: "dive", label: "Dive Bar", icon: Beer },
-                  { id: "sports", label: "Sports Bar", icon: Trophy },
-                  { id: "speakeasy", label: "Speakeasy", icon: Key },
-                  { id: "cocktail", label: "Cocktails", icon: Martini },
-                  { id: "wine", label: "Wine & Tapas", icon: Wine },
-                  { id: "brewery", label: "Brewery", icon: Beer },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      handleInteraction();
-                      setSceneFilter(option.id);
-                      setFilterKind("scene");
-                      setShowSceneMenu(false);
-                    }}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2"
-                  >
-                    {option.icon && <option.icon className="w-3.5 h-3.5" />}
-                    {option.label}
-                  </button>
-                ))}
-
-              {/* PLAY OPTIONS */}
-              {showPlayMenu &&
-                TAXONOMY_PLAY.slice(0, 12).map((game) => {
-                  const PlayIcon =
-                    {
-                      Pool: Target,
-                      Pinball: Zap,
-                      Darts: Target,
-                      Arcade: Gamepad,
-                      Shuffleboard: MoveHorizontal,
-                      Cornhole: CircleDot,
-                      "Skee-Ball": Disc,
-                      "Board Games": Puzzle,
-                      "Ping Pong": MoveHorizontal,
-                      Foosball: Users,
-                      "Giant Jenga": Layers,
-                      "Ring Toss": Circle,
-                    }[game] || Dices;
-
-                  return (
+            <div className="pt-2 animate-in slide-in-from-top-2 fade-in duration-200 border-t border-white/5 mx-2">
+              <div className="flex flex-wrap gap-2">
+                {/* VIBE OPTIONS */}
+                {showVibeMenu &&
+                  [
+                    { id: "flooded", label: "Flooded", icon: Zap },
+                    { id: "gushing", label: "Gushing", icon: Flame },
+                    { id: "flowing", label: "Flowing", icon: Beer },
+                    { id: "trickle", label: "Trickle", icon: Clock },
+                  ].map((option) => (
                     <button
-                      key={game}
+                      key={option.id}
                       onClick={() => {
                         handleInteraction();
-                        setPlayFilter(game);
-                        setFilterKind("play");
-                        setShowPlayMenu(false);
+                        setStatusFilter(option.id as VenueStatus);
+                        setFilterKind("status");
+                        setShowVibeMenu(false);
                       }}
-                      className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${playFilter === game ? "border-primary text-primary" : ""}`}
+                      className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${statusFilter === option.id && filterKind === "status" ? "border-primary text-primary" : ""}`}
                     >
-                      <PlayIcon className="w-3.5 h-3.5" /> {game}
+                      {option.icon && <option.icon className="w-3.5 h-3.5" />}
+                      {option.label}
                     </button>
-                  );
-                })}
+                  ))}
 
-              {/* FEATURES OPTIONS */}
-              {showFeatureMenu &&
-                [
-                  { id: "patio", label: "Patio", icon: TreesIcon },
-                  { id: "dog_friendly", label: "Dog Friendly", icon: Trees }, // Using tree for outdoors/dogs for now, Lucide doesn't have a dog icon in standard set often, wait... it usually does as Dog.
-                  { id: "all_ages", label: "All Ages", icon: Users },
-                  { id: "fireplace", label: "Fireplace", icon: Flame },
-                  { id: "dance_floor", label: "Dance Floor", icon: Music },
-                  { id: "jukebox", label: "Jukebox", icon: Music },
-                  { id: "pull_tabs", label: "Pull Tabs", icon: Ticket },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      handleInteraction();
-                      setFeatureFilter(option.id);
-                      setFilterKind("features");
-                      setShowFeatureMenu(false);
-                    }}
-                    className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${featureFilter === option.id ? "border-primary text-primary" : ""}`}
-                  >
-                    {option.icon && <option.icon className="w-3.5 h-3.5" />}{" "}
-                    {option.label}
-                  </button>
-                ))}
+                {/* SCENE OPTIONS */}
+                {showSceneMenu &&
+                  [
+                    { id: "dive", label: "Dive Bar", icon: Beer },
+                    { id: "sports", label: "Sports Bar", icon: Trophy },
+                    { id: "speakeasy", label: "Speakeasy", icon: Key },
+                    { id: "cocktail", label: "Cocktails", icon: Martini },
+                    { id: "wine", label: "Wine & Tapas", icon: Wine },
+                    { id: "brewery", label: "Brewery", icon: Beer },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        handleInteraction();
+                        setSceneFilter(option.id);
+                        setFilterKind("scene");
+                        setShowSceneMenu(false);
+                      }}
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2"
+                    >
+                      {option.icon && <option.icon className="w-3.5 h-3.5" />}
+                      {option.label}
+                    </button>
+                  ))}
 
-              {/* EVENTS OPTIONS */}
-              {showEventMenu && (
-                <>
-                  <button
-                    onClick={() => {
-                      handleInteraction();
-                      setEventFilter("all");
-                      setFilterKind("events");
-                      setShowEventMenu(false);
-                    }}
-                    className={`px-3 py-2 ${eventFilter === "all" ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
-                  >
-                    <Calendar className="w-3.5 h-3.5" /> All Events
-                  </button>
-                  {TAXONOMY_EVENTS.map((event: string) => {
-                    const EventIcon =
+                {/* PLAY OPTIONS */}
+                {showPlayMenu &&
+                  TAXONOMY_PLAY.slice(0, 12).map((game) => {
+                    const PlayIcon =
                       {
-                        "League Night": Trophy,
-                        "Live Music": Music,
-                        "Trivia Night": HelpCircle,
-                        Karaoke: Mic2,
-                        DJ: Disc,
-                        "Watch Party": Tv,
-                        "Bar Bingo": Ticket,
-                        Tournaments: Swords,
-                        "Theme Night": Sparkles,
-                        "Open Mic": Mic,
-                      }[event] || Calendar;
+                        Pool: Target,
+                        Pinball: Zap,
+                        Darts: Target,
+                        Arcade: Gamepad,
+                        Shuffleboard: MoveHorizontal,
+                        Cornhole: CircleDot,
+                        "Skee-Ball": Disc,
+                        "Board Games": Puzzle,
+                        "Ping Pong": MoveHorizontal,
+                        Foosball: Users,
+                        "Giant Jenga": Layers,
+                        "Ring Toss": Circle,
+                      }[game] || Dices;
 
                     return (
                       <button
-                        key={event}
+                        key={game}
                         onClick={() => {
                           handleInteraction();
-                          setEventFilter(event);
-                          setFilterKind("events");
-                          setShowEventMenu(false);
+                          setPlayFilter(game);
+                          setFilterKind("play");
+                          setShowPlayMenu(false);
                         }}
-                        className={`px-3 py-2 ${eventFilter === event ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
+                        className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${playFilter === game ? "border-primary text-primary" : ""}`}
                       >
-                        <EventIcon className="w-3.5 h-3.5" /> {event}
+                        <PlayIcon className="w-3.5 h-3.5" /> {game}
                       </button>
                     );
                   })}
-                  <button
-                    onClick={() => {
-                      handleInteraction();
-                      setEventFilter("other");
-                      setFilterKind("events");
-                      setShowEventMenu(false);
-                    }}
-                    className={`px-3 py-2 ${eventFilter === "other" ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
-                  >
-                    <Layers className="w-3.5 h-3.5" /> Other
-                  </button>
-                </>
-              )}
+
+                {/* FEATURES OPTIONS */}
+                {showFeatureMenu &&
+                  [
+                    { id: "patio", label: "Patio", icon: TreesIcon },
+                    { id: "dog_friendly", label: "Dog Friendly", icon: Trees }, // Using tree for outdoors/dogs for now, Lucide doesn't have a dog icon in standard set often, wait... it usually does as Dog.
+                    { id: "all_ages", label: "All Ages", icon: Users },
+                    { id: "fireplace", label: "Fireplace", icon: Flame },
+                    { id: "dance_floor", label: "Dance Floor", icon: Music },
+                    { id: "jukebox", label: "Jukebox", icon: Music },
+                    { id: "pull_tabs", label: "Pull Tabs", icon: Ticket },
+                  ].map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => {
+                        handleInteraction();
+                        setFeatureFilter(option.id);
+                        setFilterKind("features");
+                        setShowFeatureMenu(false);
+                      }}
+                      className={`px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2 ${featureFilter === option.id ? "border-primary text-primary" : ""}`}
+                    >
+                      {option.icon && <option.icon className="w-3.5 h-3.5" />}{" "}
+                      {option.label}
+                    </button>
+                  ))}
+
+                {/* EVENTS OPTIONS */}
+                {showEventMenu && (
+                  <>
+                    <button
+                      onClick={() => {
+                        handleInteraction();
+                        setEventFilter("all");
+                        setFilterKind("events");
+                        setShowEventMenu(false);
+                      }}
+                      className={`px-3 py-2 ${eventFilter === "all" ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
+                    >
+                      <Calendar className="w-3.5 h-3.5" /> All Events
+                    </button>
+                    {TAXONOMY_EVENTS.map((event: string) => {
+                      const EventIcon =
+                        {
+                          "League Night": Trophy,
+                          "Live Music": Music,
+                          "Trivia Night": HelpCircle,
+                          Karaoke: Mic2,
+                          DJ: Disc,
+                          "Watch Party": Tv,
+                          "Bar Bingo": Ticket,
+                          Tournaments: Swords,
+                          "Theme Night": Sparkles,
+                          "Open Mic": Mic,
+                        }[event] || Calendar;
+
+                      return (
+                        <button
+                          key={event}
+                          onClick={() => {
+                            handleInteraction();
+                            setEventFilter(event);
+                            setFilterKind("events");
+                            setShowEventMenu(false);
+                          }}
+                          className={`px-3 py-2 ${eventFilter === event ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
+                        >
+                          <EventIcon className="w-3.5 h-3.5" /> {event}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => {
+                        handleInteraction();
+                        setEventFilter("other");
+                        setFilterKind("events");
+                        setShowEventMenu(false);
+                      }}
+                      className={`px-3 py-2 ${eventFilter === "other" ? "bg-primary text-black" : "bg-slate-800 text-slate-200"} hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition-all active:scale-95 flex items-center gap-2`}
+                    >
+                      <Layers className="w-3.5 h-3.5" /> Other
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );

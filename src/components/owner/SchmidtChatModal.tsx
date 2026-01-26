@@ -3,20 +3,22 @@ import { createPortal } from 'react-dom';
 import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, TrendingUp, ShieldAlert, BarChart3, Briefcase } from 'lucide-react';
 import { useSchmidtChat } from '../../hooks/useSchmidtChat';
 import { useToast } from '../ui/BrandedToast';
+import { UserProfile } from '../../types';
 import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
 
 interface SchmidtChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   venueId?: string;
+  userProfile: UserProfile;
 }
 
 /**
  * SchmidtChatModal: The B2B "War Room" for Venue Owners.
  * Aesthetic: High-contrast, Sleek, Data-Driven.
  */
-export const SchmidtChatModal: React.FC<SchmidtChatModalProps> = ({ isOpen, onClose, venueId }) => {
-  const { messages, sendMessage, isLoading, error, clearMessages } = useSchmidtChat(venueId);
+export const SchmidtChatModal: React.FC<SchmidtChatModalProps> = ({ isOpen, onClose, venueId, userProfile }) => {
+  const { messages, sendMessage, isLoading, error, clearMessages } = useSchmidtChat(venueId, userProfile);
   const [input, setInput] = useState('');
   const [pendingAction, setPendingAction] = useState<any>(null);
   const [actionStatus, setActionStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -77,8 +79,9 @@ export const SchmidtChatModal: React.FC<SchmidtChatModalProps> = ({ isOpen, onCl
             endTime: new Date(pendingAction.params.startTimeISO).getTime() + (Number(pendingAction.params.duration) * 60000),
             durationMinutes: Number(pendingAction.params.duration),
             status: 'PENDING',
-            createdBy: 'SCHMIDT',
-            staffBriefingConfirmed: true
+            createdBy: 'ARTIE',
+            staffBriefingConfirmed: true,
+            category: pendingAction.params.category || 'other'
           });
           showToast("Flash Bounty Deployed Successfully", "success");
           break;
@@ -159,8 +162,8 @@ export const SchmidtChatModal: React.FC<SchmidtChatModalProps> = ({ isOpen, onCl
             return (
               <div key={i} className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
                 <div className={`max-w-[90%] p-4 rounded-xl text-sm font-medium leading-relaxed ${isUser
-                    ? 'bg-zinc-800 text-white rounded-tr-none border border-zinc-700'
-                    : 'bg-[#111] text-zinc-300 border border-[#222] rounded-tl-none shadow-lg'
+                  ? 'bg-zinc-800 text-white rounded-tr-none border border-zinc-700'
+                  : 'bg-[#111] text-zinc-300 border border-[#222] rounded-tl-none shadow-lg'
                   }`}>
                   {displayText}
                 </div>
@@ -185,7 +188,7 @@ export const SchmidtChatModal: React.FC<SchmidtChatModalProps> = ({ isOpen, onCl
                       {pendingAction.skill.split('_').join(' ')}
                     </h4>
                     <p className="text-zinc-400 text-xs italic leading-relaxed">
-                      {pendingAction.params.summary || pendingAction.params.prompt}
+                      {pendingAction.params.summary || pendingAction.params.topic || pendingAction.params.prompt || pendingAction.params.details}
                     </p>
                   </div>
 

@@ -31,11 +31,12 @@ The "Pulse" is composed of two distinct metrics that are calculated every time a
 
 The Total Buzz Score determines the color/status shown on the UI:
 
-| Status | Color | Score Threshold | Meaning |
+| Status | Color | Threshold | Meaning |
 | :--- | :--- | :--- | :--- |
-| **BUZZING** | Amber/Orange | **> 60** | High energy. Approx 6+ recent people. |
-| **LIVELY** | Green/Gold | **> 20** | Good flow. Approx 2-5 recent people. |
-| **CHILL** | Blue/Grey | **< 20** | Relaxed. 0-1 recent people. |
+| **FLOODED** | Red/Danger | **> 85% Saturation** | Maximum depth. Wall to wall. |
+| **GUSHING** | Orange/Fire | **> 50% Saturation** | High pressure. Active energy. |
+| **FLOWING** | Blue/Water | **> 15% Saturation** | Steady stream. Good vibes. |
+| **TRICKLE** | Slate/Grey | **< 15% Saturation** | Quiet & intimate. Easy access. |
 
 ## Updating the Logic
 

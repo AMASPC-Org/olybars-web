@@ -1,12 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 import { SchmidtAgent, SchmidtMessage } from '../features/owner/services/SchmidtAgent';
-import { useAuth } from '../contexts/AuthContext'; // Assuming this exists
+import { UserProfile } from '../types';
 
-export const useSchmidtChat = (venueId?: string) => {
+export const useSchmidtChat = (venueId?: string, userProfile?: UserProfile) => {
   const [messages, setMessages] = useState<SchmidtMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
@@ -29,7 +28,7 @@ export const useSchmidtChat = (venueId?: string) => {
       await SchmidtAgent.chat(
         text,
         messages, // Current history
-        { venueId, userId: user?.uid, userRole: (user as any)?.role },
+        { venueId, userId: userProfile?.uid, userRole: userProfile?.role },
         (accumulated) => {
           setMessages(prev => {
             const next = [...prev];
@@ -54,7 +53,7 @@ export const useSchmidtChat = (venueId?: string) => {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, venueId, user]);
+  }, [messages, venueId, userProfile]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

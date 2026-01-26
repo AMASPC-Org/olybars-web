@@ -2,16 +2,11 @@ import React, { useState, useRef } from "react";
 import {
   X,
   Camera,
-  Share2,
-  Info,
   Loader2,
   Sparkles,
-  Beer,
-  Users,
   Flame,
   MapPin,
   Gamepad2,
-  Clock,
   Zap,
   AlertTriangle,
   ShieldCheck,
@@ -19,12 +14,12 @@ import {
   Droplets,
   Waves,
 } from "lucide-react";
-import { Venue, VenueStatus, GameStatus } from "../../../types";
+import { Venue, VenueStatus, GameStatus, UserProfile } from "../../../types";
 import { getGameTTL } from "../../../config/gameConfig";
-import { useGeolocation } from "../../../hooks/useGeolocation";
-import { calculateDistance } from "../../../utils/geoUtils";
 import { GAMIFICATION_CONFIG } from "../../../config/gamification";
 import { FormatCurrency } from "../../../utils/formatCurrency";
+import { useBouncer, AdmissionStatus } from "../../../hooks/useBouncer";
+import { useUser } from "../../../contexts/UserContext";
 
 interface VibeCheckModalProps {
   isOpen: boolean;
@@ -42,8 +37,6 @@ interface VibeCheckModalProps {
   clockedIn?: boolean;
   onClockInPrompt?: () => void;
   verificationMethod?: "gps" | "qr";
-  isLoggedIn?: boolean;
-  userRole?: string;
   onLogin?: (mode: "login" | "signup") => void;
 }
 
@@ -55,13 +48,12 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
   clockedIn,
   onClockInPrompt,
   verificationMethod = "gps",
-  isLoggedIn = false,
-  userRole,
   onLogin,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<VenueStatus>(
     venue.status || "flowing",
   );
+  // ... (rest of simple state)
   const [showCamera, setShowCamera] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState(false);
@@ -92,29 +84,36 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const { userProfile } = useUser();
+
+  // --- BOUNCER INTEGRATION ---
   const {
-    coords,
-    loading: geoLoading,
-    requestLocation,
-    refresh,
-  } = useGeolocation();
+    canClockIn, // Vibe Check shares logic with ClockIn for location/cooldown often
+    admissionStatus,
+    estimatePoints,
+    location
+  } = useBouncer(userProfile, venue);
+
+  const { coords, loading: geoLoading, refresh } = location;
+
+  // Derived User State (Legacy logic preserved via AdmissionStatus)
+  const isAnonymous = admissionStatus === AdmissionStatus.SHADOW_MODE;
+
+  // Location Verification (Independent of Cooldowns)
+  // We consider location valid if we are NOT locked by distance.
+  // LOCKED_COOLDOWN implies we are close enough but timed out, which is fine for Vibe Check.
+  const isLocationVerified = canClockIn?.status !== AdmissionStatus.LOCKED_DISTANCE &&
+    canClockIn?.status !== AdmissionStatus.SYSTEM_ERROR &&
+    canClockIn?.metadata?.distance !== undefined;
+
+  const distance = canClockIn?.metadata?.distance;
+
+  // For Sober Check / UI logic that requires strictly "Allowed" status
+  const isAllowed =
+    canClockIn?.status === AdmissionStatus.ALLOWED ||
+    canClockIn?.status === AdmissionStatus.SHADOW_MODE;
 
   if (!isOpen) return null;
-
-  const currentDistance =
-    coords && venue.location
-      ? calculateDistance(
-          coords.latitude,
-          coords.longitude,
-          venue.location.lat,
-          venue.location.lng,
-        )
-      : null;
-
-  const isLocalhost =
-    typeof window !== "undefined" && window.location.hostname === "localhost";
-  const isAtVenue =
-    (currentDistance !== null && currentDistance <= 25) || isLocalhost;
 
   const startCamera = async () => {
     setCameraError(false);
@@ -157,12 +156,23 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
   };
 
   const handleConfirm = async () => {
-    if (!isAtVenue) {
+    // [BOUNCER VALIDATION]
+    // Vibe Check also requires proximity.
+    // We reuse canClockIn status for proximity check since it's the same radius.
+    // If we want a separate 'canVibeCheck' in the future, we can add it to Bouncer.
+    if (!canClockIn || canClockIn.status === AdmissionStatus.LOCKED_DISTANCE) {
       setErrorMessage(
         "Coordinate Verification Failed. You must be at the venue to submit a vibe.",
       );
       return;
     }
+
+    // Cooldown check?
+    // Bouncer Service handles Clock In cooldowns.
+    // Vibe Checks have separate cooldowns (handled in App.tsx handleVibeCheck usually BEFORE modal opens).
+    // If the modal is open, we assume cooldown was checked?
+    // No, App.tsx checks it before setting showVibeCheckModal.
+    // So we assume if we are here, cooldown is OK.
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -181,12 +191,12 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
       setVibeResult({
         total:
           (result as any)?.pointsAwarded ||
-          5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0),
+          estimatePoints('vibe') + (capturedPhoto ? estimatePoints('photo') : 0) + (allowMarketingUse ? 15 : 0),
         bountyPending: (result as any)?.bountyPending,
       });
 
       // If success (200), check mode
-      if (!isLoggedIn || userRole === "guest") {
+      if (admissionStatus === AdmissionStatus.SHADOW_MODE) {
         setShadowVariant("success");
       } else {
         setIsSuccess(true);
@@ -197,7 +207,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
       }
     } catch (err: any) {
       // Honest Gate: Handle Auth Errors (401/403)
-      if (!isLoggedIn && (err.status === 401 || err.status === 403)) {
+      // Vibe Check usually executes logic in App.tsx which mimics 'performClockIn'-like calls.
+      if (admissionStatus === AdmissionStatus.SHADOW_MODE && (err.status === 401 || err.status === 403)) {
         setShadowVariant("locked");
       } else {
         setErrorMessage(err.message || "Failed to submit vibe.");
@@ -214,35 +225,35 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     color: string;
     desc: string;
   }[] = [
-    {
-      status: "trickle",
-      label: "Trickle",
-      icon: Droplets,
-      color: "text-emerald-400",
-      desc: "Low flow, easy access.",
-    },
-    {
-      status: "flowing",
-      label: "Flowing",
-      icon: Waves,
-      color: "text-blue-400",
-      desc: "Steady stream, good vibes.",
-    },
-    {
-      status: "gushing",
-      label: "Gushing",
-      icon: Flame,
-      color: "text-orange-500",
-      desc: "High pressure, active energy!",
-    },
-    {
-      status: "flooded",
-      label: "Flooded",
-      icon: Zap,
-      color: "text-red-500",
-      desc: "Max depth, wall to wall.",
-    },
-  ];
+      {
+        status: "trickle",
+        label: "Trickle",
+        icon: Droplets,
+        color: "text-emerald-400",
+        desc: "Low flow, easy access.",
+      },
+      {
+        status: "flowing",
+        label: "Flowing",
+        icon: Waves,
+        color: "text-blue-400",
+        desc: "Steady stream, good vibes.",
+      },
+      {
+        status: "gushing",
+        label: "Gushing",
+        icon: Flame,
+        color: "text-orange-500",
+        desc: "High pressure, active energy!",
+      },
+      {
+        status: "flooded",
+        label: "Flooded",
+        icon: Zap,
+        color: "text-red-500",
+        desc: "Max depth, wall to wall.",
+      },
+    ];
 
   if (isSuccess) {
     return (
@@ -255,7 +266,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter font-league italic">
               Flow Reported!
             </h2>
-            {isLoggedIn ? (
+            {!isAnonymous ? (
               <div className="flex items-center justify-center gap-2 mt-2">
                 <span className="text-cyan-400 font-black uppercase tracking-widest text-xs">
                   Data Signal Reward:
@@ -267,7 +278,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 DROPS PENDING CLAIM
               </p>
             )}
-            {isLoggedIn && (
+            {!isAnonymous && (
               <p className="text-white font-black uppercase tracking-widest text-[10px] mt-2 opacity-60">
                 Total Flow: {vibeResult?.total}{" "}
                 {GAMIFICATION_CONFIG.CURRENCY.UNIT}
@@ -279,7 +290,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             <div className="bg-slate-900/80 p-4 rounded-xl border border-white/5 space-y-4">
               <p className="text-slate-300 text-sm font-bold leading-tight">
                 Nice vibe! Since you're here, want to{" "}
-                <span className="text-primary italic">Clock In</span> for +10
+                <span className="text-primary italic">Clock In</span> for +{estimatePoints('clockin')}
                 more points?
               </p>
               <button
@@ -295,7 +306,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 Maybe Later
               </button>
             </div>
-          ) : !isLoggedIn && onLogin ? (
+          ) : isAnonymous && onLogin ? (
             <div className="bg-primary/10 rounded-xl p-4 border border-primary/20 space-y-3">
               <p className="text-[10px] text-primary font-bold uppercase tracking-widest">
                 Claim Your Rewards
@@ -325,7 +336,6 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
   if (shadowVariant) {
     const isLocked = shadowVariant === "locked";
-    const isAnonymous = !isLoggedIn; // Careful here: isLoggedIn passed as prop might be effectively false if we don't pass it right, but here we trust the prop or default.
 
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -415,6 +425,8 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
     );
   }
 
+  // --- UI RENDER HELPERS ---
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
       <div className="bg-surface w-full max-w-sm overflow-hidden rounded-xl border border-slate-700 shadow-lg relative">
@@ -460,20 +472,19 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
         <div className="p-4 space-y-4">
           <div className="text-center">
+            {/* BOUNCER LOCATION STATUS */}
             <p
-              className={`text-[10px] font-black uppercase tracking-widest ${isAtVenue ? "text-primary" : currentDistance !== null ? "text-red-400" : "text-slate-500"}`}
+              className={`text-[10px] font-black uppercase tracking-widest ${isLocationVerified ? "text-primary" : distance !== undefined ? "text-red-400" : "text-slate-500"}`}
             >
               {geoLoading
                 ? "Finding you..."
-                : isLocalhost
-                  ? "?? DEV MODE: GPS BYPASS"
-                  : isAtVenue
-                    ? "?? Verified At Venue"
-                    : currentDistance !== null
-                      ? `${Math.round(currentDistance)}m FROM VENUE`
-                      : "?? Location Check Required"}
+                : isLocationVerified
+                  ? "?? Verified At Venue"
+                  : distance !== undefined
+                    ? `${Math.round(distance)}m FROM VENUE`
+                    : "?? Location Check Required"}
             </p>
-            {!isAtVenue && !geoLoading && (
+            {!isLocationVerified && !geoLoading && (
               <button
                 onClick={refresh}
                 className="mt-2 text-[10px] bg-primary/20 text-primary font-black px-3 py-1 rounded-full border border-primary/30 hover:bg-primary/30 transition-all uppercase tracking-widest"
@@ -609,7 +620,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
           )}
 
         {/* Sober Friendly Feedback (GPS Verified Only) */}
-        {venue.isSoberFriendly && isAtVenue && (
+        {venue.isSoberFriendly && isAllowed && (
           <div className="bg-blue-900/40 border border-blue-800 rounded-xl p-3 space-y-3">
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} className="text-secondary" />
@@ -693,7 +704,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                 <div className="flex items-center justify-center gap-2">
                   <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary" />
                   <p className="text-[10px] font-black text-slate-300 uppercase italic">
-                    Add Proof of Flow (+10 Drops)
+                    Add Proof of Flow (+{estimatePoints('photo')} Drops)
                   </p>
                 </div>
               )}
@@ -716,7 +727,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                   Marketing Consent
                 </p>
                 <p className="text-[8px] text-slate-500 font-bold uppercase italic mt-0.5">
-                  Earn +15 Bonus Drops!
+                  Earn +{GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT} Bonus Drops!
                 </p>
               </div>
             </div>
@@ -742,13 +753,13 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             League Reward
           </span>
           <span className="text-sm font-black text-cyan-400 uppercase font-league">
-            +{5 + (capturedPhoto ? 10 : 0) + (allowMarketingUse ? 15 : 0)} DROPS
+            +{estimatePoints('vibe') + (capturedPhoto ? estimatePoints('photo') : 0) + (allowMarketingUse ? GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT : 0)} DROPS
           </span>
         </div>
 
         <button
           onClick={handleConfirm}
-          disabled={isSubmitting || (!isAtVenue && !geoLoading)}
+          disabled={isSubmitting || (!isLocationVerified && !geoLoading)}
           className="w-full bg-primary hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-400 text-black font-black text-lg uppercase tracking-widest py-4 rounded-lg shadow-xl active:scale-95 transition-all font-league italic flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
