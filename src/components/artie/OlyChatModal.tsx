@@ -1,4 +1,13 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, Paperclip, Mic, MicOff } from 'lucide-react';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
+import { useDragAndDrop } from '../../hooks/useDragAndDrop';
+import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
+import { useToast } from '../../components/ui/BrandedToast';
+import { UserProfile, isSystemAdmin } from '../../types';
+import artieLogo from '../../assets/Artie-Only-Logo.png';
+import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
 
 /**
  * Strict Link Parser (Security-First)
@@ -40,17 +49,6 @@ const renderTextWithLinks = (text: string) => {
 
     return parts.length > 0 ? parts : text;
 };
-
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
-import { useDragAndDrop } from '../../hooks/useDragAndDrop';
-
-import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
-import { useToast } from '../../components/ui/BrandedToast';
-import { UserProfile, isSystemAdmin } from '../../types';
-// Note: Ensure these paths exist in your assets folder
-import artieLogo from '../../assets/Artie-Only-Logo.png';
-import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
-import { ArtieMessage } from '../../features/artie/services/ArtieAgent';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
@@ -459,8 +457,8 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
     const activeError = persona === 'artie' ? artieChat.error : opsSchmidt.error;
 
     // Schmidt has bubbles, Artie (guest) currently doesn't use the same quickReply system but could
-    // For now we only show bubbles if they exist in the active hook (ArtieOps doesn't have them yet)
-    const activeBubbles = (activeHook as any).currentBubbles || [];
+    // For now we only show bubbles if they exist in the active hook (ArtieOps handles this via opsSchmidt)
+    const activeBubbles = persona === 'schmidt' ? (opsSchmidt.currentBubbles || []) : [];
 
     return createPortal(
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
