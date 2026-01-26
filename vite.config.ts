@@ -14,8 +14,15 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         "/api": {
-          target: "http://localhost:3001",
+          target: env.VITE_UPSTREAM || "http://localhost:3001",
           changeOrigin: true,
+          configure: (proxy, _options) => {
+            proxy.on("error", (err, _req, _res) => {
+              console.error(
+                `\x1b[31m[PROXY ERROR] Could not proxy to backend at ${env.VITE_UPSTREAM || "http://localhost:3001"}. Is the server running?\x1b[0m`,
+              );
+            });
+          },
         },
       },
     },

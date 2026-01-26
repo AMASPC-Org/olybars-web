@@ -53,7 +53,11 @@ if (
   connectFirestoreEmulator(db, "localhost", 8080);
 
   // Connect Auth (Login)
-  connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+  connectAuthEmulator(
+    auth,
+    import.meta.env.VITE_AUTH_EMULATOR_URL || "http://localhost:9099",
+    { disableWarnings: true },
+  );
 
   // Connect Functions (Backend Logic)
   connectFunctionsEmulator(functions, "localhost", 5001);

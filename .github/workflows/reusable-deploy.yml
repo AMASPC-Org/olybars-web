@@ -85,6 +85,20 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
+          echo "🚀 [DEBUG-LOG] Launching GCloud Deploy..."
+          echo "Current Path: $(pwd)"
+          
+          # Construct Command for Logging (Secrets Redacted)
+          CMD="gcloud run deploy olybars-backend \
+            --image ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
+            --region ${{ inputs.region }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --project ${{ inputs.project_id }} \
+            --set-env-vars INTERNAL_HEALTH_TOKEN=[REDACTED]"
+          
+          echo "Executing: $CMD"
+
           gcloud run deploy olybars-backend \
             --image ${{ inputs.region }}-docker.pkg.dev/${{ inputs.project_id }}/${{ inputs.repo_name }}/olybars-backend:latest \
             --region ${{ inputs.region }} \
