@@ -15,7 +15,8 @@ export const GAMIFICATION_CONFIG = {
         VIBE_PHOTO: 15,
         EXPLORER_BONUS: 50,
         MARKETING_CONSENT: 15,
-        REFERRAL: 100
+        REFERRAL: 100,
+        GAME_REPORT_FLAT_BONUS: 5
     },
     PIONEER_CURVE: {
         trickle: 100,

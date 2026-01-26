@@ -214,7 +214,7 @@ export const updateVenueBuzz = async (venueId: string) => {
 
   const finalClockIns =
     venueData?.manualClockIns !== undefined &&
-    venueData?.manualClockInsExpiresAt > now
+      venueData?.manualClockInsExpiresAt > now
       ? venueData.manualClockIns
       : activeUserIds.size;
 
@@ -725,7 +725,7 @@ export const performVibeCheck = async (
   // Game Status Bonus (Flat 5 points for any update)
   let gameBonus = 0;
   if (gameStatus && Object.keys(gameStatus).length > 0) {
-    gameBonus = 5;
+    gameBonus = PULSE_CONFIG.POINTS.GAME_REPORT_BONUS;
     immediatePoints += gameBonus;
   }
 

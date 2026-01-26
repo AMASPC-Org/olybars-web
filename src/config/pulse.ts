@@ -7,6 +7,7 @@ export const PULSE_CONFIG = {
         VIBE_REPORT: GAMIFICATION_CONFIG.REWARDS.VIBE_REPORT,
         PHOTO_VIBE: GAMIFICATION_CONFIG.REWARDS.VIBE_PHOTO,
         VERIFIED_BONUS: GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT,
+        GAME_REPORT_BONUS: GAMIFICATION_CONFIG.REWARDS.GAME_REPORT_FLAT_BONUS,
         VIBE_POINTS: GAMIFICATION_CONFIG.PIONEER_CURVE
     },
 
@@ -40,10 +41,6 @@ export const PULSE_CONFIG = {
         GUSHING: 0.50,  // > 50% Capacity
         FLOWING: 0.15,    // > 15% Capacity
         TRICKLE: 0,      // < 15% Capacity
-        PACKED: 0.85,    // Alias
-        BUZZING: 0.50,   // Alias
-        CHILL: 0.15,     // Alias
-        MELLOW: 0,       // Alias
         DEAD: 0,        // [DEPRECATED]
         FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
