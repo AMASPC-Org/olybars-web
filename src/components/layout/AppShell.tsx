@@ -11,7 +11,6 @@ import {
 import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
-import { isSystemAdmin } from '../../types/auth_schema';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -29,17 +28,11 @@ interface AppShellProps {
   userPoints: number;
   userRank?: number;
   isLeagueMember?: boolean;
-  alertPrefs: any;
-  setAlertPrefs: (prefs: any) => void;
   onProfileClick?: () => void;
-  onOwnerLoginClick?: () => void;
   onMemberLoginClick?: (mode?: 'login' | 'signup') => void;
-  userRole?: string;
-  userHandle?: string;
   onLogout?: () => void;
   onToggleFavorite?: (venueId: string) => void;
   onToggleWeeklyBuzz?: () => void;
-  onVenueDashboardClick?: () => void;
   onClockIn?: (venue: Venue) => void;
   onVibeCheck?: (venue: Venue) => void;
   clockedInVenue?: string | null;
@@ -268,6 +261,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           isOpen={!!showArtie}
           onClose={() => setShowArtie?.(false)}
           venueId={initialVenueId || userProfile?.homeBase}
+          userProfile={userProfile}
         />
       )}
 

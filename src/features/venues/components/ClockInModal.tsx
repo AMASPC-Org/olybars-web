@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Lock, Zap, Droplets } from 'lucide-react';
-import { Venue, ClockInRecord, PointsReason } from '../../../types';
+import { Venue, ClockInRecord, PointsReason, VenueStatus } from '../../../types';
 import { performClockIn } from '../../../services/userService';
 import { useGeolocation } from '../../../hooks/useGeolocation';
 import { calculateDistance } from '../../../utils/geoUtils';
@@ -14,7 +14,7 @@ interface ClockInModalProps {
     isOpen: boolean;
     onClose: () => void;
     selectedVenue: Venue | null;
-    awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints?: number, skipBackend?: boolean) => void;
+    awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints?: number, skipBackend?: boolean, venueStatus?: VenueStatus, overrideTotal?: number) => void;
     setClockInHistory: React.Dispatch<React.SetStateAction<ClockInRecord[]>>;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
@@ -156,7 +156,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             }
 
             // Always award points locally for UI feedback (skipped for guest if locked, handled below)
-            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, !isVisitor);
+            awardPoints('clockin', selectedVenue.id, allowMarketingUse, 'gps', 0, !isVisitor, selectedVenue.status, result.pointsAwarded);
 
             // Optimistic UI Update (TanStack Query Cache)
             queryClient.setQueryData(['venues-brief'], (oldVenues: Venue[] | undefined) => {
