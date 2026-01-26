@@ -47,6 +47,7 @@ import {
   generateArtieHook,
 } from "./features/social/services/VibeReceiptService";
 import { SessionPurgeService } from "./services/SessionPurgeService";
+import { cookieService } from "./services/cookieService";
 import { BuzzScreen } from "./features/venues/screens/BuzzScreen";
 import { VenuesScreen } from "./features/venues/screens/VenuesScreen";
 
@@ -237,51 +238,57 @@ const InfoPopup = ({ infoContent, setInfoContent }: any) => {
   );
 };
 
+// --- CONTEXTS ---
+import { UserProvider, useUser } from "./contexts/UserContext";
+
+// [BOUNCER INTEGRATION]
+import { BouncerGate } from './features/auth/components/BouncerGate';
+
 const SmartOwnerRoute = ({
   venues,
   handleUpdateVenue,
-  userProfile,
+  // userProfile, // [REFACTOR] Now consumed via context or prop from AppContent
   isLoading,
 }: any) => {
   const { venueId, tab } = useParams();
   const navigate = useNavigate();
+  // We can consume context here if needed, or pass it down. 
+  // For now, assume it's passed or available.
+  const { userProfile } = useUser();
 
-  // [DIAGNOSTIC] Check Auth
-  const isAuthorized =
-    isLoading ||
-    isSystemAdmin(userProfile) ||
-    (userProfile.venuePermissions &&
-      Object.keys(userProfile.venuePermissions).length > 0);
+  // Helper to resolve initial venue
+  const resolveStartingVenue = () => {
+    if (venueId) return venueId;
+    // If admin with no permissions, default to hannahs (legacy dev)
+    // If owner, pick first venue
+    if (userProfile.venuePermissions && Object.keys(userProfile.venuePermissions).length > 0) {
+      return Object.keys(userProfile.venuePermissions)[0];
+    }
+    return "hannahs";
+  };
 
-  if (!isAuthorized && !isLoading) {
-    return <OwnerPortal />;
-  }
-
-  const defaultVenueId =
-    venueId ||
-    (isSystemAdmin(userProfile) &&
-      (!userProfile.venuePermissions ||
-        Object.keys(userProfile.venuePermissions).length === 0)
-      ? "hannahs"
-      : userProfile.venuePermissions
-        ? Object.keys(userProfile.venuePermissions)[0]
-        : "hannahs");
+  const defaultVenueId = resolveStartingVenue();
 
   return (
-    <OwnerDashboardScreen
-      isOpen={true}
-      onClose={() => navigate("/")}
-      venues={venues}
-      updateVenue={handleUpdateVenue}
-      userProfile={userProfile}
-      initialVenueId={defaultVenueId}
-      initialView={(tab as any) || "operations"}
+    <BouncerGate
       isLoading={isLoading}
-    />
+      fallback={<OwnerPortal />}
+    >
+      <OwnerDashboardScreen
+        isOpen={true}
+        onClose={() => navigate("/")}
+        venues={venues}
+        updateVenue={handleUpdateVenue}
+        userProfile={userProfile}
+        initialVenueId={defaultVenueId}
+        initialView={(tab as any) || "operations"}
+        isLoading={isLoading}
+      />
+    </BouncerGate>
   );
 };
 
-export default function OlyBarsApp() {
+function AppContent() {
   // --- DATA FETCHING (TanStack Query with Persistence) ---
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -310,6 +317,10 @@ export default function OlyBarsApp() {
     }
   }, [venues]);
 
+  // --- CONTEXT HOOKS ---
+  const { userProfile, setUserProfile, isLoading: isAuthLoading } = useUser();
+
+  // --- LOCAL STATE (Non-Identity) ---
   const [userPoints, setUserPoints] = useState(() =>
     parseInt(localStorage.getItem("oly_points") || "0"),
   );
@@ -325,20 +336,25 @@ export default function OlyBarsApp() {
       '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}',
     ),
   );
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    try {
-      const stored = localStorage.getItem("oly_profile");
-      if (!stored || stored === "null" || stored === "undefined") {
-        return { uid: "guest", role: "guest" };
-      }
-      return JSON.parse(stored);
-    } catch {
-      return { uid: "guest", role: "guest" };
-    }
-  });
 
+  // Progressive Profiling State
+  const [showPreferredSipsModal, setShowPreferredSipsModal] = useState(false);
+  const [showHomeBaseModal, setShowHomeBaseModal] = useState(false);
+  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  // Derived userId for convenience
   const userId = userProfile?.uid || "guest_user_123";
 
+  // const { showToast } = useToast(); // Moved to top
+  // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
+  //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
+  // ]);
+  const [userRank, setUserRank] = useState<number | undefined>(undefined);
+
+  // --- RESTORED LOCAL STATE ---
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginMode, setLoginMode] = useState<"user" | "owner">("user");
   const [userSubMode, setUserSubMode] = useState<"login" | "signup">("signup");
@@ -366,93 +382,10 @@ export default function OlyBarsApp() {
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [showArtie, setShowArtie] = useState(false);
-  const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
+  const [showMakerSurvey, setShowMakerSurvey] = useState(false);
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(
     null,
   );
-  const [isAuthInitializing, setIsAuthInitializing] = useState(true);
-
-  // --- AUTH LISTENER (Authoritative Source of Truth) ---
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log(
-        "[Auth] State Change Detected:",
-        firebaseUser?.email || "No User",
-      );
-
-      if (firebaseUser) {
-        // [HYDRATION] If we have a session but state is Guest OR stale, refresh it
-        if (
-          userProfile.uid === "guest" ||
-          userProfile.uid !== firebaseUser.uid
-        ) {
-          try {
-            const freshProfile = await getUserProfile(firebaseUser.uid);
-            if (freshProfile) {
-              // Apply Super Admin overrides if necessary (Ryan Rule)
-              if (freshProfile.email === "ryan@amaspc.com") {
-                freshProfile.role = "super-admin" as any;
-                freshProfile.systemRole = "admin" as any;
-              }
-              setUserProfile(freshProfile);
-            } else {
-              // Minimal profile if Firestore sync hasn't happened yet
-              setUserProfile({
-                uid: firebaseUser.uid,
-                role: "guest",
-                email: firebaseUser.email || "",
-              });
-            }
-          } catch (e) {
-            console.error("[Auth] Hydration failed:", e);
-          }
-        }
-      } else {
-        // [SANITIZATION] No session -> Revert to Guest
-        // We do NOT call purgeSession('nuclear') here because it causes a loop on load if just unauthenticated.
-        // Instead, we just ensure local profile is clean.
-
-        if (localStorage.getItem("oly_profile")) {
-          localStorage.removeItem("oly_profile");
-        }
-
-        if (userProfile.uid !== "guest") {
-          setUserProfile({ uid: "guest", role: "guest" });
-        }
-      }
-      setIsAuthInitializing(false);
-    });
-
-    // [INTERVENTION] Handle Session Expiry from API 401s
-    const handleSessionExpiry = () => {
-      console.warn("[App] Session Expired Event Received. Signing out.");
-      auth.signOut();
-
-      // Use SessionPurge for clean state reset (preserving Age Gate)
-      SessionPurgeService.purgeSession('nuclear');
-      showToast("SESSION EXPIRED", "error");
-    };
-
-    window.addEventListener("auth:session_expired", handleSessionExpiry);
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener("auth:session_expired", handleSessionExpiry);
-    };
-  }, [userProfile.uid]);
-
-  // Progressive Profiling State
-  const [showPreferredSipsModal, setShowPreferredSipsModal] = useState(false);
-  const [showHomeBaseModal, setShowHomeBaseModal] = useState(false);
-  const [homeBaseTargetVenue, setHomeBaseTargetVenue] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  // const { showToast } = useToast(); // Moved to top
-  // const [artieMessages, setArtieMessages] = useState<{ sender: string, text: string }[]>([
-  //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
-  // ]);
-  const [userRank, setUserRank] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const getRank = async () => {
@@ -464,49 +397,9 @@ export default function OlyBarsApp() {
     getRank();
   }, [userPoints, userProfile.uid]);
 
-  // Persistence Layer (Sync State to LocalStorage)
-  useEffect(() => {
-    if (userProfile) {
-      localStorage.setItem("oly_profile", JSON.stringify(userProfile));
-    }
-  }, [userProfile]);
-
   useEffect(() => {
     localStorage.setItem("oly_points", userPoints.toString());
   }, [userPoints]);
-
-  // [HYDRATION] Refresh User Profile from Backend on Load
-  useEffect(() => {
-    const hydrateProfile = async () => {
-      if (userProfile.uid && userProfile.uid !== "guest") {
-        try {
-          // 1. Fetch fresh data
-          const freshProfile = await getUserProfile(userProfile.uid);
-
-          if (freshProfile) {
-            // 2. [SECURITY] Re-apply Ryan Rule (Hardcoded Super Admin)
-            if (freshProfile.email === "ryan@amaspc.com") {
-              freshProfile.role = "super-admin" as any;
-              freshProfile.systemRole = "admin" as any;
-              if (!freshProfile.handle) {
-                freshProfile.handle = "Ryan (Admin)";
-              }
-            }
-
-            // 3. Update State if different
-            setUserProfile((prev) => ({
-              ...prev,
-              ...freshProfile,
-            }));
-          }
-        } catch (e) {
-          console.error("[App] Failed to hydrate profile:", e);
-        }
-      }
-    };
-
-    hydrateProfile();
-  }, [userProfile.uid]);
 
   useEffect(() => {
     localStorage.setItem("oly_clockins", JSON.stringify(clockInHistory));
@@ -1135,423 +1028,79 @@ export default function OlyBarsApp() {
                   }
                 />
                 <Route path="meet-artie" element={<ArtieBioScreen />} />
-                <Route path="artie-bio" element={<ArtieBioScreen />} />
-                <Route path="artie" element={<ArtieBioScreen />} />
-                <Route
-                  path="owner"
-                  element={
-                    <SmartOwnerRoute
-                      venues={venues}
-                      handleUpdateVenue={handleUpdateVenue}
-                      userProfile={userProfile}
-                      isLoading={isLoading}
-                    />
-                  }
-                />
-                <Route
-                  path="admin/brewhouse"
-                  element={
-                    <SmartOwnerRoute
-                      venues={venues}
-                      handleUpdateVenue={handleUpdateVenue}
-                      userProfile={userProfile}
-                      isLoading={isLoading}
-                    />
-                  }
-                />
-                <Route
-                  path="admin/brewhouse/:venueId"
-                  element={
-                    <SmartOwnerRoute
-                      venues={venues}
-                      handleUpdateVenue={handleUpdateVenue}
-                      userProfile={userProfile}
-                      isLoading={isLoading}
-                    />
-                  }
-                />
-                <Route
-                  path="admin/brewhouse/:venueId/:tab"
-                  element={
-                    <SmartOwnerRoute
-                      venues={venues}
-                      handleUpdateVenue={handleUpdateVenue}
-                      userProfile={userProfile}
-                      isLoading={isLoading}
-                    />
-                  }
-                />
-                <Route
-                  path="vc/:venueId"
-                  element={
-                    <QRVibeCheckScreen
-                      venues={venues}
-                      handleVibeCheck={confirmVibeCheck}
-                    />
-                  }
-                />
-                <Route
-                  path="profile"
-                  element={
-                    userProfile.uid !== "guest" ? (
-                      <UserProfileScreen
-                        userProfile={userProfile}
-                        setUserProfile={setUserProfile}
-                        venues={venues}
-                      />
-                    ) : (
-                      <div className="p-10 text-center font-black text-primary uppercase tracking-widest">
-                        Access Denied: Please Login to View Your League ID
-                        <button
-                          onClick={() => setShowLoginModal(true)}
-                          className="block mx-auto mt-4 px-6 py-2 bg-primary text-black rounded-lg"
-                        >
-                          Login
-                        </button>
-                      </div>
-                    )
-                  }
-                />
-                <Route
-                  path="settings"
-                  element={
-                    <SettingsScreen
-                      userProfile={userProfile}
-                      setUserProfile={setUserProfile}
-                    />
-                  }
-                />
-                <Route
-                  path="terms"
-                  element={
-                    <>
-                      <SEO title="Terms of Service" />
-                      <TermsScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="privacy"
-                  element={
-                    <>
-                      <SEO title="Privacy Policy" />
-                      <PrivacyScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="cookies"
-                  element={
-                    <>
-                      <SEO title="Cookie Policy" />
-                      <CookiePolicyScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="security"
-                  element={
-                    <>
-                      <SEO title="Security & Data Protection" />
-                      <PartnerSecurityScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="faq"
-                  element={
-                    <>
-                      <SEO
-                        title="The Manual (FAQ)"
-                        description="Everything you need to know about the OlyBars league, pins, and etiquette."
-                      />
-                      <FAQScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="about"
-                  element={
-                    <>
-                      <SEO
-                        title="Welcome to the League (Thurston County)"
-                        description="The mission and story behind Thurston County's nightlife operating system."
-                      />
-                      <AboutPage />
-                    </>
-                  }
-                />
-                <Route
-                  path="admin"
-                  element={
-                    isSystemAdmin(userProfile) ? (
-                      <AdminDashboardScreen userProfile={userProfile} />
-                    ) : (
-                      <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">
-                        403: League Integrity Violation - Restricted Access
-                      </div>
-                    )
-                  }
-                />
-                <Route
-                  path="admin/extractor"
-                  element={
-                    isSystemAdmin(userProfile) ? (
-                      <FlyerExtractor />
-                    ) : (
-                      <div className="p-10 text-center font-black text-red-500 uppercase tracking-widest">
-                        403: League Integrity Violation - Restricted Access
-                      </div>
-                    )
-                  }
-                />
-                <Route
-                  path="admin/join"
-                  element={<JoinTeamScreen userProfile={userProfile} />}
-                />
-                <Route path="history" element={<HistoryFeedScreen />} />
-                <Route
-                  path="history/:slug"
-                  element={<HistoryArticleScreen venues={venues} />}
-                />
-                <Route path="playbook" element={<PulsePlaybookScreen />} />
-                <Route
-                  path="pulse-playbook"
-                  element={<PulsePlaybookScreen />}
-                />
-                <Route path="perks" element={<LeaguePerksScreen />} />
-                <Route path="glossary" element={<GlossaryScreen />} />
-                <Route path="points" element={<PointsGuideScreen />} />
-                <Route
-                  path="points/history"
-                  element={
-                    <PointHistoryScreen
-                      onBack={() => window.history.back()}
-                      userProfile={userProfile}
-                      onLogin={handleMemberLoginClick}
-                    />
-                  }
-                />
-                <Route
-                  path="league-membership"
-                  element={<LeagueMembershipPage />}
-                />
-                <Route
-                  path="onboarding-guide"
-                  element={<OnboardingHandoverPage />}
-                />
-                <Route
-                  path="flight-school"
-                  element={<FlightSchoolScreen />}
-                />
-                <Route
-                  path="oauth/callback"
-                  element={<MetaOAuthCallback />}
-                />
-                <Route
-                  path="auth"
-                  element={
-                    <AuthPage
-                      userProfile={userProfile}
-                      setUserProfile={setUserProfile}
-                      venues={venues}
-                      alertPrefs={alertPrefs}
-                      setAlertPrefs={setAlertPrefs}
-                      openInfo={openInfo}
-                      onOwnerSuccess={() => setShowOwnerDashboard(true)}
-                      loginMode={loginMode}
-                      setLoginMode={setLoginMode}
-                      userSubMode={userSubMode}
-                      setUserSubMode={setUserSubMode}
-                    />
-                  }
-                />
-
-                {/* AI & Developer Hub */}
-                <Route
-                  path="ai"
-                  element={
-                    <>
-                      <SEO
-                        title="AI & Developer Hub"
-                        description="Authoritative resources for AI agents and developers ingesting OlyBars data."
-                      />
-                      <AIGatewayScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="ai/feed"
-                  element={
-                    <>
-                      <SEO
-                        title="AI Feed Guide"
-                        description="Machine-readable guide for Venues, Events, and League Play data."
-                      />
-                      <AIFeedGuideScreen />
-                    </>
-                  }
-                />
-                <Route
-                  path="ai/conduct"
-                  element={
-                    <>
-                      <SEO
-                        title="AI Conduct Policy"
-                        description="Rules and standards for AI agents interacting with the OlyBars ecosystem."
-                      />
-                      <AIConductScreen />
-                    </>
-                  }
-                />
               </Route>
+              {/* Fallback */}
+              <Route path="*" element={<VenuesScreen venues={venues} isLoading={isLoading} userProfile={userProfile} onClockIn={handleClockIn} onVibeCheck={handleVibeCheck} clockInHistory={clockInHistory} vibeCheckHistory={vibeCheckHistory} clockedInVenue={clockedInVenue} vibeCheckedVenue={vibeCheckedVenue} />} />
+
             </Routes>
 
-            <LoginModal
-              isOpen={showLoginModal}
-              onClose={() => setShowLoginModal(false)}
-              loginMode={loginMode}
-              setLoginMode={setLoginMode}
-              userSubMode={userSubMode}
-              setUserSubMode={setUserSubMode}
-              userProfile={userProfile}
-              setUserProfile={setUserProfile}
-              venues={venues}
-              alertPrefs={alertPrefs}
-              setAlertPrefs={setAlertPrefs}
-              openInfo={openInfo}
-              onOwnerSuccess={() => setShowOwnerDashboard(true)}
-            />
+            {/* --- MODALS --- */}
 
-            {showOnboarding && (
-              <OnboardingModal
-                isOpen={showOnboarding}
-                onClose={() => setShowOnboarding(false)}
-                userRole={userProfile.role}
-              />
-            )}
-
-            {showOwnerDashboard && (
-              <OwnerDashboardScreen
-                isOpen={showOwnerDashboard}
-                onClose={() => setShowOwnerDashboard(false)}
-                venues={venues}
-                updateVenue={handleUpdateVenue}
-                userProfile={userProfile}
-                initialVenueId={ownerDashboardInitialVenueId}
-                initialView={ownerDashboardInitialView}
-              />
+            {showLoginModal && (
+              <Suspense fallback={null}>
+                <LoginModal
+                  isOpen={showLoginModal}
+                  onClose={() => setShowLoginModal(false)}
+                  defaultMode={loginMode}
+                  defaultSubMode={userSubMode}
+                  onLoginSuccess={(profile) => {
+                    setUserProfile(profile);
+                    setShowLoginModal(false);
+                    showToast(`Welcome back, ${profile.displayName || 'Guest'}!`, 'success');
+                  }}
+                />
+              </Suspense>
             )}
 
             {showClockInModal && selectedVenue && (
-              <ClockInModal
-                isOpen={showClockInModal}
-                onClose={() => setShowClockInModal(false)}
-                selectedVenue={selectedVenue}
-                awardPoints={awardPoints}
-                setClockInHistory={setClockInHistory}
-                setClockedInVenue={setClockedInVenue}
-                vibeChecked={vibeCheckedVenue === selectedVenue.id}
-                onVibeCheckPrompt={() => {
-                  setVibeVenue(selectedVenue);
-                  setShowVibeCheckModal(true);
-                  setShowClockInModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== "guest"}
-                userId={userProfile.uid}
-                userRole={userProfile.role}
-                onLogin={handleMemberLoginClick}
-                onJoinLeague={async () => {
-                  setShowClockInModal(false);
-                  if (
-                    userProfile.uid !== "guest" &&
-                    userProfile.role === "guest"
-                  ) {
-                    try {
-                      await updateUserProfile(userProfile.uid, {
-                        role: "user",
-                      });
-                      setUserProfile((prev) => ({ ...prev, role: "user" }));
-                      showToast(
-                        "Membership Activated! Points Sealed.",
-                        "success",
-                      );
-                      // Trigger Sips if needed
-                      if (
-                        !userProfile.favoriteDrinks ||
-                        userProfile.favoriteDrinks.length === 0
-                      ) {
-                        setTimeout(
-                          () => setShowPreferredSipsModal(true),
-                          500,
-                        );
-                      }
-                    } catch (e) {
-                      console.error(e);
-                      showToast(
-                        "Activation failed. Please try again.",
-                        "error",
-                      );
-                    }
-                  } else {
-                    setShowOnboarding(true);
-                  }
-                }}
-              />
+              <Suspense fallback={null}>
+                <ClockInModal
+                  isOpen={showClockInModal}
+                  onClose={() => setShowClockInModal(false)}
+                  venue={selectedVenue}
+                  userProfile={userProfile}
+                  onClockIn={() => handleConfirmClockIn(selectedVenue.id)}
+                />
+              </Suspense>
             )}
 
             {showVibeCheckModal && vibeVenue && (
-              <VibeCheckModal
-                isOpen={showVibeCheckModal}
-                onClose={() => setShowVibeCheckModal(false)}
-                venue={vibeVenue}
-                onConfirm={confirmVibeCheck}
-                clockedIn={clockedInVenue === vibeVenue.id}
-                onClockInPrompt={() => {
-                  setSelectedVenue(vibeVenue);
-                  setShowClockInModal(true);
-                  setShowVibeCheckModal(false);
-                }}
-                isLoggedIn={userProfile.uid !== "guest"}
-                userRole={userProfile.role}
-                onLogin={handleMemberLoginClick}
-              />
-            )}
-
-            {showPreferredSipsModal && (
-              <PreferredSipsModal
-                isOpen={showPreferredSipsModal}
-                onClose={() => setShowPreferredSipsModal(false)}
-                userProfile={userProfile}
-                setUserProfile={setUserProfile}
-              />
-            )}
-
-            {showHomeBaseModal && homeBaseTargetVenue && (
-              <HomeBaseModal
-                isOpen={showHomeBaseModal}
-                onClose={() => setShowHomeBaseModal(false)}
-                venueId={homeBaseTargetVenue.id}
-                venueName={homeBaseTargetVenue.name}
-                userProfile={userProfile}
-                setUserProfile={setUserProfile}
-              />
+              <Suspense fallback={null}>
+                <VibeCheckModal
+                  isOpen={showVibeCheckModal}
+                  onClose={() => setShowVibeCheckModal(false)}
+                  venue={vibeVenue}
+                  userProfile={userProfile}
+                  onVibeSubmit={(status, pts) => handleConfirmVibeCheck(status, vibeVenue.id, pts)}
+                />
+              </Suspense>
             )}
 
             {showMakerSurvey && (
-              <MakerSurveyModal
-                isOpen={showMakerSurvey}
-                onClose={() => {
-                  setShowMakerSurvey(false);
-                  // Optimistic update to prevent re-trigger in this session
-                  setUserProfile((prev) => ({
-                    ...prev,
-                    hasCompletedMakerSurvey: true,
-                  }));
-                }}
-                userId={userProfile.uid}
-              />
+              <Suspense fallback={null}>
+                <MakerSurveyModal
+                  isOpen={showMakerSurvey}
+                  onClose={() => setShowMakerSurvey(false)}
+                  onComplete={handleMakerSurveyComplete}
+                />
+              </Suspense>
             )}
+
+            <ArtieBioScreen
+              isOpen={showArtie}
+              onClose={() => setShowArtie(false)}
+              userProfile={userProfile}
+            />
+
+            <JoinTeamScreen
+              isOpen={false} // Placeholder
+              onClose={() => { }}
+            />
+
+            <TermsModal
+              isOpen={!hasAcceptedTerms && hasAcceptedAgeGate}
+              onAccept={() => setHasAcceptedTerms(true)}
+            />
 
             {currentReceipt && (
               <VibeReceiptModal
@@ -1569,6 +1118,23 @@ export default function OlyBarsApp() {
           </div>
         </Suspense>
       </DiscoveryProvider>
-    </ErrorBoundary >
+    </ErrorBoundary>
+  );
+}
+
+// --- ROOT EXPORT ---
+export default function OlyBarsApp() {
+  return (
+    <ErrorBoundary>
+      <DiscoveryProvider>
+        <React.Suspense fallback={<LoadingScreen />}>
+          <Router>
+            <UserProvider>
+              <AppContent />
+            </UserProvider>
+          </Router>
+        </React.Suspense>
+      </DiscoveryProvider>
+    </ErrorBoundary>
   );
 }
