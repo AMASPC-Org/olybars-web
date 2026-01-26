@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Mic, MicOff } from 'lucide-react';
+import { RotateCcw, X, Send, Bot, Sparkles, Loader2, CheckCircle2, Paperclip, Mic, MicOff } from 'lucide-react';
 
 /**
  * Strict Link Parser (Security-First)
@@ -44,7 +42,6 @@ const renderTextWithLinks = (text: string) => {
 };
 
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
-import { useSchmidtOps } from '../../hooks/useSchmidtOps'; // [UNIFIED]
 import { useDragAndDrop } from '../../hooks/useDragAndDrop';
 
 import { QuickReplyChips, QuickReplyOption } from './QuickReplyChips';
@@ -53,13 +50,16 @@ import { UserProfile, isSystemAdmin } from '../../types';
 // Note: Ensure these paths exist in your assets folder
 import artieLogo from '../../assets/Artie-Only-Logo.png';
 import schmidtLogo from '../../assets/Schmidt-Only-Logo (40 x 40 px).png';
-import { ChatMessage } from '../../types/chat';
+import { ArtieMessage } from '../../features/artie/services/ArtieAgent';
 
 interface ArtieChatModalProps {
     isOpen: boolean;
     onClose: () => void;
     userProfile?: UserProfile;
     initialVenueId?: string;
+    artieChat: any;
+    opsSchmidt: any;
+    persona: 'artie' | 'schmidt';
 }
 
 interface ArtieAction {
@@ -129,16 +129,17 @@ const getArtieGreeting = (profile?: UserProfile): ArtieGreeting => {
     };
 };
 
-export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, userProfile, initialVenueId }) => {
+export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
+    isOpen,
+    onClose,
+    userProfile,
+    initialVenueId,
+    artieChat,
+    opsSchmidt,
+    persona
+}) => {
     // --- 1. Mode Determination ---
     const isOpsMode = !((window as any)._artie_force_guest) && userProfile && (isSystemAdmin(userProfile) || userProfile.role === 'owner' || userProfile.role === 'manager');
-
-    // --- 2. Hook (Unified) ---
-    const opsSchmidt = useSchmidtOps();
-
-    // [SELECTOR] Logic now flows through one hook
-    const activeHook = opsSchmidt;
-    const persona = opsSchmidt.persona;
 
 
 
@@ -281,9 +282,14 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
         const venueId = initialVenueId || userProfile?.homeBase;
         const requestContext = { userId: userProfile?.uid, userRole: userProfile?.role, hpValue };
 
-        // Unified Logic
-        await opsSchmidt.processAction(userText, undefined, venueId, requestContext);
+        // [OPTIMIZATION] If in Artie Discovery, use the specialized hook
+        if (persona === 'artie' && opsSchmidt.opsState === 'idle') {
+            await artieChat.sendMessage(userText);
+            return;
+        }
 
+        // Otherwise use the Ops state machine
+        await opsSchmidt.processAction(userText, undefined, venueId, requestContext);
     };
 
     const handleSuggestionClick = (suggestion: string) => {
@@ -448,9 +454,9 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({ isOpen, onClose, u
     if (!isOpen) return null;
 
     // Unified Variables from Active Hook
-    const activeMessages = activeHook.messages;
-    const activeIsLoading = activeHook.isLoading;
-    const activeError = activeHook.error;
+    const activeMessages = persona === 'artie' ? artieChat.messages : opsSchmidt.messages;
+    const activeIsLoading = persona === 'artie' ? artieChat.isLoading : opsSchmidt.isLoading;
+    const activeError = persona === 'artie' ? artieChat.error : opsSchmidt.error;
 
     // Schmidt has bubbles, Artie (guest) currently doesn't use the same quickReply system but could
     // For now we only show bubbles if they exist in the active hook (ArtieOps doesn't have them yet)

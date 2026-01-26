@@ -79,6 +79,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
+  const isMapPage = location.pathname === '/map';
+
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
