@@ -100,12 +100,4 @@ export interface VenueMenuItem {
 }
 
 // --- TAB [7]: PEOPLE ---
-
-export interface VenueInvite {
-  id: string;
-  token: string; // Single-use security token
-  email: string;
-  role: "manager" | "staff";
-  status: "pending" | "accepted" | "expired";
-  expiresAt: Timestamp; // TTL of 48 hours
-}
+// VenueInvite removed - using src/types/venue.ts as source of truth
