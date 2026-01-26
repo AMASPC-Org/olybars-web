@@ -1,5 +1,5 @@
 ---
-status: open
+status: done
 agent: unassigned
 type: security
 priority: high

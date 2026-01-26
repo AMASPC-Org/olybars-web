@@ -1,5 +1,5 @@
 ---
-status: claimed
+status: done
 agent: AGV2
 type: security
 priority: high
