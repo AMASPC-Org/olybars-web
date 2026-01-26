@@ -907,7 +907,6 @@ function AppContent() {
                       />
                       <TriviaScreen
                         venues={venues}
-                        userProfile={userProfile}
                       />
                     </>
                   }
@@ -1386,8 +1385,6 @@ function AppContent() {
                 onClose={() => setShowHomeBaseModal(false)}
                 venueId={homeBaseTargetVenue.id}
                 venueName={homeBaseTargetVenue.name}
-                userProfile={userProfile}
-                setUserProfile={setUserProfile}
               />
             )}
 

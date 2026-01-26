@@ -3,24 +3,21 @@ import { X, Home, Star } from 'lucide-react';
 import { UserProfile } from '../../../types';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
+import { useUser } from '../../../contexts/UserContext';
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     venueName: string;
     venueId: string;
-    userProfile: UserProfile;
-    setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
 }
 
 export const HomeBaseModal: React.FC<Props> = ({
     isOpen,
     onClose,
-    venueName,
     venueId,
-    userProfile,
-    setUserProfile
 }) => {
+    const { userProfile, refreshProfile } = useUser();
     const [isSaving, setIsSaving] = useState(false);
     const { showToast } = useToast();
 
@@ -31,8 +28,8 @@ export const HomeBaseModal: React.FC<Props> = ({
                 await updateUserProfile(userProfile.uid, { homeBase: venueId });
             }
 
-            // Update local state
-            setUserProfile(prev => ({ ...prev, homeBase: venueId }));
+            // Update local state by refreshing context
+            await refreshProfile();
 
             showToast(`${venueName} is now your Home Base! 🏠`, 'success');
             onClose();

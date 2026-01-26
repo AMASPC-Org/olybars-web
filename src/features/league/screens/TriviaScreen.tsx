@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useUser } from "../../../contexts/UserContext";
 import { ArenaLayout } from "../../../components/layout/ArenaLayout";
 import { UniversalEventCard } from "../../../components/ui/UniversalEventCard";
 import { GameFeatureCard } from "../components/GameFeatureCard";
@@ -17,13 +18,12 @@ import { CheatCodeWidget } from "../../history/components/CheatCodeWidget";
 
 interface TriviaScreenProps {
   venues: Venue[];
-  userProfile?: any;
 }
 
 export const TriviaScreen: React.FC<TriviaScreenProps> = ({
   venues,
-  userProfile,
 }) => {
+  const { userProfile } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(
     null,
@@ -74,9 +74,9 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({
     );
     return key
       ? {
-          title: key.charAt(0).toUpperCase() + key.slice(1),
-          note: GAME_FEATURE_LORE[key],
-        }
+        title: key.charAt(0).toUpperCase() + key.slice(1),
+        note: GAME_FEATURE_LORE[key],
+      }
       : null;
   }, [searchQuery]);
 
