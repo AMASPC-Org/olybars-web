@@ -37,3 +37,7 @@ If you see these patterns in `JSX` or `UI Strings`, auto-correct them:
 Before reporting any UI task as "Complete", you MUST run a global grep for forbidden terms to ensure no leaks were introduced or missed:
 - `grep -riE "points|score|xp" src/` (Filter out `node_modules` and `types`)
 - If matches are found in user-facing files, you must fix them before finishing.
+
+## 5. System Layer Disambiguation
+Refer to [system_glossary.md](file:///.agent/rules/system_glossary.md) for the distinction between Antigravity (Engineering) and OlyBars (Product) terminology.
+- **Strict Rule**: Never confuse "Agent Skills" (.agent/skills) with "Persona Skills" (src/skills).
