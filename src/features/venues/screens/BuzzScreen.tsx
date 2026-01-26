@@ -1,34 +1,16 @@
 import React, { useState, useCallback, useMemo } from "react";
-import {
-  useNavigate,
-  Link,
-  useSearchParams,
-  useOutletContext,
-} from "react-router-dom";
-import { GlobalSearch } from "../../../components/features/search/GlobalSearch";
-import { StickyHeader } from "../../../components/layout/StickyHeader";
-import { DateContextSelector } from "../../../components/features/search/DateContextSelector";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   Flame,
   Beer,
-  Star,
-  Users,
   MapPin,
-  Trophy,
   ChevronRight,
   Crown,
-  Search,
-  Filter,
-  Bot,
-  Clock,
   Zap,
-  Gamepad2,
-  ShieldCheck,
-  List,
-  Map as MapIcon,
   Sparkles,
-  Utensils,
+  Clock,
 } from "lucide-react";
+import { InteractionBase as InteractionBaseComponent } from "../../../components/ui/InteractionBase";
 import {
   Venue,
   VenueStatus,
@@ -48,15 +30,12 @@ import {
   timeToMinutes,
 } from "../../../utils/venueUtils";
 import { PULSE_CONFIG } from "../../../config/pulse";
-import {
-  TAXONOMY_PLAY,
-  TAXONOMY_FEATURES,
-  TAXONOMY_EVENTS,
-} from "../../../data/taxonomy";
+import { TAXONOMY_EVENTS } from "../../../data/taxonomy";
 import { isSameDay, format } from "date-fns";
 import { useDiscovery } from "../contexts/DiscoveryContext";
-import { VenueMap } from "../components/VenueMap";
+import { useVenueLiveStatus } from "../../../hooks/useVenueLiveStatus";
 import { SEO } from "../../../components/common/SEO";
+import { VenueMap } from "../components/VenueMap";
 
 const SkeletonCard = () => (
   <div className="bg-surface rounded-xl border border-slate-800 p-4 shadow-lg animate-pulse">
@@ -107,15 +86,6 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
-type FilterKind =
-  | "status"
-  | "scene"
-  | "play"
-  | "makers"
-  | "features"
-  | "events"
-  | "all";
-
 const STATUS_ORDER: Record<VenueStatus, number> = {
   flooded: 0,
   gushing: 1,
@@ -125,7 +95,8 @@ const STATUS_ORDER: Record<VenueStatus, number> = {
 
 const EventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
   return (
-    <div
+    <InteractionBaseComponent
+      as="div"
       onClick={onClick}
       className="p-4 rounded-2xl bg-surface/50 border border-white/5 hover:bg-surface transition-all cursor-pointer group flex gap-4 animate-in fade-in slide-in-from-bottom-2"
     >
@@ -171,7 +142,130 @@ const EventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
           />
         </div>
       </div>
-    </div>
+    </InteractionBaseComponent>
+  );
+};
+
+const VenueListItem = ({
+  venue,
+  onClick,
+  upcomingDeals,
+}: {
+  venue: any;
+  onClick: () => void;
+  upcomingDeals: any;
+}) => {
+  const livePulse = useVenueLiveStatus(venue.id, {
+    score: venue.currentBuzz?.score,
+    status: venue.status,
+    clockIns: venue.clockIns,
+    lastUpdated: venue.currentBuzz?.lastUpdated,
+  });
+
+  const hasActiveBounty = !!(
+    venue.activeFlashBounty && venue.activeFlashBounty.isActive
+  );
+
+  // Resolving Deal Display
+  const scheduledDeal = upcomingDeals[venue.id]?.sort(
+    (a, b: any) => a.startTime - b.startTime,
+  )[0];
+  const isUpcoming = !hasActiveBounty && !!scheduledDeal;
+
+  const bountyTitle =
+    venue.activeFlashBounty?.title || venue.deal || scheduledDeal?.title;
+
+  return (
+    <InteractionBaseComponent
+      as="div"
+      onClick={onClick}
+      className={`p-4 rounded-2xl flex gap-4 transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-4 duration-500 border ${hasActiveBounty
+        ? "bg-red-950/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] hover:bg-red-950/30"
+        : "bg-surface/50 border-white/5 hover:bg-surface"
+        }`}
+    >
+      <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+        <img
+          src={
+            venue.photos?.[0]?.url ||
+            "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&auto=format&fit=crop"
+          }
+          alt={venue.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+        <div className="absolute top-1 right-1">
+          <PulseMeter status={livePulse.status} />
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start">
+          <h3
+            className={`text-lg font-black uppercase font-league leading-tight truncate transition-colors ${hasActiveBounty ? "text-white" : "group-hover:text-primary"
+              }`}
+          >
+            {venue.name}
+          </h3>
+          {venue.distance !== null && (
+            <span className="text-[10px] font-bold text-slate-500 uppercase">
+              {venue.distance.toFixed(1)}mi
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-widest italic truncate">
+            {venue.vibe}
+          </span>
+          <span className="text-slate-700">•</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase mb-[1px]">
+            {venue.venueType.replace(/_/g, " ")}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-1">
+          {venue.sceneTags?.slice(0, 3).map((tag: string) => (
+            <span
+              key={tag}
+              className="text-[8px] font-black bg-white/5 text-slate-400 px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+
+        {bountyTitle && (
+          <div
+            className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${hasActiveBounty
+              ? "bg-red-500 text-white border-red-400 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]"
+              : isUpcoming
+                ? "bg-amber-400 text-black border-amber-300 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
+                : "text-red-500 border-transparent"
+              }`}
+          >
+            {hasActiveBounty && venue.activeFlashBounty?.category === "food" ? (
+              <Utensils size={12} className="fill-white" />
+            ) : hasActiveBounty &&
+              venue.activeFlashBounty?.category === "drink" ? (
+              <Beer size={12} className="fill-white" />
+            ) : (
+              <Zap
+                size={12}
+                className={hasActiveBounty ? "fill-white" : "fill-red-500"}
+              />
+            )}
+            <span className="text-[9px] font-black uppercase tracking-widest">
+              {hasActiveBounty
+                ? "FLASH BOUNTY: "
+                : isUpcoming
+                  ? "STARTING SOON: "
+                  : ""}
+              {bountyTitle.replace(/⚡/g, "").trim()}
+            </span>
+          </div>
+        )}
+      </div>
+    </InteractionBaseComponent>
   );
 };
 
@@ -180,11 +274,7 @@ export const BuzzScreen: React.FC = () => {
   const {
     venues,
     userProfile,
-    onToggleMenu,
-    onClockIn: handleClockIn,
-    clockedInVenue,
     isLoading,
-    onToggleWeeklyBuzz,
     clockInHistory = [],
     vibeCheckHistory = [],
   } = useOutletContext<{
@@ -200,27 +290,18 @@ export const BuzzScreen: React.FC = () => {
     vibeCheckHistory?: VibeCheckRecord[];
   }>();
 
-  const userPoints = userProfile.stats?.seasonPoints || 0;
   const isGuest = userProfile.role === "guest";
   const navigate = useNavigate();
   const {
     searchQuery,
     filterKind,
-    setFilterKind,
     statusFilter,
-    setStatusFilter,
     sceneFilter,
-    setSceneFilter,
     playFilter,
-    setPlayFilter,
     featureFilter,
-    setFeatureFilter,
     eventFilter,
-    setEventFilter,
     selectedDate,
-    setSelectedDate,
     viewMode,
-    setViewMode,
     isToday,
     clearAllFilters,
     mapRegion, // Get mapRegion here
@@ -228,12 +309,6 @@ export const BuzzScreen: React.FC = () => {
   } = useDiscovery();
 
   const isNextStopMode = searchParams.get("mode") === "next-stop";
-  const [showPulseMenu, setShowPulseMenu] = useState(false);
-  const [showSceneMenu, setShowSceneMenu] = useState(false);
-  const [showPlayMenu, setShowPlayMenu] = useState(false);
-  const [showFeatureMenu, setShowFeatureMenu] = useState(false);
-  const [showEventMenu, setShowEventMenu] = useState(false);
-  const [showMakersMenu, setShowMakersMenu] = useState(false);
   const [upcomingDeals, setUpcomingDeals] = useState<
     Record<string, ScheduledDeal[]>
   >({});
@@ -574,13 +649,13 @@ export const BuzzScreen: React.FC = () => {
         distance:
           coords && v.location
             ? metersToMiles(
-                calculateDistance(
-                  coords.latitude,
-                  coords.longitude,
-                  v.location.lat,
-                  v.location.lng,
-                ),
-              )
+              calculateDistance(
+                coords.latitude,
+                coords.longitude,
+                v.location.lat,
+                v.location.lng,
+              ),
+            )
             : null,
       })),
     [venues, coords, selectedDate],
@@ -649,7 +724,6 @@ export const BuzzScreen: React.FC = () => {
             if (nextDeal) {
               const start = new Date(nextDeal.startTime);
               const startMinutes = start.getHours() * 60 + start.getMinutes();
-              const diff = startMinutes - currentMinutes;
               // Note: diff might be negative if start implies "tomorrow" but simplified logic treats as linear.
               // Actually, use raw timestamp diff for correctness across midnight
               const diffMinutes = (nextDeal.startTime - Date.now()) / 60000;
@@ -777,35 +851,26 @@ export const BuzzScreen: React.FC = () => {
     ],
   );
 
-  const flashBountyVenues = venues.filter((v) => {
-    const hasFlatDeal = !!v.deal && (v.dealEndsIn || 0) > 0;
-    const hasStructuredDeal =
-      v.activeFlashBounty?.isActive &&
-      (v.activeFlashBounty.endTime || 0) > Date.now();
-    const hasUpcomingDeal = upcomingDeals[v.id]?.length > 0;
-    return hasFlatDeal || hasStructuredDeal || hasUpcomingDeal;
-  });
-
   const isFallbackActive =
     filteredVenues.length === 0 && venuesWithDistance.length > 0;
 
   const displayVenues = isFallbackActive
     ? [...venuesWithDistance]
-        .filter(
-          (v) =>
-            v.tier_config?.is_directory_listed !== false &&
-            v.isActive !== false,
-        )
-        .sort((a, b) => {
-          if (a.isPaidLeagueMember && !b.isPaidLeagueMember) return -1;
-          if (!a.isPaidLeagueMember && b.isPaidLeagueMember) return 1;
-          return 0;
-        })
-        .map((v, i, arr) => {
-          const shiftedIndex =
-            (i + (rotationOffset % (arr.length || 1))) % (arr.length || 1);
-          return arr[shiftedIndex];
-        })
+      .filter(
+        (v) =>
+          v.tier_config?.is_directory_listed !== false &&
+          v.isActive !== false,
+      )
+      .sort((a, b) => {
+        if (a.isPaidLeagueMember && !b.isPaidLeagueMember) return -1;
+        if (!a.isPaidLeagueMember && b.isPaidLeagueMember) return 1;
+        return 0;
+      })
+      .map((v, i, arr) => {
+        const shiftedIndex =
+          (i + (rotationOffset % (arr.length || 1))) % (arr.length || 1);
+        return arr[shiftedIndex];
+      })
     : filteredVenues;
 
   const displayItems = useMemo(() => {
@@ -878,15 +943,6 @@ export const BuzzScreen: React.FC = () => {
         return timeA.localeCompare(timeB);
       });
   }, [displayVenues, filterKind, selectedDate, eventFilter]);
-
-  const statusActive = filterKind === "status" || filterKind === "all";
-  const sceneActive = filterKind === "scene";
-  const playActive = filterKind === "play";
-  const featuresActive = filterKind === "features";
-  const eventsActive = filterKind === "events";
-
-  const baseChipClasses =
-    "px-3 py-1.5 text-xs font-bold rounded-full border transition-all whitespace-nowrap";
 
   return (
     <div className="bg-background min-h-screen pb-24 font-sans text-slate-100">
@@ -983,131 +1039,13 @@ export const BuzzScreen: React.FC = () => {
                     );
                   }
 
-                  const venue = item;
-                  const hasActiveBounty = !!(
-                    venue.activeFlashBounty && venue.activeFlashBounty.isActive
-                  );
-
-                  // Resolving Deal Display
-                  const scheduledDeal = upcomingDeals[venue.id]?.sort(
-                    (a, b) => a.startTime - b.startTime,
-                  )[0];
-                  const isUpcoming = !hasActiveBounty && !!scheduledDeal;
-
-                  const bountyTitle =
-                    venue.activeFlashBounty?.title ||
-                    venue.deal ||
-                    scheduledDeal?.title;
-
                   return (
-                    <div
-                      key={venue.id}
-                      onClick={() => navigate(`/bars/${venue.id}`)}
-                      className={`p-4 rounded-2xl flex gap-4 transition-all cursor-pointer group animate-in fade-in slide-in-from-bottom-4 duration-500 border ${
-                        hasActiveBounty
-                          ? "bg-red-950/20 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)] hover:bg-red-950/30"
-                          : "bg-surface/50 border-white/5 hover:bg-surface"
-                      }`}
-                    >
-                      <div className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
-                        <img
-                          src={
-                            venue.photos?.[0]?.url ||
-                            "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=100&auto=format&fit=crop"
-                          }
-                          alt={venue.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute top-1 right-1">
-                          <PulseMeter status={venue.status} />
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h3
-                            className={`text-lg font-black uppercase font-league leading-tight truncate transition-colors ${
-                              hasActiveBounty
-                                ? "text-white"
-                                : "group-hover:text-primary"
-                            }`}
-                          >
-                            {venue.name}
-                          </h3>
-                          {venue.distance !== null && (
-                            <span className="text-[10px] font-bold text-slate-500 uppercase">
-                              {venue.distance.toFixed(1)}mi
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-bold text-primary uppercase tracking-widest italic truncate">
-                            {venue.vibe}
-                          </span>
-                          <span className="text-slate-700">•</span>
-                          <span className="text-[10px] font-black text-slate-500 uppercase mb-[1px]">
-                            {venue.venueType.replace(/_/g, " ")}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1">
-                          {venue.sceneTags?.slice(0, 3).map((tag: string) => (
-                            <span
-                              key={tag}
-                              className="text-[8px] font-black bg-white/5 text-slate-400 px-1.5 py-0.5 rounded border border-white/5 uppercase tracking-tighter"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        {bountyTitle && (
-                          <div
-                            className={`mt-2 flex items-center gap-1.5 p-2 rounded-lg border ${
-                              hasActiveBounty
-                                ? "bg-red-500 text-white border-red-400 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]"
-                                : isUpcoming
-                                  ? "bg-amber-400 text-black border-amber-300 font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]"
-                                  : "text-red-500 border-transparent"
-                            }`}
-                          >
-                            {hasActiveBounty &&
-                            venue.activeFlashBounty?.category === "food" ? (
-                              <Utensils size={12} className="fill-white" />
-                            ) : hasActiveBounty &&
-                              venue.activeFlashBounty?.category === "drink" ? (
-                              <Beer size={12} className="fill-white" />
-                            ) : (
-                              <Zap
-                                size={hasActiveBounty || isUpcoming ? 12 : 10}
-                                className={`${
-                                  hasActiveBounty
-                                    ? "fill-white"
-                                    : isUpcoming
-                                      ? "fill-black"
-                                      : "fill-red-500"
-                                }`}
-                              />
-                            )}
-                            <span
-                              className={`text-[10px] uppercase tracking-tighter line-clamp-1 ${
-                                hasActiveBounty || isUpcoming
-                                  ? "font-black"
-                                  : "font-bold"
-                              }`}
-                            >
-                              {hasActiveBounty
-                                ? "FLASH BOUNTY: "
-                                : isUpcoming
-                                  ? "STARTING SOON: "
-                                  : ""}
-                              {bountyTitle.replace(/⚡/g, "").trim()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <VenueListItem
+                      key={item.id}
+                      venue={item}
+                      upcomingDeals={upcomingDeals}
+                      onClick={() => navigate(`/bars/${item.id}`)}
+                    />
                   );
                 })
               ) : (

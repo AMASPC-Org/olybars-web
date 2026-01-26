@@ -3,15 +3,13 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation,
-  useSearchParams,
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { SEO } from "./components/common/SEO";
 import { X } from "lucide-react";
-import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./lib/firebase";
 
 // --- CONFIG & TYPES ---
@@ -23,7 +21,6 @@ import {
   ClockInRecord,
   UserAlertPreferences,
   VenueStatus,
-  ActivityLog,
   GameStatus,
   VibeCheckRecord,
 } from "./types";
@@ -34,11 +31,9 @@ import { fetchVenues, updateVenueDetails } from "./services/venueService";
 import {
   saveAlertPreferences,
   logUserActivity,
-  syncClockIns,
   fetchUserRank,
   toggleFavorite,
   updateUserProfile,
-  fetchRecentActivity, // New Export
   performVibeCheck,
   getUserProfile,
 } from "./services/userService";
@@ -265,8 +260,8 @@ const SmartOwnerRoute = ({
   const defaultVenueId =
     venueId ||
     (isSystemAdmin(userProfile) &&
-    (!userProfile.venuePermissions ||
-      Object.keys(userProfile.venuePermissions).length === 0)
+      (!userProfile.venuePermissions ||
+        Object.keys(userProfile.venuePermissions).length === 0)
       ? "hannahs"
       : userProfile.venuePermissions
         ? Object.keys(userProfile.venuePermissions)[0]
@@ -326,7 +321,7 @@ export default function OlyBarsApp() {
   const [alertPrefs, setAlertPrefs] = useState<UserAlertPreferences>(() =>
     JSON.parse(
       localStorage.getItem("oly_prefs") ||
-        '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}',
+      '{"nightlyDigest":true,"weeklyDigest":true,"followedVenues":[],"interests":[]}',
     ),
   );
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -414,12 +409,13 @@ export default function OlyBarsApp() {
         }
       } else {
         // [SANITIZATION] No session -> Revert to Guest
+        // We ALWAYS clear these on null session to prevent "Zombie Hydration"
+        localStorage.removeItem("oly_profile");
+        localStorage.removeItem("oly_points");
+        localStorage.removeItem("oly_clockins");
+
         if (userProfile.uid !== "guest") {
           setUserProfile({ uid: "guest", role: "guest" });
-          localStorage.removeItem("oly_profile");
-          localStorage.removeItem("oly_points");
-          localStorage.removeItem("oly_clockins");
-          // NOTE: We do NOT remove oly_age_gate or oly_terms to preserve UX
         }
       }
       setIsAuthInitializing(false);
@@ -511,10 +507,6 @@ export default function OlyBarsApp() {
   useEffect(() => {
     localStorage.setItem("oly_clockins", JSON.stringify(clockInHistory));
   }, [clockInHistory]);
-
-  useEffect(() => {
-    localStorage.setItem("oly_vibe_history", JSON.stringify(vibeCheckHistory));
-  }, [vibeCheckHistory]);
 
   useEffect(() => {
     localStorage.setItem("oly_vibe_history", JSON.stringify(vibeCheckHistory));
@@ -662,7 +654,7 @@ export default function OlyBarsApp() {
     if (lastCheck && now - lastCheck < 60 * 60 * 1000) {
       const minsLeft = Math.ceil((60 * 60 * 1000 - (now - lastCheck)) / 60000);
       showToast(
-        `${venue.name} Vibe Check locked! Available in ${minsLeft}m`,
+        `${venue.name} Vibe Check locked! Available in ${minsLeft} m`,
         "info",
       );
       return;
@@ -732,7 +724,7 @@ export default function OlyBarsApp() {
       hasConsent,
       verificationMethod,
       gameBonus,
-      userProfile.uid !== "guest",
+      userProfile.uid === "guest",
     );
 
     // Generate Vibe Receipt
@@ -852,18 +844,30 @@ export default function OlyBarsApp() {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      // 1. Authoritative Sign Out
+      await signOut(auth);
+
+      // 2. Clear Local State
+      localStorage.removeItem("oly_profile");
+      localStorage.removeItem("oly_points");
+      localStorage.removeItem("oly_clockins");
+
+      // 3. Reset React State
+      setUserProfile({ uid: "guest", role: "guest" });
+      setUserPoints(1250);
+      setClockInHistory([]);
+      setShowOwnerDashboard(false);
+
+      // 4. Tiny Propagate Delay (Ensures IDB/Cookies are cleared before reload)
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // 5. Hard Reset
+      window.location.href = "/";
     } catch (error) {
       console.error("[App] Logout failed:", error);
+      // Fail-safe redirect even on error
+      window.location.href = "/";
     }
-    localStorage.removeItem("oly_profile");
-    localStorage.removeItem("oly_points");
-    localStorage.removeItem("oly_clockins");
-    setUserProfile({ uid: "guest", role: "guest" });
-    setUserPoints(1250);
-    setClockInHistory([]);
-    setShowOwnerDashboard(false);
-    window.location.href = "/";
   };
 
   // Sync points when profile changes (e.g. after login)
