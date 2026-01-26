@@ -38,7 +38,11 @@
         },
         {
             "question": "What is Artie?",
-            "answer": "Artie is OlyBars' official AI concierge, powered by Well 80. He helps players find the right vibe and helps venue owners manage their presence."
+            "answer": "Artie is OlyBars' official AI concierge for players and guests. He knows every vibe, happy hour, and secret stool in the city. He's your guide to the League."
+        },
+        {
+            "question": "Who is Schmidt?",
+            "answer": "Schmidt is our specialized Heritage Concierge for Venue Owners and Operators. Inspired by Leopold Schmidt, he provides business coaching, compliance guidance, and automated marketing through 'The Brew House'."
         },
         {
             "question": "What is The Weekly Buzz?",

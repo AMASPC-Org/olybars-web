@@ -44,14 +44,17 @@ export class GeminiService {
   }
 
   /**
-   * [ADAPTER] Static method required by ArtieChat flow
-   * Now imports from the shared config.
+   * [ADAPTER] Returns the system instruction for the specified agent.
    */
   static async generateSystemPrompt(
-    userId?: string,
-    role?: string,
-    venueId?: string,
+    agent: "artie" | "schmidt",
+    _userId?: string,
+    _role?: string,
+    _venueId?: string,
   ): Promise<string> {
+    if (agent === "schmidt") {
+      return GeminiService.SCHMIDT_PERSONA;
+    }
     return GeminiService.ARTIE_PERSONA;
   }
 
@@ -94,7 +97,28 @@ export class GeminiService {
     return this.genAI.models.generateContentStream({
       model,
       contents,
-      // [FINOPS] If we have a cache, the system instruction is already inside it.
+      systemInstruction: cachedContent
+        ? undefined
+        : { parts: [{ text: instruction }] },
+      tools: tools ? [{ function_declarations: tools }] : undefined,
+      cachedContent,
+      config: { temperature },
+    });
+  }
+
+  async generateSchmidtResponseStream(
+    model: string,
+    contents: any[],
+    temperature: number = 0.7,
+    systemInstruction?: string,
+    tools?: any[],
+    cachedContent?: string,
+  ) {
+    const instruction = systemInstruction || GeminiService.SCHMIDT_PERSONA;
+
+    return this.genAI.models.generateContentStream({
+      model,
+      contents,
       systemInstruction: cachedContent
         ? undefined
         : { parts: [{ text: instruction }] },
@@ -196,7 +220,7 @@ export class GeminiService {
 
     try {
       return JSON.parse(text);
-    } catch (e) {
+    } catch (_e) {
       console.error("JSON Parse Error on Artie Analysis:", text);
       return {
         confidenceScore: 0,
