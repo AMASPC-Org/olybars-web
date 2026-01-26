@@ -3,21 +3,5 @@
     "default": "ama-ecosystem-prod",
     "staging": "ama-ecosystem-dev-9ceda"
   },
-  "targets": {
-    "ama-ecosystem-prod": {
-      "hosting": {
-        "main_app": [
-          "olybars"
-        ]
-      }
-    },
-    "ama-ecosystem-dev-9ceda": {
-      "hosting": {
-        "main_app": [
-          "ama-ecosystem-dev-9ceda"
-        ]
-      }
-    }
-  },
   "etags": {}
 }
