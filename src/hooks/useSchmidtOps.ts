@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { usePersona } from '../contexts';
+import { usePersona, useUser } from '../contexts';
+import { UserProfile, isSystemAdmin } from '../types';
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
 import { VenueOpsService } from '../services/VenueOpsService';
 import { SkillContext, EventSkillContext } from '../types/skill';
@@ -34,7 +35,8 @@ interface EventDraft {
 
 export const useSchmidtOps = () => {
     // 1. Core State (Unified Schmidt System)
-    const { activePersona } = usePersona(); // Consume centralized persona context
+    const { activePersona, setActivePersona } = usePersona(); // Consume centralized persona context
+    const { userProfile } = useUser();
     const [opsState, setOpsState] = useState<SchmidtOpsState>('idle');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [currentBubbles, setCurrentBubbles] = useState<QuickReplyOption[]>([]);
@@ -97,8 +99,8 @@ export const useSchmidtOps = () => {
         try {
             const check = await VenueOpsService.validateSlot(mockVenue, new Date(timeISO).getTime(), duration);
             return check;
-        } catch (_e) {
-            console.warn("Validation service unreachable, proceeding with caution.");
+        } catch (error) {
+            console.warn("Validation service unreachable, proceeding with caution.", error);
             return { valid: true };
         }
     }, []);
@@ -126,6 +128,21 @@ export const useSchmidtOps = () => {
         }
 
         const effectivePersona = forcedPersona || activePersona;
+
+        // --- AUTHORIZATION GATEKEEPER (The Ryan Rule + Owner Access) ---
+        const isSchmidtAuthorized = (user: UserProfile) => {
+            // 1. System Admins (Ryan / HQ)
+            if (isSystemAdmin(user)) return true;
+
+            // 2. Venue Operators (Owners / Staff)
+            // If they have ANY venue permissions, they are "Staff" or "Owner" somewhere.
+            if (user.venuePermissions && Object.keys(user.venuePermissions).length > 0) {
+                return true;
+            }
+
+            return false;
+        };
+
 
 
         // --- Context Implementation ---
@@ -173,6 +190,18 @@ export const useSchmidtOps = () => {
             validateLCBCompliance,
             validateSchedule
         };
+
+        // --- AUTHORIZATION GATEKEEPER (The Ryan Rule) ---
+        // If trying to be Schmidt but not authorized...
+        if (effectivePersona === 'schmidt' && !isSchmidtAuthorized(userProfile)) {
+            console.warn(`[Security] Unauthorized Schmidt Access Attempt by ${userProfile?.email || 'unknown'}`);
+
+            // Forcefully downgrade to Artie
+            setActivePersona('artie');
+
+            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. You need higher clearance to access Schmidt Ops.", ctx as any);
+            return;
+        }
 
         const eventCtx: EventSkillContext = {
             ...ctx,
@@ -422,7 +451,7 @@ export const useSchmidtOps = () => {
 
     return {
         persona: activePersona,
-        setPersona: (_p: any) => console.warn('Persona is managed by Global Context'),
+        setPersona: () => console.warn('Persona is managed by Global Context'),
         opsState,
         setOpsState,
         messages,

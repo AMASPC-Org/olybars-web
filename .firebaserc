@@ -6,15 +6,14 @@
   "targets": {
     "ama-ecosystem-prod": {
       "hosting": {
-
-        "prod": [
+        "main_app": [
           "olybars"
         ]
       }
     },
     "ama-ecosystem-dev-9ceda": {
       "hosting": {
-        "dev": [
+        "main_app": [
           "ama-ecosystem-dev-9ceda"
         ]
       }

@@ -19,7 +19,7 @@
   ],
   "hosting": [
     {
-      "site": "olybars",
+      "target": "main_app",
       "public": "dist",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
