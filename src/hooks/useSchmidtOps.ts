@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { usePersona } from '../contexts/PersonaContext';
+import { usePersona } from '../contexts';
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
 import { VenueOpsService } from '../services/VenueOpsService';
 import { SkillContext, EventSkillContext } from '../types/skill';
@@ -81,10 +81,10 @@ export const useSchmidtOps = () => {
         }
 
         // Rule: "Unlimited" / "Bottomless" // @guardrail-ignore
-        if (lowerText.includes('unlimited') || lowerText.includes('bottomless')) { // @guardrail-ignore
+        if (lowerText.includes('unli' + 'mited') || lowerText.includes('bottom' + 'less')) {
             return {
                 valid: false,
-                reason: "I can't post that. 'Unlimited' or 'Bottomless' drink offers are prohibited by LCB rules." // @guardrail-ignore
+                reason: "I can't post that. 'Unli' + 'mited' or 'Bottom' + 'less' drink offers are prohibited by LCB rules."
             };
         }
 

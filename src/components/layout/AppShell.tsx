@@ -12,8 +12,8 @@ import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types'
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
-import { usePersona } from '../../contexts/PersonaContext';
-import { useUser } from '../../contexts/UserContext';
+import { usePersona } from '../../contexts';
+import { useUser } from '../../contexts';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';

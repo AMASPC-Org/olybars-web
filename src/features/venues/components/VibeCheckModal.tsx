@@ -14,12 +14,12 @@ import {
   Droplets,
   Waves,
 } from "lucide-react";
-import { Venue, VenueStatus, GameStatus, UserProfile } from "../../../types";
+import { Venue, VenueStatus, GameStatus } from "../../../types";
 import { getGameTTL } from "../../../config/gameConfig";
 import { GAMIFICATION_CONFIG } from "../../../config/gamification";
 import { FormatCurrency } from "../../../utils/formatCurrency";
 import { useBouncer, AdmissionStatus } from "../../../hooks/useBouncer";
-import { useUser } from "../../../contexts/UserContext";
+import { useUser } from "../../../contexts";
 
 interface VibeCheckModalProps {
   isOpen: boolean;

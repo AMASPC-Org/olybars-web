@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUser } from '../../../contexts/UserContext';
+import { useUser } from '../../../contexts';
 import { BouncerService, AdmissionStatus } from '../../../services/BouncerService';
 import { Loader2 } from 'lucide-react';
 

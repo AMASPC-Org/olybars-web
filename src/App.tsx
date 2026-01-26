@@ -11,13 +11,12 @@ import { SEO } from "./components/common/SEO";
 import { X } from "lucide-react";
 
 // --- CONFIG & TYPES ---
-import { UserProvider, useUser } from "./contexts/UserContext";
+import { UserProvider, useUser } from "./contexts";
 import { queryClient } from "./lib/queryClient";
 import { GAMIFICATION_CONFIG } from "./config/gamification";
 import {
   Venue,
   PointsReason,
-  UserProfile,
   ClockInRecord,
   UserAlertPreferences,
   VenueStatus,
@@ -29,13 +28,11 @@ import { isSystemAdmin } from "./types/auth_schema";
 // --- REAL SERVICES ---
 import { fetchVenues, updateVenueDetails } from "./services/venueService";
 import {
-  saveAlertPreferences,
   logUserActivity,
   fetchUserRank,
   toggleFavorite,
-  updateUserProfile,
   performVibeCheck,
-  getUserProfile,
+  updateUserProfile,
 } from "./services/userService";
 import { LoadingScreen } from "./components/common/LoadingScreen";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
@@ -317,7 +314,7 @@ function AppContent() {
   }, [venues]);
 
   // --- CONTEXT HOOKS ---
-  const { userProfile, setUserProfile, isLoading: isAuthLoading, logout } = useUser();
+  const { userProfile, setUserProfile, isLoading: isAuthLoading } = useUser();
 
   // --- LOCAL STATE (Non-Identity) ---
   const [userPoints, setUserPoints] = useState(() =>

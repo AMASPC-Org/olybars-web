@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Camera, Share2, MapPin, Info, Loader2, Sparkles, Facebook, Instagram, Music2, Droplets, Zap } from 'lucide-react';
-import { Venue, ClockInRecord, PointsReason, VenueStatus, UserProfile } from '../../../types';
+import { Venue, ClockInRecord, PointsReason, VenueStatus } from '../../../types';
 import { performClockIn } from '../../../services/userService';
 import { queryClient } from '../../../lib/queryClient';
 import { PULSE_CONFIG } from '../../../config/pulse';
@@ -8,7 +8,7 @@ import { PermissionRecoveryView } from './PermissionRecoveryView';
 import { GAMIFICATION_CONFIG } from '../../../config/gamification';
 import { FormatCurrency } from '../../../utils/formatCurrency';
 import { useBouncer, AdmissionStatus } from '../../../hooks/useBouncer';
-import { useUser } from '../../../contexts/UserContext';
+import { useUser } from '../../../contexts';
 
 interface ClockInModalProps {
     isOpen: boolean;

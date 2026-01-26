@@ -20,7 +20,7 @@ window.onunhandledrejection = (event) => {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { ToastProvider } from './components/ui/BrandedToast';
-import { PersonaProvider } from './contexts/PersonaContext';
+import { PersonaProvider } from './contexts';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

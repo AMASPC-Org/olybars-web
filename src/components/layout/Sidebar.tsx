@@ -7,14 +7,26 @@ import {
     Zap,
     LayoutDashboard,
     Store,
-    Activity
+    Activity,
+    Crown,
+    BookOpen,
+    Key,
+    HelpCircle,
+    Info,
+    Bot,
+    Shield,
+    Coffee,
+    Eye,
+    List,
+    Percent,
+    Scan
 } from 'lucide-react';
 import { UserProfile, UserRole } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
 import { FormatCurrency } from '../../utils/formatCurrency';
 import { GAMIFICATION_CONFIG } from '../../config/gamification';
 import { BouncerService, AdmissionStatus } from '../../services/BouncerService';
-import { useUser } from '../../contexts/UserContext';
+import { useUser } from '../../contexts';
 
 interface SidebarProps {
     isOpen: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { useUser } from "../../../contexts/UserContext";
+import { useUser } from "../../../contexts";
 import { ArenaLayout } from "../../../components/layout/ArenaLayout";
 import { UniversalEventCard } from "../../../components/ui/UniversalEventCard";
 import { GameFeatureCard } from "../components/GameFeatureCard";

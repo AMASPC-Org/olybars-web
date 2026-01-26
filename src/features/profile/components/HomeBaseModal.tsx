@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { X, Home, Star } from 'lucide-react';
-import { UserProfile } from '../../../types';
+import { X, Home } from 'lucide-react';
 import { updateUserProfile } from '../../../services/userService';
 import { useToast } from '../../../components/ui/BrandedToast';
-import { useUser } from '../../../contexts/UserContext';
+import { useUser } from '../../../contexts';
 
 interface Props {
     isOpen: boolean;
@@ -15,6 +14,7 @@ interface Props {
 export const HomeBaseModal: React.FC<Props> = ({
     isOpen,
     onClose,
+    venueName,
     venueId,
 }) => {
     const { userProfile, refreshProfile } = useUser();
