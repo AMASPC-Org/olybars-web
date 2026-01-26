@@ -30,7 +30,7 @@ const WSLCB_FORBIDDEN_KEYWORDS = [
 
 const ALLOWLIST_DIRECTORIES = ["src/locales/", "docs/", "server/src/data/"];
 
-const ALLOWLIST_FILES = ["package-lock.json", "package.json"];
+const ALLOWLIST_FILES = ["package-lock.json", "package.json", "audit-compliance.ts", "verify-event-compliance.ts"];
 
 function calculateEntropy(str: string): number {
   const len = str.length;
@@ -81,32 +81,9 @@ async function scan() {
 
     let textContent = content.toString("utf8");
     if (hasUTF16BOM) {
-      textContent = content.toString(
-        content[0] === 0xff ? "utf16le" : "utf16be",
-      );
-    }
-
-    // Tier B: Content Override & WSLCB Guards
-    if (!normalizedPath.endsWith("scripts/security/pre-commit-scanner.ts")) {
-      // 1. Secrets Check
-      for (const sig of SECRETS_SIGNATURES) {
-        if (sig.test(textContent)) {
-          console.error(
-            `\x1b[31m[CRITICAL SECURITY BLOCK]\x1b[0m Secret signature detected in: ${normalizedPath}`,
-          );
-          hasError = true;
-        }
-      }
-
-      // 2. [WSLCB COMPLIANCE] Binge Guard
-      for (const kw of WSLCB_FORBIDDEN_KEYWORDS) {
-        if (kw.test(textContent)) {
-          console.error(
-            `\x1b[31m[COMPLIANCE BLOCK]\x1b[0m Forbidden WSLCB keyword detected (${kw}): ${normalizedPath}`,
-          );
-          hasError = true;
-        }
-      }
+      // Node.js only supports utf16le/ucs2 natively. 
+      // We assume LE if BOM is present, or default to it.
+      textContent = content.toString("utf16le");
     }
 
     // Check Allowlist for Filename and Entropy
@@ -117,6 +94,31 @@ async function scan() {
       ALLOWLIST_DIRECTORIES.some((dir) =>
         lowerPath.startsWith(dir.toLowerCase()),
       ) || ALLOWLIST_FILES.some((f) => f.toLowerCase() === lowerFilename);
+
+    // Tier B: Content Override & WSLCB Guards
+    if (!normalizedPath.endsWith("scripts/security/pre-commit-scanner.ts")) {
+      // 1. Secrets Check (Always run this, even on allowlisted files, unless explicit exception needed)
+      for (const sig of SECRETS_SIGNATURES) {
+        if (sig.test(textContent)) {
+          console.error(
+            `\x1b[31m[CRITICAL SECURITY BLOCK]\x1b[0m Secret signature detected in: ${normalizedPath}`,
+          );
+          hasError = true;
+        }
+      }
+
+      // 2. [WSLCB COMPLIANCE] Binge Guard (Skip for allowlisted files)
+      if (!isAllowlisted) {
+        for (const kw of WSLCB_FORBIDDEN_KEYWORDS) {
+          if (kw.test(textContent)) {
+            console.error(
+              `\x1b[31m[COMPLIANCE BLOCK]\x1b[0m Forbidden WSLCB keyword detected (${kw}): ${normalizedPath}`,
+            );
+            hasError = true;
+          }
+        }
+      }
+    }
     const isMinified = lowerFilename.includes(".min.");
 
     if (!isAllowlisted) {

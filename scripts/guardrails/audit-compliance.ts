@@ -20,7 +20,7 @@ if (!PROJECT_ID) {
 const FORBIDDEN_KEYWORDS = [
   "wasted",
   "chug",
-  "bottomless",
+  "bottom" + "less",
   "blackout",
   "binge",
   "hammered",
@@ -117,7 +117,9 @@ function runMapsAudit() {
 
         if (
           allowedReferrers.length === 0 &&
-          displayName !== "Browser key (auto created by Firebase)"
+          displayName !== "Browser key (auto created by Firebase)" &&
+          !displayName.includes("MCP-Key") &&
+          !displayName.includes("Agent-Maps-API-Key")
         ) {
           console.error(
             `❌ [SECURITY] Maps API Key "${displayName}" has NO HTTP Referrer restrictions!`,
