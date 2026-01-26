@@ -11,6 +11,7 @@ import {
 import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
+import { usePersona } from '../../contexts/PersonaContext';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -97,7 +98,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const artieChat = useArtieChat(initialVenueId || userProfile?.homeBase);
   const opsSchmidt = useSchmidtOps();
-  const persona = opsSchmidt.persona;
+  const { activePersona } = usePersona();
+  const persona = activePersona; // Alias for compatibility with existing code
 
   const activeDeals = venues
     .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)

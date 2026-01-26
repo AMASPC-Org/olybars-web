@@ -1,5 +1,5 @@
-// File: src/hooks/useSchmidtOps.ts
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { usePersona } from '../contexts/PersonaContext';
 import { QuickReplyOption } from '../components/artie/QuickReplyChips';
 import { VenueOpsService } from '../services/VenueOpsService';
 import { SkillContext, EventSkillContext } from '../types/skill';
@@ -16,7 +16,6 @@ import * as SchmidtExtraction from '../skills/Schmidt/eventExtraction';
 import { SchmidtOpsState } from '../skills/Schmidt/types';
 
 // 2. Regulatory Guardrails (LCB Compliance)
-const LCB_FORBIDDEN_TERMS = ['free alcohol', 'free beer', 'free shots', 'free drinks', 'unlimited', 'bottomless', 'complimentary', 'giveaway', '0.00', '$0']; // @guardrail-ignore
 const ALCOHOL_TERMS = ['beer', 'wine', 'shots', 'cocktails', 'drinks', 'booze', 'ipa', 'stout', 'pilsner', 'mimosas', 'tequila', 'whiskey', 'vodka', 'gin', 'rum'];
 
 // Helper Interface for building the event step-by-step
@@ -35,20 +34,15 @@ interface EventDraft {
 
 export const useSchmidtOps = () => {
     // 1. Core State (Unified Schmidt System)
-    const [persona, setPersona] = useState<'schmidt' | 'artie'>('artie'); // Default to Artie (Visitor)
+    const { activePersona } = usePersona(); // Consume centralized persona context
     const [opsState, setOpsState] = useState<SchmidtOpsState>('idle');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [currentBubbles, setCurrentBubbles] = useState<QuickReplyOption[]>([]);
     const [draftData, setDraftData] = useState<any>({});
     const [eventDraft, setEventDraft] = useState<EventDraft>({ imageState: 'none' });
 
+
     // [DEFENSIVE] Ensure persona is never undefined
-    useEffect(() => {
-        if (!persona) {
-            console.warn('[SchmidtOps] Persona undefined, resetting to artie');
-            setPersona('artie');
-        }
-    }, [persona]);
     const [isLoading, setIsLoading] = useState(false);
     const [venue, setVenue] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
@@ -76,7 +70,6 @@ export const useSchmidtOps = () => {
         const lowerText = text.toLowerCase();
 
         // Check for "Free Alcohol" specifically (Combinations)
-        const hasForbidden = LCB_FORBIDDEN_TERMS.some(term => lowerText.includes(term));
         const hasAlcohol = ALCOHOL_TERMS.some(word => lowerText.includes(word));
 
         // Rule: "Free" + Alcohol Context
@@ -104,7 +97,7 @@ export const useSchmidtOps = () => {
         try {
             const check = await VenueOpsService.validateSlot(mockVenue, new Date(timeISO).getTime(), duration);
             return check;
-        } catch (e) {
+        } catch (_e) {
             console.warn("Validation service unreachable, proceeding with caution.");
             return { valid: true };
         }
@@ -132,7 +125,8 @@ export const useSchmidtOps = () => {
             await fetchVenue(venueId);
         }
 
-        const effectivePersona = forcedPersona || persona;
+        const effectivePersona = forcedPersona || activePersona;
+
 
         // --- Context Implementation ---
         const addUserMessage = (text: string) => {
@@ -185,6 +179,17 @@ export const useSchmidtOps = () => {
             eventDraft,
             setEventDraft
         };
+
+        // --- SECURITY GUARDRAIL (Moved) ---
+        // If Artie is active, BLOCK all Schmidt skills. Only allow Artie Concierge.
+        const isSchmidtSkill = action.startsWith('skill_') ||
+            ['confirm_post', 'UPLOAD_FILE'].includes(action);
+
+        if (effectivePersona === 'artie' && isSchmidtSkill) {
+            console.warn(`[Security] Blocked Schmidt Action '${action}' for Artie user`);
+            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. I'm just Artie!", ctx as any);
+            return;
+        }
 
         // --- Visitor Delegation (Artie Persona) ---
         // If in Artie mode and not a designated internal skill, use the Concierge
@@ -390,7 +395,7 @@ export const useSchmidtOps = () => {
                     setOpsState('selecting_skill');
                 }
         }
-    }, [draftData, eventDraft, opsState, validateLCBCompliance, validateSchedule, venue, fetchVenue, persona]);
+    }, [draftData, eventDraft, opsState, validateLCBCompliance, validateSchedule, venue, fetchVenue, activePersona]);
 
     const addSchmidtMessage = useCallback((text: string, imageUrl?: string) => {
         const id = `s-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -416,8 +421,8 @@ export const useSchmidtOps = () => {
     }, [processAction]);
 
     return {
-        persona,
-        setPersona,
+        persona: activePersona,
+        setPersona: (_p: any) => console.warn('Persona is managed by Global Context'),
         opsState,
         setOpsState,
         messages,

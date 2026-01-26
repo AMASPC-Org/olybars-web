@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import {
   Routes,
   Route,
@@ -46,6 +46,7 @@ import {
   VibeReceiptData,
   generateArtieHook,
 } from "./features/social/services/VibeReceiptService";
+import { SessionPurgeService } from "./services/SessionPurgeService";
 import { BuzzScreen } from "./features/venues/screens/BuzzScreen";
 import { VenuesScreen } from "./features/venues/screens/VenuesScreen";
 
@@ -173,7 +174,6 @@ const PassportScreen = lazy(() =>
 
 // --- UTILS & HELPERS ---
 import { cookieService } from "./services/cookieService";
-import { calculateDistance, metersToMiles } from "./utils/geoUtils";
 
 // --- RELOCATED SCREENS ---
 
@@ -284,6 +284,7 @@ const SmartOwnerRoute = ({
 export default function OlyBarsApp() {
   // --- DATA FETCHING (TanStack Query with Persistence) ---
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const { data: venues = [], isLoading } = useQuery({
     queryKey: ["venues-brief"],
@@ -365,7 +366,6 @@ export default function OlyBarsApp() {
   const [clockedInVenue, setClockedInVenue] = useState<string | null>(null);
   const [vibeCheckedVenue, setVibeCheckedVenue] = useState<string | null>(null);
   const [showArtie, setShowArtie] = useState(false);
-  const [chatInput, setChatInput] = useState("");
   const [showMakerSurvey, setShowMakerSurvey] = useState(false); // Survey State
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(
     null,
@@ -409,10 +409,12 @@ export default function OlyBarsApp() {
         }
       } else {
         // [SANITIZATION] No session -> Revert to Guest
-        // We ALWAYS clear these on null session to prevent "Zombie Hydration"
-        localStorage.removeItem("oly_profile");
-        localStorage.removeItem("oly_points");
-        localStorage.removeItem("oly_clockins");
+        // We do NOT call purgeSession('nuclear') here because it causes a loop on load if just unauthenticated.
+        // Instead, we just ensure local profile is clean.
+
+        if (localStorage.getItem("oly_profile")) {
+          localStorage.removeItem("oly_profile");
+        }
 
         if (userProfile.uid !== "guest") {
           setUserProfile({ uid: "guest", role: "guest" });
@@ -425,6 +427,9 @@ export default function OlyBarsApp() {
     const handleSessionExpiry = () => {
       console.warn("[App] Session Expired Event Received. Signing out.");
       auth.signOut();
+
+      // Use SessionPurge for clean state reset (preserving Age Gate)
+      SessionPurgeService.purgeSession('nuclear');
       showToast("SESSION EXPIRED", "error");
     };
 
@@ -448,7 +453,6 @@ export default function OlyBarsApp() {
   //   { sender: 'artie', text: "Cheers! I'm Artie, your local guide powered by Well 80 Artesian Water." }
   // ]);
   const [userRank, setUserRank] = useState<number | undefined>(undefined);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const getRank = async () => {
@@ -639,8 +643,6 @@ export default function OlyBarsApp() {
   };
 
   const handleClockIn = (venue: Venue) => {
-    const now = Date.now();
-
     // 1. Calculate OlyBars Business Day Start (4:00 AM)
     if (clockedInVenue === venue.id) {
       showToast("You're already clocked in here!", "info");
@@ -703,12 +705,10 @@ export default function OlyBarsApp() {
 
     setVibeCheckedVenue(venue.id);
 
-    // Calculate Game Bonus Points
+    // Calculate Game Bonus Points (Flat Rate)
     let gameBonus = 0;
     if (gameStatus && Object.keys(gameStatus).length > 0) {
-      // 2 points per game reported, max 10
-      const gameCount = Object.keys(gameStatus).length;
-      gameBonus = Math.min(gameCount * 2, 10);
+      gameBonus = GAMIFICATION_CONFIG.REWARDS.GAME_REPORT_FLAT_BONUS;
     }
 
     // Update Venue Status and Photos (Attempt for all, handle guest auth errors)
@@ -743,6 +743,8 @@ export default function OlyBarsApp() {
       verificationMethod,
       gameBonus,
       userProfile.uid === "guest",
+      undefined,
+      backendResult?.pointsAwarded
     );
 
     // Generate Vibe Receipt
@@ -798,7 +800,7 @@ export default function OlyBarsApp() {
     if (userProfile.uid !== "guest") {
       try {
         await updateUserProfile(userProfile.uid, { weeklyBuzz: newVal });
-      } catch (e) {
+      } catch {
         showToast("Sync failed, retrying...", "error");
       }
     }
@@ -830,7 +832,7 @@ export default function OlyBarsApp() {
           "success",
         );
       }
-    } catch (e) {
+    } catch {
       showToast("Error updating favorites", "error");
     }
   };
@@ -873,26 +875,19 @@ export default function OlyBarsApp() {
       // 1. Authoritative Sign Out
       await signOut(auth);
 
-      // 2. Clear Local State
-      localStorage.removeItem("oly_profile");
-      localStorage.removeItem("oly_points");
-      localStorage.removeItem("oly_clockins");
+      // 2. Surgical Purge via Service (Preserves Age Gate, Clears User Data)
+      SessionPurgeService.purgeSession('nuclear');
 
-      // 3. Reset React State
+      // 3. Reset React State (in case redirect takes a moment)
       setUserProfile({ uid: "guest", role: "guest" });
       setUserPoints(1250);
       setClockInHistory([]);
       setShowOwnerDashboard(false);
 
-      // 4. Tiny Propagate Delay (Ensures IDB/Cookies are cleared before reload)
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 5. Hard Reset
-      window.location.href = "/";
     } catch (error) {
       console.error("[App] Logout failed:", error);
-      // Fail-safe redirect even on error
-      window.location.href = "/";
+      // Fail-safe purge even on error
+      SessionPurgeService.purgeSession('nuclear');
     }
   };
 

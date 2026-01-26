@@ -20,6 +20,7 @@ window.onunhandledrejection = (event) => {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { ToastProvider } from './components/ui/BrandedToast';
+import { PersonaProvider } from './contexts/PersonaContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -32,7 +33,9 @@ root.render(
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
-          <App />
+          <PersonaProvider>
+            <App />
+          </PersonaProvider>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>
