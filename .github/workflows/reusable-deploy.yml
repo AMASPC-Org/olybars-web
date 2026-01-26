@@ -91,7 +91,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --project ${{ inputs.project_id }} \
-            --set-secrets VITE_GOOGLE_BROWSER_KEY=${{ inputs.vite_secret_name }}:latest \
+            --set-secrets "VITE_GOOGLE_BROWSER_KEY=${{ inputs.vite_secret_name }}:latest,GOOGLE_BACKEND_KEY=GOOGLE_BACKEND_KEY:latest,GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest" \
             --set-env-vars INTERNAL_HEALTH_TOKEN=${{ secrets.internal_health_token }}
 
       # --- 4. Firebase Deploy (Functions, Firestore, Hosting) ---
