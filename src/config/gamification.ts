@@ -11,10 +11,25 @@ export const GAMIFICATION_CONFIG = {
     },
     REWARDS: {
         CLOCK_IN: 10,
-        VIBE_CHECK: 15,
-        REFERRAL: 100,
-        PHOTO_BONUS: 10,
-        MARKETING_CONSENT: 15
+        VIBE_REPORT: 5,
+        VIBE_PHOTO: 15,
+        EXPLORER_BONUS: 50,
+        MARKETING_CONSENT: 15,
+        REFERRAL: 100
+    },
+    PIONEER_CURVE: {
+        trickle: 100,
+        flowing: 50,
+        gushing: 25,
+        flooded: 10,
+        dead: 100
+    },
+    LIMITS: {
+        CLOCK_IN_PER_VENUE_12H: 1,
+        CLOCK_IN_GLOBAL_12H: 2,
+        VIBE_REPORT_PER_VENUE_NIGHT: 1,
+        VIBE_COOLDOWN_GLOBAL_MINS: 30,
+        VIBE_COOLDOWN_VENUE_MINS: 60
     },
     LEVELS: {
         LABEL: 'Depth',

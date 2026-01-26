@@ -1,24 +1,13 @@
+import { GAMIFICATION_CONFIG } from './gamification';
 export type VibeLevel = 'trickle' | 'flowing' | 'gushing' | 'flooded';
 export const PULSE_CONFIG = {
     // Scoring Weights
     POINTS: {
-        CLOCK_IN: 10.0, // Base points
-        VIBE_REPORT: 5.0,
-        PHOTO_VIBE: 10.0,
-        VERIFIED_BONUS: 15.0, // For verified QR/GPS consent
-
-        // [NEW] The Pioneer Curve (Dynamic Clock-in Points)
-        VIBE_POINTS: {
-            trickle: 100,
-            flowing: 50,
-            gushing: 25,
-            flooded: 10,
-            mellow: 100,
-            chill: 50,
-            buzzing: 25,
-            packed: 10,
-            dead: 100     // Legacy backward compatibility
-        }
+        CLOCK_IN: GAMIFICATION_CONFIG.REWARDS.CLOCK_IN,
+        VIBE_REPORT: GAMIFICATION_CONFIG.REWARDS.VIBE_REPORT,
+        PHOTO_VIBE: GAMIFICATION_CONFIG.REWARDS.VIBE_PHOTO,
+        VERIFIED_BONUS: GAMIFICATION_CONFIG.REWARDS.MARKETING_CONSENT,
+        VIBE_POINTS: GAMIFICATION_CONFIG.PIONEER_CURVE
     },
 
     // NEW: Venue Physics (Density Calculation)
