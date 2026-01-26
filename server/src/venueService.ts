@@ -197,11 +197,11 @@ export const updateVenueBuzz = async (venueId: string) => {
 
   // If consensus is met, force 'flooded'. Otherwise follow saturation-based status.
   let calibratedStatus: VenueStatus = "trickle";
-  if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED)
+  if (saturation > PULSE_CONFIG.THRESHOLDS.FLOODED)
     calibratedStatus = "flooded"; // Threshold constants kept as is for physics
-  else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING)
+  else if (saturation > PULSE_CONFIG.THRESHOLDS.GUSHING)
     calibratedStatus = "gushing";
-  else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL)
+  else if (saturation > PULSE_CONFIG.THRESHOLDS.FLOWING)
     calibratedStatus = "flowing";
 
   if (isConsensusPacked) calibratedStatus = "flooded";
@@ -320,9 +320,9 @@ const applyVirtualDecay = (venue: Venue): Venue => {
     const saturation = calculateSaturation(likelyHeadcount, capacity);
 
     status = "trickle"; // Default 'dead' -> 'trickle'
-    if (saturation > PULSE_CONFIG.THRESHOLDS.PACKED) status = "flooded";
-    else if (saturation > PULSE_CONFIG.THRESHOLDS.BUZZING) status = "gushing";
-    else if (saturation > PULSE_CONFIG.THRESHOLDS.CHILL) status = "flowing";
+    if (saturation > PULSE_CONFIG.THRESHOLDS.FLOODED) status = "flooded";
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.GUSHING) status = "gushing";
+    else if (saturation > PULSE_CONFIG.THRESHOLDS.FLOWING) status = "flowing";
     else status = "trickle";
   }
 
@@ -625,7 +625,7 @@ export const clockIn = async (
   // Mellow: 100, Chill: 50, Buzzing: 25, Packed: 10
   const basePoints =
     (PULSE_CONFIG.POINTS.VIBE_POINTS as any)[venueData.status] ||
-    PULSE_CONFIG.POINTS.VIBE_POINTS.mellow;
+    PULSE_CONFIG.POINTS.VIBE_POINTS.trickle; // CHANGED FROM mellow TO trickle
   let points = basePoints + eventBonus;
   const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
