@@ -1,0 +1,13 @@
+name: Debug Docker Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: docker build .
