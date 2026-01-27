@@ -2,6 +2,11 @@
 
 > "The Brain and The Bouncer"
 
+## Status
+- [x] **Complete**
+- [x] **Closed**
+- [x] **Locked** (2026-01-27)
+
 ## Objective
 
 Implement the backend Cloud Functions and logic to handle:
