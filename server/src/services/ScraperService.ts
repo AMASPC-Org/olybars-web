@@ -132,7 +132,7 @@ export class ScraperService {
                                 const stateZipPart = parts[2].trim().split(' ')[0];
                                 city = `${cityPart}, ${stateZipPart}`;
                             }
-                        } catch (e) {
+                        } catch {
                             console.warn(`[Scraper] Failed to parse city from address: ${venue.address}, defaulting to Olympia.`);
                         }
                     }
@@ -142,10 +142,11 @@ export class ScraperService {
                         timezone: "America/Los_Angeles"
                     };
 
-                    const result = await gemini.analyzeScrapedContent(rawContent, currentTime, venueContext, source.target as any);
+                    const geminiTarget = source.extractionMode || source.target;
+                    const result = await gemini.analyzeScrapedContent(rawContent, currentTime, venueContext, geminiTarget as any, source.extractionNotes);
 
                     // [DATA SINK] Route data based on target
-                    if (source.target === 'EVENTS' && Array.isArray(result)) {
+                    if (source.extractionMode === 'EVENTS' && Array.isArray(result)) {
                         for (const eventData of result) {
                             if (eventData.sourceConfidence < 0.7) continue;
                             const startTime = new Date(eventData.date + 'T' + (eventData.time || '00:00')).getTime();
@@ -155,13 +156,26 @@ export class ScraperService {
                         }
                         console.log(`[Scraper] Synced ${result.length} events.`);
                     }
-                    else if (source.target === 'MENU' && result) {
+                    else if ((source.extractionMode === 'MENU' || source.extractionMode === 'DRINKS') && result) {
+                        // [CONSOLIDATION] Align both Menu and Drinks to the same highlights field
+                        // but B009 will handle deduplication logic in the prompt.
                         await db.collection('venues').doc(venue.id).update({
                             'ai_draft_profile.menu_highlights': result
                         });
-                        console.log(`[Scraper] Updated Menu Highlights.`);
+                        console.log(`[Scraper] Updated Menu/Drinks Highlights.`);
                     }
-                    else if (source.target === 'NEWSLETTER' && result?.newsItems?.length > 0) {
+                    else if (source.extractionMode === 'CALENDAR' && Array.isArray(result)) {
+                        // CALENDAR uses the same logic as EVENTS for now
+                        for (const eventData of result) {
+                            if (eventData.sourceConfidence < 0.7) continue;
+                            const startTime = new Date(eventData.date + 'T' + (eventData.time || '00:00')).getTime();
+                            if (startTime < Date.now()) continue;
+
+                            await this.saveEvent(venue.id, { ...eventData, startTime });
+                        }
+                        console.log(`[Scraper] Synced ${result.length} calendar events.`);
+                    }
+                    else if (source.extractionMode === 'NEWSLETTER' && result?.newsItems?.length > 0) {
                         await this.createSocialDraft(venue.id, result.newsItems, source.url);
                         console.log(`[Scraper] Created User Draft from Newsletter.`);
                     }

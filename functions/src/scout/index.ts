@@ -44,7 +44,7 @@ export const scoutDispatcher = onSchedule(
     retryCount: 3,
     memory: "512MiB",
   },
-  async (event) => {
+  async () => {
     console.log("🚀 [Dispatcher] Starting scout dispatch run...");
 
     // Query for venues with scraping enabled
@@ -170,7 +170,7 @@ export const scoutWorker = onMessagePublished(
           // Fail Open if robots.txt 404s
           newRobotsCache = { verdict: "allow", checkedAt: now };
         }
-      } catch (e) {
+      } catch {
         // Fail Open on Network Error
         newRobotsCache = { verdict: "allow", checkedAt: now };
       }
@@ -274,25 +274,28 @@ export const scoutWorker = onMessagePublished(
         timeZone: "America/Los_Angeles",
       });
 
-      const targetType = source.target || "EVENTS";
-      let geminiTarget: "EVENTS" | "MENU" | "NEWSLETTER" | "SOCIAL_FEED" =
-        "EVENTS";
+      const targetType = source.extractionMode || source.target || "EVENTS";
+      let geminiTarget: "EVENTS" | "CALENDAR" | "MENU" | "DRINKS" | "NEWSLETTER" | "SOCIAL_FEED" | "WEBSITE" = "EVENTS";
       if (targetType === "MENU") geminiTarget = "MENU";
+      if (targetType === "DRINKS") geminiTarget = "DRINKS";
+      if (targetType === "CALENDAR") geminiTarget = "CALENDAR";
       if (targetType === "NEWSLETTER") geminiTarget = "NEWSLETTER";
+      if (targetType === "WEBSITE") geminiTarget = "WEBSITE";
 
       const extractedData = await gemini.analyzeScrapedContent(
         rawText,
         todayPST,
         venueContext,
         geminiTarget,
+        source.extractionNotes
       );
 
       // Step 4: The Scribe (Save Results)
       if (extractedData) {
         const batch = db.batch();
 
-        if (geminiTarget === "EVENTS" && Array.isArray(extractedData)) {
-          console.log(`[Worker] Saving ${extractedData.length} events.`);
+        if ((geminiTarget === "EVENTS" || geminiTarget === "CALENDAR") && Array.isArray(extractedData)) {
+          console.log(`[Worker] Saving ${extractedData.length} ${geminiTarget} events.`);
           for (const ev of extractedData) {
             const titleSlug = ev.title.toLowerCase().replace(/[^a-z0-9]/g, "");
             const eventId = `${venueId}_${ev.date.replace(/-/g, "")}_${titleSlug}`;
@@ -309,6 +312,23 @@ export const scoutWorker = onMessagePublished(
               { merge: true },
             );
           }
+        } else if (geminiTarget === "MENU" || geminiTarget === "DRINKS") {
+          const venueRef_forUpdate = db.collection("venues").doc(venueId);
+          batch.update(venueRef_forUpdate, {
+            "ai_draft_profile.menu_highlights": extractedData
+          });
+          console.log(`[Worker] Updated Menu/Drinks highlights.`);
+        } else if (geminiTarget === "WEBSITE") {
+          const venueRef_forUpdate = db.collection("venues").doc(venueId);
+          const websitePayload: any = {};
+          if (extractedData.hours) websitePayload["hours_display"] = extractedData.hours;
+          if (extractedData.amenities) websitePayload["ai_draft_profile.amenities"] = extractedData.amenities;
+          if (extractedData.vibeKeywords) websitePayload["ai_draft_profile.vibe_keywords"] = extractedData.vibeKeywords;
+
+          if (Object.keys(websitePayload).length > 0) {
+            batch.update(venueRef_forUpdate, websitePayload);
+          }
+          console.log(`[Worker] Updated website recon data.`);
         }
         await batch.commit();
       }

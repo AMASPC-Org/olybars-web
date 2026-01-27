@@ -13,7 +13,7 @@ import {
 } from "../config/tiers.js";
 import { BrandDNA } from "./schemas.js";
 
-export interface TierLimits extends TierFeatures {}
+export interface TierLimits extends TierFeatures { }
 
 export const TIER_CONFIG = GLOBAL_TIER_CONFIG;
 
@@ -80,8 +80,10 @@ export type VenueType =
   | "winery_tasting";
 
 export type ScrapeTarget =
+  | "CALENDAR"
   | "EVENTS"
   | "MENU"
+  | "DRINKS"
   | "NEWSLETTER"
   | "SOCIAL_FEED"
   | "WEBSITE";
@@ -210,22 +212,22 @@ export type GameFeatureStatus = "active" | "out_of_order";
 export interface GameFeature {
   id: string; // e.g. "pinball_godzilla" or just "pool_table_1"
   type:
-    | "arcade_game"
-    | "pinball_machine"
-    | "pool_table"
-    | "darts"
-    | "skeeball"
-    | "shuffleboard"
-    | "foosball"
-    | "cornhole"
-    | "beer_pong"
-    | "trivia"
-    | "karaoke"
-    | "giant_jenga"
-    | "console_gaming"
-    | "jukebox"
-    | "pull_tabs"
-    | "unknown";
+  | "arcade_game"
+  | "pinball_machine"
+  | "pool_table"
+  | "darts"
+  | "skeeball"
+  | "shuffleboard"
+  | "foosball"
+  | "cornhole"
+  | "beer_pong"
+  | "trivia"
+  | "karaoke"
+  | "giant_jenga"
+  | "console_gaming"
+  | "jukebox"
+  | "pull_tabs"
+  | "unknown";
   name: string; // Display name e.g. "Godzilla Pinball"
   status: GameFeatureStatus;
   count: number;
@@ -263,15 +265,15 @@ export interface LeagueEvent {
   title: string;
   description?: string;
   type:
-    | "trivia"
-    | "karaoke"
-    | "live_music"
-    | "dj"
-    | "bingo"
-    | "sports"
-    | "comedy"
-    | "happy_hour"
-    | "other";
+  | "trivia"
+  | "karaoke"
+  | "live_music"
+  | "dj"
+  | "bingo"
+  | "sports"
+  | "comedy"
+  | "happy_hour"
+  | "other";
   startTime: number; // UTC timestamp
   date: string; // [NEW] ISO YYYY-MM-DD
   time?: string; // [NEW] HH:mm
@@ -321,18 +323,18 @@ export interface Venue {
 
   // Events & Hours
   leagueEvent?:
-    | "karaoke"
-    | "trivia"
-    | "arcade"
-    | "events"
-    | "openmic"
-    | "bingo"
-    | "live_music"
-    | "pool"
-    | "darts"
-    | "shuffleboard"
-    | "pinball"
-    | null;
+  | "karaoke"
+  | "trivia"
+  | "arcade"
+  | "events"
+  | "openmic"
+  | "bingo"
+  | "live_music"
+  | "pool"
+  | "darts"
+  | "shuffleboard"
+  | "pinball"
+  | null;
   triviaTime?: string;
   triviaHost?: string;
   triviaPrizes?: string;
@@ -460,10 +462,10 @@ export interface Venue {
     badgeId: string;
   }[];
   establishmentType?:
-    | "Bar Only"
-    | "Bar & Restaurant"
-    | "Restaurant with Bar"
-    | "Brewpub"; // Likely deprecated by venueType
+  | "Bar Only"
+  | "Bar & Restaurant"
+  | "Restaurant with Bar"
+  | "Brewpub"; // Likely deprecated by venueType
   googlePlaceId?: string;
   vibeDefault?: VenueStatus;
 
@@ -490,10 +492,10 @@ export interface Venue {
     caption?: string;
     allowMarketingUse?: boolean;
     marketingStatus?:
-      | "pending-super"
-      | "pending-venue"
-      | "approved"
-      | "rejected";
+    | "pending-super"
+    | "pending-venue"
+    | "approved"
+    | "rejected";
     superAdminApprovedBy?: string;
     venueAdminApprovedBy?: string;
     isApprovedForFeed?: boolean;
