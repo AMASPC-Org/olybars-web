@@ -11,6 +11,7 @@ interface PersonaContextType {
     voiceStyle: string;
   };
   forcePersona: (persona: PersonaType | null) => void; // Allow manual override (Ryan Rule)
+  setActivePersona: (persona: PersonaType) => void; // Direct setter alias
 }
 
 const PersonaContext = createContext<PersonaContextType | undefined>(undefined);
@@ -55,7 +56,7 @@ export const PersonaProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
 
   return (
-    <PersonaContext.Provider value={{ activePersona, theme, forcePersona: setManualOverride }}>
+    <PersonaContext.Provider value={{ activePersona, theme, forcePersona: setManualOverride, setActivePersona: (p) => setManualOverride(p) }}>
       {children}
     </PersonaContext.Provider>
   );

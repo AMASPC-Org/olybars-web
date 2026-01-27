@@ -8,12 +8,10 @@ import {
   Info,
   Beer
 } from 'lucide-react';
-import { Venue, UserProfile, ClockInRecord, VibeCheckRecord } from '../../types';
+import { Venue, ClockInRecord, VibeCheckRecord } from '../../types';
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
-import { useSchmidtOps } from '../../hooks/useSchmidtOps';
-import { usePersona } from '../../contexts';
-import { useUser } from '../../contexts';
+import { usePersona, useUser } from '../../contexts';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -93,12 +91,11 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   const initialVenueId = getVenueIdFromPath();
-
+  const { userProfile } = useUser();
   const artieChat = useArtieChat(initialVenueId || userProfile?.homeBase);
   const opsSchmidt = useSchmidtOps();
   const { activePersona } = usePersona();
   const persona = activePersona; // Alias for compatibility with existing code
-  const { userProfile, logout } = useUser();
 
   const activeDeals = venues
     .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
@@ -150,7 +147,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   return (
     <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
       ? 'w-full max-w-none border-x-0'
-      : 'max-w-md border-x-4 border-black'
+      : 'max-w-md border-x border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-none md:rounded-3xl md:my-8'
       }`}>
       {!isDiscoveryFlow && (
         <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'}`}>
@@ -175,13 +172,13 @@ export const AppShell: React.FC<AppShellProps> = ({
                   const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
                   if (!isAuthenticated && onMemberLoginClick) onMemberLoginClick('login');
                   else if (onProfileClick) onProfileClick();
-                }} className="text-slate-400 hover:text-primary transition-all active:scale-95" title="Profile">
+                }} className="text-slate-400 hover:text-primary transition-all active:scale-97 ease-spring-smooth" title="Profile">
                   <User className="w-6 h-6" strokeWidth={2.5} />
                 </button>
-                <button onClick={() => setShowInfo(true)} className="text-slate-400 hover:text-primary transition-all active:scale-95" title="Rules & Prizes">
+                <button onClick={() => setShowInfo(true)} className="text-slate-400 hover:text-primary transition-all active:scale-97 ease-spring-smooth" title="Rules & Prizes">
                   <Info className="w-6 h-6" strokeWidth={2.5} />
                 </button>
-                <button onClick={() => setShowMenu(true)} className="text-white hover:text-primary transition-all active:scale-95">
+                <button onClick={() => setShowMenu(true)} className="text-white hover:text-primary transition-all active:scale-97 ease-spring-smooth">
                   <Menu className="w-8 h-8" strokeWidth={3} />
                 </button>
               </div>

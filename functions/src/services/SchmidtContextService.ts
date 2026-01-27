@@ -98,4 +98,19 @@ Goal: Minimize "Mellow" idle time, Maximize "Buzzing" conversion.
       return "[ERROR] Business intelligence layer timed out.";
     }
   }
+
+  /**
+   * Checks for upcoming holidays (14-30 day window) to drive notifications.
+   */
+  static getUpcomingContext() {
+    // TODO: Connect to a real holiday calendar or config
+    // For now, return safety default to pass build/runtime
+    return {
+      hasUpcomingHoliday: false,
+      holidayName: "",
+      daysUntil: 0,
+      eventDate: new Date().toISOString(),
+      vibe: "chill",
+    };
+  }
 }

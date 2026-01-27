@@ -19,12 +19,10 @@ import {
     Eye,
     List,
     Percent,
-    Scan
+    Scan,
+    X
 } from 'lucide-react';
-import { UserProfile, UserRole } from '../../types';
 import { isSystemAdmin } from '../../types/auth_schema';
-import { FormatCurrency } from '../../utils/formatCurrency';
-import { GAMIFICATION_CONFIG } from '../../config/gamification';
 import { BouncerService, AdmissionStatus } from '../../services/BouncerService';
 import { useUser } from '../../contexts';
 
@@ -65,62 +63,74 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const renderPlayerMode = () => (
         <>
             {/* 1. Header: Player Card */}
-            <div className="bg-primary p-6 flex justify-between items-start border-b border-black/20 relative overflow-hidden">
-                {/* Abstract Pattern overlay */}
-                <div className="absolute -right-4 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            {/* 1. Header: Player Card (Holographic VIP Pass) */}
+            <div className="border-b border-white/5 bg-gradient-to-br from-slate-800 to-slate-900 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_100%] animate-shimmer opacity-50 pointer-events-none" />
 
-                <div
-                    className="flex items-center gap-3 cursor-pointer group relative z-10"
-                    onClick={() => {
-                        const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
-                        if (!isAuthenticated) {
-                            onLogin('login');
-                        } else {
-                            onProfileClick();
-                        }
-                        onClose();
-                    }}
-                >
-                    <div className="w-12 h-12 bg-black rounded-full border-2 border-white flex items-center justify-center group-hover:scale-105 transition-transform shadow-lg">
-                        <User className="w-6 h-6 text-primary" strokeWidth={3} />
+                <div className="relative z-10 p-6 flex justify-between items-start">
+                    <div
+                        className="flex items-center gap-4 cursor-pointer relative"
+                        onClick={() => {
+                            const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
+                            if (!isAuthenticated) {
+                                onLogin('login');
+                            } else {
+                                onProfileClick();
+                            }
+                            onClose();
+                        }}
+                    >
+                        <div className="relative">
+                            <div className="w-14 h-14 bg-black rounded-full border-2 border-primary overflow-hidden shadow-[0_0_15px_-3px_rgba(251,191,36,0.3)] group-hover:scale-105 transition-transform">
+                                <User className="w-full h-full p-3 text-primary" strokeWidth={2} />
+                                {/* If we had a real photo: <img src={userProfile.photoURL} ... /> */}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 bg-primary text-black text-[9px] font-black px-1.5 py-0.5 rounded border border-black">
+                                LVL {Math.floor((userPoints || 0) / 100) + 1}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-white font-black uppercase text-lg leading-none tracking-tight">
+                                {userProfile?.handle ? `#${userProfile.handle}` : (userProfile?.displayName || 'Guest Player')}
+                            </h3>
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className="text-[10px] font-bold text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 tracking-wider">
+                                    {(userProfile?.role === 'owner') ? 'Venue Operator' : 'League Member'}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-xl font-black text-black leading-none uppercase font-league tracking-tight">
-                            {userProfile.handle ? `#${userProfile.handle}` : (userProfile.displayName || 'Guest Player')}
-                        </span>
-                        <span className="text-[10px] font-black text-black/60 uppercase tracking-widest mt-1">
-                            {!(userProfile?.uid && userProfile.uid !== 'guest') ? 'Tap to Sign In' : <FormatCurrency amount={userPoints} variant='default' className='text-black/60' />}
-                        </span>
-                    </div>
+
+                    <button
+                        onClick={onClose}
+                        className="text-white/50 hover:text-white hover:rotate-90 transition-all p-1"
+                    >
+                        <X className="w-6 h-6" strokeWidth={3} />
+                    </button>
                 </div>
-                <button
-                    onClick={onClose}
-                    className="text-black hover:rotate-90 transition-all p-1 relative z-10 hover:bg-black/10 rounded-full"
-                >
-                    <X className="w-8 h-8" strokeWidth={4} />
-                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 {/* 1. Main Navigation */}
                 <div className="space-y-2">
-                    <button onClick={() => handleNavigation('/league')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-[0.98]">
+                    <button onClick={() => handleNavigation('/league')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth">
                         <Crown className="w-6 h-6 text-yellow-400" />
-                        <span className="text-sm font-black uppercase text-white tracking-wide">League</span>
+                        <span className="text-sm font-bold uppercase text-white tracking-widest">League</span>
                     </button>
 
-                    <button onClick={() => handleNavigation('/playbook')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-yellow-400/50 transition-all active:scale-[0.98] group">
+                    <button onClick={() => handleNavigation('/playbook')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-yellow-400/50 transition-all active:scale-97 ease-spring-smooth group">
                         <div className="flex items-center gap-4">
                             <BookOpen className="w-5 h-5 text-yellow-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">The Pulse Playbook</span>
+                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Pulse Playbook</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400" />
                     </button>
 
-                    <button onClick={() => handleNavigation('/back-room')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                    <button onClick={() => handleNavigation('/back-room')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
                         <div className="flex items-center gap-4">
                             <Key className="w-5 h-5 text-primary" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">The Back Room</span>
+                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Back Room</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                     </button>
@@ -130,18 +140,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 2. Manual & Glossary */}
                 <div className="space-y-2">
-                    <button onClick={() => handleNavigation('/faq')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                    <button onClick={() => handleNavigation('/faq')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
                         <div className="flex items-center gap-4">
                             <HelpCircle className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">The Manual</span>
+                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Manual</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                     </button>
 
-                    <button onClick={() => handleNavigation('/glossary')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                    <button onClick={() => handleNavigation('/glossary')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
                         <div className="flex items-center gap-4">
                             <Info className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-black uppercase text-white tracking-wide">Glossary</span>
+                            <span className="text-sm font-bold uppercase text-white tracking-widest">Glossary</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                     </button>
@@ -152,10 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* 3. Settings & Legal */}
                 <div className="space-y-2">
                     {userProfile?.uid && userProfile.uid !== 'guest' && (
-                        <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                        <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
                             <div className="flex items-center gap-4">
                                 <Activity className="w-5 h-5 text-slate-400" />
-                                <span className="text-sm font-black uppercase text-white tracking-wide">Settings</span>
+                                <span className="text-sm font-bold uppercase text-white tracking-widest">Settings</span>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
                         </button>

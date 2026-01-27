@@ -17,6 +17,7 @@ export const fetchVenues = async (brief = false): Promise<Venue[]> => {
     const url = brief
       ? `${API_ENDPOINTS.VENUES.LIST}?brief=true`
       : API_ENDPOINTS.VENUES.LIST;
+    console.log("[venueService] Fetching venues from:", url);
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch venues: ${response.statusText}`);

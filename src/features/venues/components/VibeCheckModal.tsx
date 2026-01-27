@@ -258,7 +258,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
   if (isSuccess) {
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+        <div className="glass-panel w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
           <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto animate-bounce border-2 border-cyan-500">
             <Droplets className="w-10 h-10 text-cyan-400" />
           </div>
@@ -295,7 +295,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
               </p>
               <button
                 onClick={onClockInPrompt}
-                className="w-full bg-white text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 transition-transform flex items-center justify-center gap-2"
+                className="w-full bg-white text-black font-black py-3 rounded-lg uppercase tracking-wider font-league hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2"
               >
                 <MapPin className="w-5 h-5" /> Clock In Now
               </button>
@@ -339,7 +339,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
     return (
       <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] flex items-center justify-center p-4 animate-in fade-in duration-300">
-        <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+        <div className="glass-panel w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
           <div
             className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isLocked ? "bg-slate-800 border-2 border-primary/30" : "bg-primary animate-bounce"}`}
           >
@@ -401,7 +401,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
           <div className="pt-2">
             <button
               onClick={() => onLogin?.("signup")}
-              className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+              className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-wider font-league hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-primary/20"
             >
               {isLocked
                 ? "Create Profile & Publish"
@@ -429,7 +429,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
-      <div className="bg-surface w-full max-w-sm overflow-hidden rounded-xl border border-slate-700 shadow-lg relative">
+      <div className="glass-panel w-full max-w-sm overflow-hidden rounded-xl shadow-2xl relative">
         {showCamera && (
           <div className="absolute inset-0 z-[70] bg-black flex flex-col">
             <video
@@ -442,7 +442,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             <div className="p-4 bg-black/50 flex justify-between items-center absolute bottom-0 w-full border-t border-primary/20">
               <button
                 onClick={stopCamera}
-                className="font-bold uppercase tracking-wider text-sm text-white"
+                className="font-bold uppercase tracking-wider text-sm text-white active:scale-95 transition-transform"
               >
                 Cancel
               </button>
@@ -458,7 +458,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
         <div className="bg-primary p-4 text-center border-b border-black/10 relative">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 text-black/70 hover:text-black hover:scale-110 transition-transform"
+            className="absolute top-3 right-3 text-black/70 hover:text-black hover:scale-110 active:scale-90 transition-transform"
           >
             <X className="w-6 h-6" />
           </button>
@@ -487,7 +487,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             {!isLocationVerified && !geoLoading && (
               <button
                 onClick={refresh}
-                className="mt-2 text-[10px] bg-primary/20 text-primary font-black px-3 py-1 rounded-full border border-primary/30 hover:bg-primary/30 transition-all uppercase tracking-widest"
+                className="mt-2 text-[10px] bg-primary/20 text-primary font-black px-3 py-1 rounded-full border border-primary/30 hover:bg-primary/30 active:scale-95 transition-all uppercase tracking-widest"
               >
                 {coords ? "Verify Again" : "Verify My Location"}
               </button>
@@ -500,7 +500,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
               <button
                 key={opt.status}
                 onClick={() => setSelectedStatus(opt.status)}
-                className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-all text-left ${selectedStatus === opt.status ? "bg-primary/10 border-primary" : "bg-slate-800/50 border-slate-700 hover:border-slate-500"}`}
+                className={`flex items-center gap-4 p-3 rounded-xl border-2 transition-all active:scale-[0.98] text-left ${selectedStatus === opt.status ? "bg-primary/10 border-primary" : "bg-slate-800/50 border-slate-700 hover:border-slate-500"}`}
               >
                 <div className={`p-2 rounded-lg bg-black/40 ${opt.color}`}>
                   <opt.icon size={20} />
@@ -565,7 +565,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                               }));
                             }
                           }}
-                          className="text-slate-600 hover:text-yellow-400 -mr-1"
+                          className="text-slate-600 hover:text-yellow-400 -mr-1 active:scale-90 transition-transform"
                         >
                           <AlertTriangle className="w-4 h-4" />
                         </button>
@@ -635,7 +635,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                   setSoberCheck({ isGood: true });
                   setShowSoberReason(false);
                 }}
-                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === true ? "bg-secondary text-black border-secondary" : "bg-black/40 text-slate-500 border-white/5"}`}
+                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border ${soberCheck?.isGood === true ? "bg-secondary text-black border-secondary" : "bg-black/40 text-slate-500 border-white/5"}`}
               >
                 ?? Yes
               </button>
@@ -644,7 +644,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
                   setSoberCheck({ isGood: false, reason: "No Options" });
                   setShowSoberReason(true);
                 }}
-                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${soberCheck?.isGood === false ? "bg-red-500 text-white border-red-500" : "bg-black/40 text-slate-500 border-white/5"}`}
+                className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border ${soberCheck?.isGood === false ? "bg-red-500 text-white border-red-500" : "bg-black/40 text-slate-500 border-white/5"}`}
               >
                 ?? No
               </button>
@@ -733,7 +733,7 @@ export const VibeCheckModal: React.FC<VibeCheckModalProps> = ({
             </div>
             <button
               onClick={() => setAllowMarketingUse(!allowMarketingUse)}
-              className={`w-8 h-4 rounded-full p-0.5 transition-all ${allowMarketingUse ? "bg-primary" : "bg-slate-700"}`}
+              className={`w-8 h-4 rounded-full p-0.5 transition-all active:scale-95 ${allowMarketingUse ? "bg-primary" : "bg-slate-700"}`}
             >
               <div
                 className={`w-3 h-3 rounded-full bg-white transition-all ${allowMarketingUse ? "translate-x-4" : "translate-x-0"}`}

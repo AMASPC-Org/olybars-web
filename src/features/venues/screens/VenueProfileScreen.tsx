@@ -467,7 +467,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
         <p>Venue Not Found</p>
         <button
           onClick={() => navigate("/")}
-          className="mt-4 text-primary hover:underline"
+          className="mt-4 text-primary hover:underline active:scale-95 transition-transform inline-block"
         >
           Return to Discovery
         </button>
@@ -504,7 +504,7 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
       <div className="px-6 pt-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-primary mb-4 hover:opacity-80 transition-opacity uppercase font-black tracking-widest text-xs"
+          className="flex items-center gap-2 text-primary mb-4 hover:opacity-80 active:scale-95 transition-all uppercase font-black tracking-widest text-xs"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
@@ -539,11 +539,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
         <div className="absolute top-6 right-6 flex gap-2 z-10">
           <button
             onClick={() => onToggleFavorite(venue.id)}
-            className={`p-2 bg-black/50 backdrop-blur-md rounded-full border transition-colors ${
-              userProfile.favorites?.includes(venue.id)
+            className={`p-2 bg-black/50 backdrop-blur-md rounded-full border transition-colors active:scale-90 ${userProfile.favorites?.includes(venue.id)
                 ? "border-primary text-primary"
                 : "border-white/10 text-white hover:bg-black"
-            }`}
+              }`}
           >
             <Star
               className={`w-5 h-5 ${userProfile.favorites?.includes(venue.id) ? "fill-primary" : ""}`}
@@ -551,14 +550,14 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
           </button>
           <button
             onClick={handleShare}
-            className="p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black transition-colors"
+            className="p-2 bg-black/50 backdrop-blur-md rounded-full text-white border border-white/10 hover:bg-black active:scale-90 transition-all"
           >
             <Share2 className="w-5 h-5" />
           </button>
           {isVenueManager(userProfile, venue.id) && (
             <button
               onClick={() => onEdit?.(venue.id)}
-              className="p-2 bg-primary/20 backdrop-blur-md rounded-full text-primary border border-primary/30 hover:bg-primary/40 transition-colors"
+              className="p-2 bg-primary/20 backdrop-blur-md rounded-full text-primary border border-primary/30 hover:bg-primary/40 active:scale-90 transition-all"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -656,13 +655,12 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             {/* Open Status Badge */}
             {venue.physicalRoom !== false ? (
               <div
-                className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${
-                  status === "open"
+                className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status === "open"
                     ? "bg-green-500/10 text-green-400 border-green-400/30"
                     : status === "last_call"
                       ? "bg-red-600/20 text-red-500 border-red-500/50 animate-pulse"
                       : "bg-red-500/10 text-red-400 border-red-400/30"
-                }`}
+                  }`}
               >
                 {status === "open"
                   ? "Open Now"
@@ -1112,12 +1110,11 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 clockedInVenue === venue.id ||
                 (venue.membershipRequired && !isMembershipVerified)
               }
-              className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${
-                clockedInVenue === venue.id ||
-                (venue.membershipRequired && !isMembershipVerified)
+              className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ||
+                  (venue.membershipRequired && !isMembershipVerified)
                   ? "bg-slate-800 text-slate-500 border border-slate-700"
                   : "bg-primary text-black hover:scale-[1.02] active:scale-95"
-              }`}
+                }`}
             >
               <MapPin className="w-4 h-4" />
               {clockedInVenue === venue.id ? "Clocked In" : "Clock In (+10)"}
@@ -1125,11 +1122,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             <button
               onClick={() => handleVibeCheck(venue)}
               disabled={venue.membershipRequired && !isMembershipVerified}
-              className={`flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${
-                venue.membershipRequired && !isMembershipVerified
+              className={`flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${venue.membershipRequired && !isMembershipVerified
                   ? "opacity-50 grayscale cursor-not-allowed"
                   : ""
-              }`}
+                }`}
             >
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" />
@@ -1375,104 +1371,103 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
           {/* [PHASE 1] Live Menu & Taps */}
           {(venue.fullMenu?.some((i) => i.status === "Live") ||
             (venue.happyHourMenu && venue.happyHourMenu.length > 0)) && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] font-league italic">
-                  Live Menu & Taps
-                </h3>
-                <span className="text-[9px] font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-500/30 flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  LIVE NOW
-                </span>
-              </div>
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <h3 className="text-xs font-black text-primary uppercase tracking-[0.3em] font-league italic">
+                    Live Menu & Taps
+                  </h3>
+                  <span className="text-[9px] font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded border border-green-500/30 flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    LIVE NOW
+                  </span>
+                </div>
 
-              <div className="bg-slate-900 border border-primary/20 rounded-2xl overflow-hidden shadow-2xl relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="bg-slate-900 border border-primary/20 rounded-2xl overflow-hidden shadow-2xl relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
-                <div className="divide-y divide-white/5 relative z-10">
-                  {/* Legacy Happy Hour Fallback (if no fullMenu) */}
-                  {(!venue.fullMenu || venue.fullMenu.length === 0) &&
-                    venue.happyHourMenu?.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 flex justify-between items-start"
-                      >
-                        <div>
-                          <p className="font-bold text-white text-sm uppercase">
-                            {item.name}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {item.description}
-                          </p>
-                        </div>
-                        <span className="font-mono text-primary text-sm font-bold">
-                          {item.price}
-                        </span>
-                      </div>
-                    ))}
-
-                  {/* New Full Menu Rendering */}
-                  {venue.fullMenu
-                    ?.filter((i) => i.status === "Live")
-                    .map((item) => {
-                      const isHighAbv = item.stats?.abv && item.stats.abv > 8.0;
-                      const isInFlight = flightItems.find(
-                        (f) => f.id === item.id,
-                      );
-
-                      return (
+                  <div className="divide-y divide-white/5 relative z-10">
+                    {/* Legacy Happy Hour Fallback (if no fullMenu) */}
+                    {(!venue.fullMenu || venue.fullMenu.length === 0) &&
+                      venue.happyHourMenu?.map((item, idx) => (
                         <div
-                          key={item.id}
-                          className="p-4 flex justify-between gap-4 group hover:bg-white/5 transition-colors"
+                          key={idx}
+                          className="p-4 flex justify-between items-start"
                         >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="font-black text-white text-sm uppercase font-league tracking-wide">
-                                {item.name}
-                              </p>
-                              {isHighAbv && (
-                                <div className="flex items-center gap-0.5 text-[8px] font-black text-red-500 border border-red-500/30 px-1 rounded bg-red-500/10">
-                                  <AlertTriangle size={8} /> HI-OCTANE
-                                </div>
-                              )}
-                            </div>
-                            <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                          <div>
+                            <p className="font-bold text-white text-sm uppercase">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-slate-500">
                               {item.description}
                             </p>
-                            <div className="mt-2 flex gap-3 text-[10px] font-mono text-slate-500">
+                          </div>
+                          <span className="font-mono text-primary text-sm font-bold">
+                            {item.price}
+                          </span>
+                        </div>
+                      ))}
+
+                    {/* New Full Menu Rendering */}
+                    {venue.fullMenu
+                      ?.filter((i) => i.status === "Live")
+                      .map((item) => {
+                        const isHighAbv = item.stats?.abv && item.stats.abv > 8.0;
+                        const isInFlight = flightItems.find(
+                          (f) => f.id === item.id,
+                        );
+
+                        return (
+                          <div
+                            key={item.id}
+                            className="p-4 flex justify-between gap-4 group hover:bg-white/5 transition-colors"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-black text-white text-sm uppercase font-league tracking-wide">
+                                  {item.name}
+                                </p>
+                                {isHighAbv && (
+                                  <div className="flex items-center gap-0.5 text-[8px] font-black text-red-500 border border-red-500/30 px-1 rounded bg-red-500/10">
+                                    <AlertTriangle size={8} /> HI-OCTANE
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
+                                {item.description}
+                              </p>
+                              <div className="mt-2 flex gap-3 text-[10px] font-mono text-slate-500">
+                                {item.type !== "Food" && (
+                                  <span>{item.stats.abv || "?"}% ABV</span>
+                                )}
+                                {item.stats.ibu && (
+                                  <span>{item.stats.ibu} IBU</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="font-mono text-white text-sm font-bold">
+                                {item.stats.price || "-"}
+                              </span>
                               {item.type !== "Food" && (
-                                <span>{item.stats.abv || "?"}% ABV</span>
-                              )}
-                              {item.stats.ibu && (
-                                <span>{item.stats.ibu} IBU</span>
+                                <button
+                                  onClick={() => toggleFlightItem(item)}
+                                  className={`p-1.5 rounded-lg border transition-all ${isInFlight
+                                      ? "bg-primary text-black border-primary"
+                                      : "border-slate-700 text-slate-500 hover:border-primary hover:text-primary"
+                                    }`}
+                                >
+                                  <Beer size={14} />
+                                </button>
                               )}
                             </div>
                           </div>
-
-                          <div className="flex flex-col items-end gap-2">
-                            <span className="font-mono text-white text-sm font-bold">
-                              {item.stats.price || "-"}
-                            </span>
-                            {item.type !== "Food" && (
-                              <button
-                                onClick={() => toggleFlightItem(item)}
-                                className={`p-1.5 rounded-lg border transition-all ${
-                                  isInFlight
-                                    ? "bg-primary text-black border-primary"
-                                    : "border-slate-700 text-slate-500 hover:border-primary hover:text-primary"
-                                }`}
-                              >
-                                <Beer size={14} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Weekly Rituals Section */}
           {venue.weekly_schedule &&
@@ -1568,11 +1563,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                   return (
                     <div
                       key={feature.id}
-                      className={`border rounded-xl p-3 flex items-center gap-3 relative overflow-hidden ${
-                        isOutOfOrder
+                      className={`border rounded-xl p-3 flex items-center gap-3 relative overflow-hidden ${isOutOfOrder
                           ? "bg-red-900/10 border-red-500/30"
                           : "bg-slate-900/40 border-white/5"
-                      }`}
+                        }`}
                     >
                       <div
                         className={`p-2 rounded-lg ${isOutOfOrder ? "bg-red-500/10 text-red-400" : "bg-black/40 text-primary"}`}
@@ -1657,10 +1651,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     v.carryingMakers?.includes(venue.id) ||
                     venue.scavengerHunts?.[0]?.partnerVenues.includes(v.id),
                 ).length === 0 && (
-                  <p className="text-[10px] text-slate-600 font-bold uppercase py-2">
-                    Distribution list updating...
-                  </p>
-                )}
+                    <p className="text-[10px] text-slate-600 font-bold uppercase py-2">
+                      Distribution list updating...
+                    </p>
+                  )}
               </div>
             </div>
           </div>
@@ -1681,82 +1675,82 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
           venue.hasPrivateRoom ||
           (venue.privateSpaces && venue.privateSpaces.length > 0) ||
           venue.openingTime) && (
-          <div className="space-y-4">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">
-              Policies & Reservations
-            </h3>
-            <div className="bg-surface border border-white/5 rounded-2xl p-4 space-y-4">
-              {venue.openingTime && (
-                <div className="flex items-center gap-3">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <div>
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                      Opens At
-                    </span>
-                    <p className="text-xs font-bold text-white uppercase">
-                      {venue.openingTime}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {venue.reservations && (
-                <div className="flex items-center gap-3">
-                  <Info className="w-4 h-4 text-primary" />
-                  <div>
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                      Reservations
-                    </span>
-                    <p className="text-xs font-bold text-white uppercase">
-                      {venue.reservations}
-                    </p>
-                    {venue.reservationUrl && (
-                      <a
-                        href={venue.reservationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
-                      >
-                        <ExternalLink size={10} />
-                        Book a Table
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-              {(venue.hasPrivateRoom ||
-                (venue.privateSpaces && venue.privateSpaces.length > 0)) && (
-                <div className="flex items-center gap-3">
-                  <Key className="w-4 h-4 text-primary" />
-                  <div className="flex-1">
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                      The Back Room
-                    </span>
-                    <p className="text-xs font-bold text-white uppercase">
-                      {venue.privateSpaces?.length
-                        ? `${venue.privateSpaces.length} Private Space${venue.privateSpaces.length > 1 ? "s" : ""} Available`
-                        : "Private Space Available"}
-                    </p>
-                    {venue.privateSpaces?.length ? (
-                      <button
-                        onClick={() =>
-                          navigate(`/back-room?venueId=${venue.id}`)
-                        }
-                        className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
-                      >
-                        <ExternalLink size={10} />
-                        View Spaces
-                      </button>
-                    ) : (
-                      <p className="text-[9px] text-slate-400 italic mt-1">
-                        Direct booking available at venue
+            <div className="space-y-4">
+              <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] font-league italic">
+                Policies & Reservations
+              </h3>
+              <div className="bg-surface border border-white/5 rounded-2xl p-4 space-y-4">
+                {venue.openingTime && (
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <div>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                        Opens At
+                      </span>
+                      <p className="text-xs font-bold text-white uppercase">
+                        {venue.openingTime}
                       </p>
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+                {venue.reservations && (
+                  <div className="flex items-center gap-3">
+                    <Info className="w-4 h-4 text-primary" />
+                    <div>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                        Reservations
+                      </span>
+                      <p className="text-xs font-bold text-white uppercase">
+                        {venue.reservations}
+                      </p>
+                      {venue.reservationUrl && (
+                        <a
+                          href={venue.reservationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          <ExternalLink size={10} />
+                          Book a Table
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {(venue.hasPrivateRoom ||
+                  (venue.privateSpaces && venue.privateSpaces.length > 0)) && (
+                    <div className="flex items-center gap-3">
+                      <Key className="w-4 h-4 text-primary" />
+                      <div className="flex-1">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                          The Back Room
+                        </span>
+                        <p className="text-xs font-bold text-white uppercase">
+                          {venue.privateSpaces?.length
+                            ? `${venue.privateSpaces.length} Private Space${venue.privateSpaces.length > 1 ? "s" : ""} Available`
+                            : "Private Space Available"}
+                        </p>
+                        {venue.privateSpaces?.length ? (
+                          <button
+                            onClick={() =>
+                              navigate(`/back-room?venueId=${venue.id}`)
+                            }
+                            className="mt-2 inline-flex items-center gap-2 bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary text-[10px] font-black uppercase px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            <ExternalLink size={10} />
+                            View Spaces
+                          </button>
+                        ) : (
+                          <p className="text-[9px] text-slate-400 italic mt-1">
+                            Direct booking available at venue
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Location Info / Conditional Navigation */}
         {venue.physicalRoom !== false && (
@@ -1801,52 +1795,52 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
           isSystemAdmin(userProfile) ||
           !userProfile ||
           userProfile.uid === "guest") && (
-          <div className="pt-16 mt-16 border-t border-white/5 pb-16 sticky-claim-trigger">
-            <div className="bg-gradient-to-br from-primary/10 to-black border border-primary/30 p-8 rounded-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
+            <div className="pt-16 mt-16 border-t border-white/5 pb-16 sticky-claim-trigger">
+              <div className="bg-gradient-to-br from-primary/10 to-black border border-primary/30 p-8 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-all duration-1000" />
 
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-primary text-black rounded-lg">
-                    <Crown className="w-6 h-6" />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-primary text-black rounded-lg">
+                      <Crown className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-white uppercase font-league tracking-wide">
+                        Own this Venue?
+                      </h3>
+                      <p className="text-xs text-primary font-bold uppercase tracking-widest">
+                        Official Partner Program
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-white uppercase font-league tracking-wide">
-                      Own this Venue?
-                    </h3>
-                    <p className="text-xs text-primary font-bold uppercase tracking-widest">
-                      Official Partner Program
-                    </p>
-                  </div>
+
+                  <p className="text-slate-300 mb-6 max-w-xl leading-relaxed">
+                    Claim your official listing to manage your "Vibe," access
+                    real-time analytics, and launch Flash Bounties to drive
+                    traffic instantly.
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      let url = "/partners/claim";
+                      const params = new URLSearchParams();
+                      if (venue.id) params.append("venueId", venue.id);
+                      if (venue.googlePlaceId)
+                        params.append("placeId", venue.googlePlaceId);
+                      params.append("name", venue.name);
+                      if (venue.address) params.append("address", venue.address);
+                      if (params.toString()) url += `?${params.toString()}`;
+                      navigate(url, { state: { prefilledVenue: venue } });
+                    }}
+                    className="bg-primary text-black font-black uppercase tracking-widest py-3 px-8 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] flex items-center gap-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    Claim Your Listing
+                  </button>
                 </div>
-
-                <p className="text-slate-300 mb-6 max-w-xl leading-relaxed">
-                  Claim your official listing to manage your "Vibe," access
-                  real-time analytics, and launch Flash Bounties to drive
-                  traffic instantly.
-                </p>
-
-                <button
-                  onClick={() => {
-                    let url = "/partners/claim";
-                    const params = new URLSearchParams();
-                    if (venue.id) params.append("venueId", venue.id);
-                    if (venue.googlePlaceId)
-                      params.append("placeId", venue.googlePlaceId);
-                    params.append("name", venue.name);
-                    if (venue.address) params.append("address", venue.address);
-                    if (params.toString()) url += `?${params.toString()}`;
-                    navigate(url, { state: { prefilledVenue: venue } });
-                  }}
-                  className="bg-primary text-black font-black uppercase tracking-widest py-3 px-8 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] flex items-center gap-2"
-                >
-                  <Crown className="w-4 h-4" />
-                  Claim Your Listing
-                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {/* [PHASE 1] Flight Builder Dock & Modal */}

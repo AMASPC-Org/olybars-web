@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { auth, db, appCheck } from "../firebaseAdmin.js";
 import { config } from "../appConfig/config.js";
+import { RequestContext } from "../utils/context.js";
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -112,6 +113,10 @@ export const verifyToken = async (
         isAdmin: !!claimIsAdmin || !!userData?.isAdmin,
         venuePermissions: userData?.venuePermissions || {},
       };
+
+      // [OBSERVABILITY] Propagate to context
+      RequestContext.update({ userId: uid });
+
       return next();
     }
 
@@ -180,6 +185,10 @@ export const identifyUser = async (
         role: claimRole as string,
         isAdmin: !!claimIsAdmin,
       };
+
+      // [OBSERVABILITY] Propagate to context
+      RequestContext.update({ userId: uid });
+
       return next();
     }
 

@@ -406,11 +406,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     showToast('LOGIN CANCELLED: MFA REQUIRED FOR PARTNERS.', 'info');
   };
 
-  const inputClasses = "w-full bg-slate-100 border border-slate-300 focus:border-primary rounded-md py-2 text-sm text-black outline-none font-bold pl-10";
+  const inputClasses = "w-full glass-input rounded-md py-3 text-sm outline-none font-bold pl-10 focus:ring-opacity-50";
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
-      <div className="bg-surface w-full max-w-sm border-2 border-slate-700 shadow-lg rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+      <div className="glass-panel w-full max-w-sm rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
         {userSubMode === 'login' && !showMfaStep && (
           <div className="flex border-b-2 border-slate-700">
             <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Player</button>
@@ -419,7 +419,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         )}
 
         <div className="p-6 overflow-y-auto text-white">
-          <button onClick={onClose} className="absolute top-3 right-3 text-slate-500"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="absolute top-3 right-3 text-white/50 hover:text-white bg-white/5 p-2 rounded-full hover:bg-white/10 transition-all active:scale-90 z-10"><X className="w-4 h-4" /></button>
 
           <div id="recaptcha-container"></div>
           <div id="recaptcha-enroll-container"></div>
@@ -463,7 +463,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       value={mfaCode}
                       onChange={(e) => setMfaCode(e.target.value)}
                       placeholder="6-Digit Code"
-                      className={inputClasses}
+                      className="w-full glass-input text-center text-2xl tracking-[0.5em] font-mono py-3 rounded-md outline-none"
                       maxLength={6}
                     />
                   </div>
@@ -503,11 +503,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <div className="relative">
                 <Hash className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                 <input
-                  type="text"
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value)}
                   placeholder="6-Digit Code"
-                  className={inputClasses}
+                  className="w-full glass-input text-center text-2xl tracking-[0.5em] font-mono py-3 rounded-md outline-none"
                   maxLength={6}
                 />
               </div>
@@ -537,10 +536,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <div className="space-y-2 pb-4 border-b border-slate-700">
                   <button
-                    type="button"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
-                    className="w-full bg-white text-slate-900 font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                    className="w-full glass-ghost text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-white hover:text-black active:scale-95 transition-all group"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -552,10 +550,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   </button>
 
                   <button
-                    type="button"
                     onClick={handleFacebookLogin}
                     disabled={isLoading}
-                    className="w-full bg-[#1877F2] text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-[#166fe5] transition-colors"
+                    className="w-full glass-ghost text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-[#1877F2] active:scale-95 transition-all group"
                   >
                     <Facebook className="w-4 h-4" />
                     Facebook
@@ -603,7 +600,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-primary text-black font-bold py-3 rounded mt-4 uppercase disabled:opacity-50"
+                  className="w-full bg-primary text-black font-black py-3 rounded mt-4 uppercase disabled:opacity-50 active:scale-95 transition-transform shadow-[0_0_20px_-5px_rgba(251,191,36,0.4)]"
                 >
                   {isLoading ? 'Processing...' : userSubMode === 'signup' ? 'Create Account' : 'Login'}
                 </button>
@@ -633,7 +630,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full bg-white text-slate-900 font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-slate-100 transition-colors"
+                  className="w-full glass-ghost text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-white hover:text-black active:scale-95 transition-all group"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -648,7 +645,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   type="button"
                   onClick={handleFacebookLogin}
                   disabled={isLoading}
-                  className="w-full bg-[#1877F2] text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-[#166fe5] transition-colors"
+                  className="w-full glass-ghost text-white font-bold py-3 rounded flex items-center justify-center gap-3 uppercase disabled:opacity-50 hover:bg-[#1877F2] active:scale-95 transition-all group"
                 >
                   <Facebook className="w-4 h-4" />
                   Facebook
@@ -697,7 +694,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
                 <button
                   type="submit"
-                  className="w-full bg-primary text-black font-bold py-3 rounded mt-4 uppercase hover:bg-yellow-500 transition-colors"
+                  className="w-full bg-primary text-black font-black py-3 rounded mt-4 uppercase hover:bg-yellow-500 active:scale-95 transition-all shadow-[0_0_20px_-5px_rgba(251,191,36,0.4)]"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Processing...' : userSubMode === 'signup' ? 'Register Venue' : 'Login'}

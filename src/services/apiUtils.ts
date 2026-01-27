@@ -1,4 +1,6 @@
 import { auth } from "../lib/firebase";
+import { setLastCorrelationId } from "./errorService";
+import { BreadcrumbService } from "./breadcrumbService";
 
 /**
  * Get headers with Firebase ID Token for authenticated requests
@@ -33,14 +35,28 @@ export const getAuthHeaders = async (
 };
 
 /**
- * Global response interceptor to handle Auth failures
+ * Global response interceptor to handle Auth failures and capture Correlation IDs
  */
 export const checkResponse = async (response: Response) => {
+  // 1. Capture Correlation ID for support/logs
+  const correlationId = response.headers.get("x-correlation-id");
+  if (correlationId) {
+    setLastCorrelationId(correlationId);
+  }
+
+  // 2. Handle Auth Failures
   if (response.status === 401) {
-    console.warn(
-      "[API] 401 Unauthorized detected. Dispatching session expiration.",
-    );
+    BreadcrumbService.add('SYSTEM', '401 Unauthorized detected');
     window.dispatchEvent(new CustomEvent("auth:session_expired"));
   }
+
+  // 3. Track non-OK responses as breadcrumbs
+  if (!response.ok) {
+    BreadcrumbService.add('ERROR', `API Error: ${response.status} ${response.url}`, {
+      status: response.status,
+      correlationId
+    });
+  }
+
   return response;
 };

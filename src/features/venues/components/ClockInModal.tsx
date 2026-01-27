@@ -15,7 +15,7 @@ interface ClockInModalProps {
     onClose: () => void;
     selectedVenue: Venue | null;
     awardPoints: (reason: PointsReason, venueId?: string, hasConsent?: boolean, verificationMethod?: 'gps' | 'qr', bonusPoints?: number, skipBackend?: boolean, venueStatus?: VenueStatus, overrideTotal?: number) => void;
-    setClockInHistory: React.Dispatch<React.SetStateAction<ClockInRecord[]>>;
+    onClockInRecord?: (record: ClockInRecord) => void;
     setClockedInVenue: React.Dispatch<React.SetStateAction<string | null>>;
     vibeChecked?: boolean;
     onVibeCheckPrompt?: () => void;
@@ -28,7 +28,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     onClose,
     selectedVenue,
     awardPoints,
-    setClockInHistory,
+    onClockInRecord,
     setClockedInVenue,
     vibeChecked,
     onVibeCheckPrompt,
@@ -163,7 +163,9 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
             if (admissionStatus === AdmissionStatus.SHADOW_MODE) {
                 setShadowVariant('success');
             } else {
-                setClockInHistory(prev => [...prev, { venueId: selectedVenue.id, timestamp: Date.now() }]);
+                if (onClockInRecord) {
+                    onClockInRecord({ venueId: selectedVenue.id, timestamp: Date.now() });
+                }
                 setClockedInVenue(selectedVenue.id);
                 setIsSuccess(true);
             }
@@ -204,7 +206,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
     if (isSuccess) {
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
+                <div className="glass-panel w-full max-w-sm rounded-2xl border-2 border-primary shadow-[0_0_50px_-12px_rgba(251,191,36,0.5)] overflow-hidden text-center p-8 space-y-6">
                     <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mx-auto animate-bounce border-2 border-cyan-500">
                         <Droplets className="w-10 h-10 text-cyan-400" />
                     </div>
@@ -327,7 +329,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
         return (
             <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
-                <div className="bg-surface w-full max-w-sm rounded-2xl border-2 border-red-500/50 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)] overflow-hidden text-center p-8 space-y-6 relative">
+                <div className="glass-panel w-full max-w-sm rounded-2xl border-2 border-red-500/50 shadow-[0_0_50px_-12px_rgba(239,68,68,0.5)] overflow-hidden text-center p-8 space-y-6 relative">
 
                     <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto bg-slate-900 border-2 border-red-500/30">
                         <Droplets className="w-8 h-8 text-red-500 animate-pulse" />
@@ -382,7 +384,7 @@ export const ClockInModal: React.FC<ClockInModalProps> = ({
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in zoom-in-95 duration-200">
-            <div className="bg-surface w-full max-w-sm overflow-hidden rounded-xl border border-slate-700 shadow-lg relative">
+            <div className="glass-panel w-full max-w-sm overflow-hidden rounded-xl shadow-2xl relative">
 
                 {showCamera && (
                     <div className="absolute inset-0 z-50 bg-black flex flex-col">

@@ -399,55 +399,61 @@ export class GeminiService {
         }
     }
 
-    async analyzeScrapedContent(rawContent: string, currentTime: string, venueContext: { city: string, timezone: string }, target: 'EVENTS' | 'MENU' | 'NEWSLETTER' | 'SOCIAL_FEED' = 'EVENTS'): Promise<any> {
+    async analyzeScrapedContent(
+        rawContent: string,
+        currentTime: string,
+        venueContext: { city: string, timezone: string },
+        target: 'CALENDAR' | 'EVENTS' | 'MENU' | 'DRINKS' | 'NEWSLETTER' | 'SOCIAL_FEED' | 'WEBSITE' = 'EVENTS',
+        rules?: string
+    ): Promise<any> {
         // Default to Olympia if missing (Safety Net)
         const cityString = venueContext?.city || "Olympia, WA";
 
-        let prompt = '';
+        let prompt = `You are Schmidt, the Lead Architect of OlyBars.
+        TASK: Analyze the provided raw page content for a nightlife venue and extract structured data based on the target type: ${target}.
+        
+        CONTEXT:
+        Current Date: ${currentTime}.
+        Venue Location: ${cityString}.
+        `;
 
-        if (target === 'EVENTS') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
-            TASK: Extract all upcoming nightlife events from the provided raw page content.
-            
-            CONTEXT:
-            Current Date Context: ${currentTime} (Use this to resolve relative dates like "Tonight", "This Friday", or "Tomorrow").
-            Venue Location: ${cityString} (Pacific Time).
-            
+        if (rules) {
+            prompt += `\nOWNER INSTRUCTIONS (SUPERSEDE DEFAULT RULES):\n${rules}\n`;
+        }
+
+        if (target === 'EVENTS' || target === 'CALENDAR') {
+            prompt += `
             EXTRACTION RULES:
-            1. Extract ALL unique events found in the text.
+            1. Extract all upcoming nightlife events.
             2. TITLE: Catchy, clear. Shorten if it's too long.
             3. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
-            4. TIME: Convert to 24h format (HH:mm). If only "7 PM" is listed, use "19:00".
-            5. TYPE: One of: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
+            4. TIME: Convert to 24h format (HH:mm). 
+            5. TYPE: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
             6. DESCRIPTION: 1-2 sentence high-energy pitch.
-            
-            LCB COMPLIANCE:
-            - If the text mentions "Free drinks", "Bottomless", or "Unlimited alcohol", FLAG it in the description or pivot to focus on the experience. // @guardrail-ignore
+            ${target === "CALENDAR" ? '7. SPECIAL: Identify recurring weekly events (e.g., "Every Wed") and extract them as a pattern.' : ""}
             
             OUTPUT FORMAT (JSON ARRAY ONLY):
             [{
-              "title": "string",
-              "date": "YYYY-MM-DD",
-              "time": "HH:mm",
-              "type": "string",
-              "description": "string",
-              "sourceConfidence": number (0.0 to 1.0)
+                "title": "string",
+                "date": "YYYY-MM-DD",
+                "time": "HH:mm",
+                "type": "string",
+                "description": "string",
+                "isRecurring": boolean,
+                "sourceConfidence": number (0.0 to 1.0)
             }]
-            
-            Note: If no events are found, return an empty array [].
             `;
-        } else if (target === 'MENU') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
-            TASK: Analyze this menu/webpage and extract "Hero Items" and "Special Deals".
-            
-            CONTEXT:
-            Current Date Context: ${currentTime}.
-            Venue Location: ${cityString}.
-
+        } else if (target === 'MENU' || target === 'DRINKS') {
+            prompt += `
             EXTRACTION RULES:
-            1. HIGHLIGHTS: Identify 3-5 distinct items that define this place (e.g., "Signature Burger", "Flight of 4", "Taco Tuesday Special").
-            2. DEALS: Extract any happy hour rules or time-based offers.
-            3. SUMMARY: A 2-sentence vibe check of the menu (e.g., "Pub grub heavy on fryers but great selection of local drafts.").
+            1. HIGHLIGHTS: Identify 3-5 distinct items that define this place. 
+            2. If target is DRINKS: Focus on Style (IPA, Sour, etc), ABV, IBU, and Brewery name.
+            3. DEALS: Extract any happy hour rules or time-based offers.
+            4. SUMMARY: A 2-sentence vibe check of the selection.
+
+            CONSISTENCY CHECK:
+            - Compare findings against any existing data mentioned in the input. 
+            - Only return items that are NEW or have UPDATED info (price, ABV).
 
             OUTPUT FORMAT (JSON ONLY):
             {
@@ -458,27 +464,50 @@ export class GeminiService {
             }
             `;
         } else if (target === 'NEWSLETTER') {
-            prompt = `You are Schmidt, the Lead Architect of OlyBars.
-            TASK: Extract key announcements from this text.
-            
-            CONTEXT:
-            Current Date Context: ${currentTime}.
-            
+            prompt += `
             EXTRACTION RULES:
-            1. LOOK FOR: Closures, Grand Openings, New Menu Launches, Special Guests.
-            2. IGNORE: Generic marketing fluff ("We create memories").
-            3. OUTPUT: A concise bulleted list of ACTUAL news.
-            
+            1. NEWS_ITEMS: Extract 3-5 key announcements (new hours, upcoming renovations, special guest).
+            2. VIBE_SYNOPSIS: A short summary of the venue's current tone.
+
             OUTPUT FORMAT (JSON ONLY):
             {
                 "newsItems": ["string"],
-                "hasUrgentNews": boolean,
+                "vibeSynopsis": "string",
+                "sourceConfidence": number
+            }
+            `;
+        } else if (target === 'WEBSITE') {
+            prompt += `
+            EXTRACTION RULES (GENERAL RECON):
+            1. Extract Business Hours, Amenities (Pool, Darts, Patio), and Vibe keywords.
+            2. Identify any mention of "Draft List", "Event Calendar", or "Mailing List" links.
+
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "hours": "string",
+                "amenities": ["string"],
+                "vibeKeywords": ["string"],
+                "discoveredLinks": { "menu": "string", "calendar": "string" }
+            }
+            `;
+        } else if (target === "SOCIAL_FEED") {
+            prompt += `
+            EXTRACTION RULES (SOCIAL CLASSIFIER):
+            1. Analyze the caption and image context.
+            2. CLASSIFY as: EVENT, MENU_UPDATE, GENERAL_VIBE, or NEWS.
+            3. EXTRACT: Dates, Times, and specific items mentioned.
+            4. IGNORE: "Link in bio" or non-actionable fluff.
+
+            OUTPUT FORMAT (JSON ONLY):
+            {
+                "classification": "string",
+                "extractedEvent": { "title": "string", "date": "YYYY-MM-DD", "time": "HH:mm" },
+                "extractedHighlights": ["string"],
                 "sourceConfidence": number
             }
             `;
         } else {
-            // Default/Fallback
-            prompt = `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
+            prompt += `Analyze this text and extract key summary points relevant to nightlife. Output JSON: { "summary": string }`;
         }
 
         const response = await this.genAI.models.generateContent({

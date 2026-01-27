@@ -95,15 +95,18 @@ export const useSchmidtOps = () => {
 
     // 4. Time/Schedule Validator
     const validateSchedule = useCallback(async (timeISO: string, duration: number) => {
-        const mockVenue = { partnerConfig: { tier: 'FREE', flashBountiesUsed: 0 } } as any;
+        if (!venue) {
+            console.error("Schmidt Validation Error: Venue context missing.");
+            return { valid: false, reason: "System Error: Venue data not loaded. Please refresh." };
+        }
         try {
-            const check = await VenueOpsService.validateSlot(mockVenue, new Date(timeISO).getTime(), duration);
+            const check = await VenueOpsService.validateSlot(venue, new Date(timeISO).getTime(), duration);
             return check;
         } catch (error) {
             console.warn("Validation service unreachable, proceeding with caution.", error);
             return { valid: true };
         }
-    }, []);
+    }, [venue]);
 
     // Helper for streaming updates 
     const updateLastSchmidtMessage = useCallback((text: string) => {

@@ -1,35 +1,41 @@
 
 import { API_BASE_URL } from '../lib/api-config';
+import { BreadcrumbService } from './breadcrumbService';
 
-interface ErrorContext {
-    url: string;
-    userAgent: string;
-    componentStack?: string;
-    [key: string]: any;
-}
+// Global store for the last correlation ID seen from the server
+let lastCorrelationId: string | null = null;
+
+export const setLastCorrelationId = (id: string) => {
+    lastCorrelationId = id;
+};
+
+export const getLastCorrelationId = () => lastCorrelationId;
 
 export const logErrorToBackend = (error: any, contextInfo: string, componentStack?: string) => {
-    // Prevent infinite loops if the logger itself fails
     try {
         const errorData = {
             message: error?.message || String(error),
             stack: error?.stack,
-            source: contextInfo, // e.g., 'window.onerror', 'ErrorBoundary'
+            source: contextInfo,
+            correlationId: lastCorrelationId,
+            breadcrumbs: BreadcrumbService.get(),
             context: {
                 url: window.location.href,
                 userAgent: navigator.userAgent,
-                componentStack: componentStack
+                componentStack: componentStack,
+                memory: (performance as any)?.memory ? {
+                    usedJSHeapSize: (performance as any).memory.usedJSHeapSize,
+                    totalJSHeapSize: (performance as any).memory.totalJSHeapSize,
+                } : undefined
             }
         };
 
-        // Use sendBeacon if available for reliability during unload/crash
-        const url = `${API_BASE_URL}/logClientError`;
+        const url = `${API_BASE_URL}/client-errors`;
         const blob = new Blob([JSON.stringify(errorData)], { type: 'application/json' });
 
         if (navigator.sendBeacon) {
             navigator.sendBeacon(url, blob);
         } else {
-            // Fallback to fetch (fire and forget)
             fetch(url, {
                 method: 'POST',
                 body: JSON.stringify(errorData),
@@ -38,7 +44,6 @@ export const logErrorToBackend = (error: any, contextInfo: string, componentStac
             }).catch(e => console.warn("Failed to send error log", e));
         }
     } catch (e) {
-        // Fallback to console if everything fails
         console.error("Critical: Failed to log error to backend", e);
     }
 };

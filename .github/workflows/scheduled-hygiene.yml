@@ -1,0 +1,36 @@
+name: Scheduled Hygiene Audit
+
+on:
+  schedule:
+    - cron: '0 */8 * * *' # Run every 8 hours
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write # Needed to commit the report
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Janitor Audit
+        run: npm run janitor
+
+      - name: Commit Hygiene Report with Verification
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: 'hygiene-report.md'
+          commit_message: 'chore: update hygiene report [skip ci]'
+          commit_user_name: 'Antigravity Janitor'
+          commit_user_email: 'janitor@olybars.com'

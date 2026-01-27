@@ -90,7 +90,7 @@ export const UniversalEventCard: React.FC<UniversalEventCardProps> = ({
                     </h3>
                     <div className="flex items-center gap-2 text-slate-400">
                         <MapPin size={12} className="text-primary" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">{displayVenueName} • {displayTime}</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">{displayVenueName} • {displayTime}</span>
                     </div>
                 </div>
 

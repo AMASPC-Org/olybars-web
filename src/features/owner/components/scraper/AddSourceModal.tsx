@@ -94,10 +94,12 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
-                  "EVENTS",
                   "MENU",
-                  "SOCIAL_FEED",
+                  "DRINKS",
+                  "EVENTS",
+                  "CALENDAR",
                   "WEBSITE",
+                  "SOCIAL_FEED",
                   "NEWSLETTER",
                 ] as ScrapeTarget[]
               ).map((t) => (
@@ -105,11 +107,10 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                   key={t}
                   type="button"
                   onClick={() => setTarget(t)}
-                  className={`px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${
-                    target === t
+                  className={`px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${target === t
                       ? "bg-primary text-black border-primary"
                       : "bg-black border-white/10 text-slate-500 hover:border-white/20"
-                  }`}
+                    }`}
                 >
                   {t.replace("_", " ")}
                 </button>
@@ -148,11 +149,13 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder={
-                  target === "EVENTS"
+                  target === "EVENTS" || target === "CALENDAR"
                     ? "https://facebook.com/events/..."
                     : target === "WEBSITE"
                       ? "https://yourvenue.com"
-                      : "https://yourvenue.com/menu"
+                      : target === "SOCIAL_FEED"
+                        ? "https://instagram.com/yourvenue"
+                        : "https://yourvenue.com/menu"
                 }
                 className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:border-primary/50 outline-none font-medium"
                 autoFocus
@@ -160,20 +163,26 @@ export const AddSourceModal: React.FC<AddSourceModalProps> = ({
             </div>
           </div>
 
-          {/* Context Field for Generic Website */}
-          {target === "WEBSITE" && (
-            <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-                Scraper Instructions (Optional)
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. Look for the 'Live Music' section on the homepage and grab dates..."
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:border-primary/50 outline-none font-medium min-h-[80px]"
-              />
-            </div>
-          )}
+          {/* Context Field for Instructions */}
+          <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+              {target === "SOCIAL_FEED" ? "Feed Instructions (Sync Logic)" : "Scraper Instructions (Optional)"}
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={
+                target === "MENU" || target === "DRINKS"
+                  ? "e.g. Only extract Draft Beer, ignore the wine list..."
+                  : target === "CALENDAR"
+                    ? "e.g. Grab recurring weekly trivia on Tuesdays..."
+                    : target === "SOCIAL_FEED"
+                      ? "e.g. Ignore 'link in bio' posts, only sync real events..."
+                      : "e.g. Look for the 'Live Music' section on the homepage and grab dates..."
+              }
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:border-primary/50 outline-none font-medium min-h-[80px]"
+            />
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 mt-2 text-red-400 text-[10px] font-bold uppercase tracking-wide">

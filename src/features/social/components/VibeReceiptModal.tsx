@@ -44,7 +44,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
     };
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xl flex items-center justify-center p-4">
             <div className="relative w-full max-w-[360px] animate-in zoom-in-95 duration-300">
 
                 {/* Receipt Header / "Tear Off" line */}
@@ -56,7 +56,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                 </div>
 
                 {/* Main Receipt Body */}
-                <div className="bg-slate-950 border-2 border-primary/20 rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(251,191,36,0.1)]">
+                <div className="glass-panel border-2 border-primary/20 rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(251,191,36,0.1)]">
 
                     {/* Header Section */}
                     <div className="bg-gradient-to-b from-primary to-yellow-600 p-8 text-black text-center relative">
@@ -107,7 +107,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
 
                         {/* Artie's Hook */}
                         <div className="relative pt-6 border-t border-white/10">
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-950 px-4">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black px-4">
                                 <div className="bg-primary/20 p-1.5 rounded-full">
                                     <Flame className="w-3 h-3 text-primary" />
                                 </div>
@@ -126,7 +126,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                         <div className="grid grid-cols-4 gap-2">
                             <button
                                 onClick={() => handleShare('facebook')}
-                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#1877F2]/10 border border-[#1877F2]/20 hover:bg-[#1877F2]/20 active:scale-95 transition-all group"
                                 title="Share to Facebook"
                             >
                                 <Facebook className="w-5 h-5 text-[#1877F2] group-hover:scale-110 transition-transform" />
@@ -134,7 +134,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                             </button>
                             <button
                                 onClick={() => handleShare('instagram')}
-                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#E4405F]/10 border border-[#E4405F]/20 hover:bg-[#E4405F]/20 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-[#E4405F]/10 border border-[#E4405F]/20 hover:bg-[#E4405F]/20 active:scale-95 transition-all group"
                                 title="Share to Instagram"
                             >
                                 <Instagram className="w-5 h-5 text-[#E4405F] group-hover:scale-110 transition-transform" />
@@ -142,7 +142,7 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                             </button>
                             <button
                                 onClick={() => handleShare('tiktok')}
-                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 active:scale-95 transition-all group"
                                 title="Share to TikTok"
                             >
                                 <Music2 className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
@@ -150,11 +150,11 @@ export const VibeReceiptModal: React.FC<VibeReceiptModalProps> = ({ data, onClos
                             </button>
                             <button
                                 onClick={() => handleShare('copy')}
-                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group"
+                                className="flex flex-col items-center justify-center p-2 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 active:scale-95 transition-all group"
                                 title="Copy Message & Link"
                             >
                                 {isCopied ? (
-                                    <CheckCircle2 className="w-5 h-5 text-green-400" />
+                                    <CheckCircle2 className="w-5 h-5 text-green-400 animate-in zoom-in spin-in-90 duration-300" />
                                 ) : (
                                     <Copy className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
                                 )}

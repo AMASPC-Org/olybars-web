@@ -15,17 +15,19 @@ import {
   identifyUser,
 } from "./middleware/authMiddleware.js";
 import { vibeNormalizer } from "./middleware/vibeNormalizer.js";
+import { RequestContext } from "./utils/context.js";
+import { logger } from "./utils/logger.js";
 
 import {
   ClockInSchema,
   PlayClockInSchema,
   AdminRequestSchema,
   UserUpdateSchema,
-  ChatRequestSchema,
   VenueUpdateSchema,
   VenueOnboardSchema,
   AppEventSchema,
   GenerateImageSchema,
+  BountyReviewSchema,
 } from "./utils/validation.js";
 
 const app = express();
@@ -96,24 +98,9 @@ const globalRateLimiter = rateLimit({
 });
 
 /**
- * Artie Chat Rate Limiter
- * Limits based on user role.
+ * Artie Chat Rate Limiter (Removed - Deprecated in favor of Cloud Gateway)
  */
-const artieRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  limit: (req: any) => {
-    const role = req.user?.role;
-    if (role === "super-admin" || role === "admin") return 1000;
-    if (role === "owner" || role === "manager") return 500;
-    if (role === "user") return 50; // Authenticated league player
-    return 5; // Guest Limit
-  },
-  keyGenerator: (req: any) => req.user?.uid || req.ip,
-  message: { error: "Artie is taking a short break. Come back in an hour!" },
-  standardHeaders: "draft-7",
-  legacyHeaders: false,
-  validate: { xForwardedForHeader: false, default: false },
-});
+// artieRateLimiter was here
 
 const v1Router = express.Router();
 const v2Router = express.Router();
@@ -206,57 +193,73 @@ const blockAggressiveBots = (
  * Structured Logging Helper for Google Cloud
  */
 const log = (severity: string, message: string, payload: any = {}) => {
-  const logEntry = {
-    severity,
-    message,
-    timestamp: new Date().toISOString(),
-    ...payload,
-  };
-  console.log(JSON.stringify(logEntry));
+  logger.log(severity as any, message, { payload });
 };
 
-app.use(async (req, res, next) => {
+app.use((req, res, next) => {
   const start = Date.now();
-  const correlation_id =
+  const correlationId =
     req.header("x-correlation-id") ||
     `req-${Math.random().toString(36).substring(2, 11)}`;
   const userAgent = req.get("user-agent") || "";
 
-  // AI Bot Tracking
-  if (isAiBot(userAgent)) {
-    const botName = getBotName(userAgent);
-    const resource = req.url;
+  // [SUPPORT] Inject Correlation ID into Response Headers
+  res.setHeader("x-correlation-id", correlationId);
 
-    // Non-blocking log to Firestore
-    (async () => {
-      try {
-        const { db } = await import("./firebaseAdmin.js");
-        await db.collection("ai_access_logs").add({
-          botName,
-          userAgent,
-          resource,
-          timestamp: new Date().toISOString(),
-          method: req.method,
-          ip: req.ip || req.header("x-forwarded-for") || "unknown",
-        });
-        log("INFO", `[AI_BOT_DETECTED] ${botName} accessed ${resource}`);
-      } catch (err) {
-        console.error("[AI_ERROR] Failed to log bot access:", err);
+  RequestContext.run(
+    {
+      correlationId,
+      method: req.method,
+      path: req.url,
+      clientIp: req.ip || req.header("x-forwarded-for") || "unknown",
+    },
+    () => {
+      // AI Bot Tracking
+      if (isAiBot(userAgent)) {
+        const botName = getBotName(userAgent);
+        const resource = req.url;
+        const clientIp = RequestContext.get()?.clientIp;
+
+        // Non-blocking log to Firestore
+        (async () => {
+          try {
+            const { db } = await import("./firebaseAdmin.js");
+            await db.collection("ai_access_logs").add({
+              botName,
+              userAgent,
+              resource,
+              timestamp: new Date().toISOString(),
+              method: req.method,
+              ip: clientIp,
+            });
+            logger.info(`[AI_BOT_DETECTED] ${botName} accessed ${resource}`);
+          } catch (err) {
+            logger.error("[AI_ERROR] Failed to log bot access", err);
+          }
+        })();
       }
-    })();
-  }
 
-  res.on("finish", () => {
-    const latencyMs = Date.now() - start;
-    log("INFO", `${req.method} ${req.url} - ${res.statusCode}`, {
-      correlation_id,
-      route: req.route?.path || req.url,
-      status: res.statusCode,
-      latencyMs,
-      userAgent,
-    });
-  });
-  next();
+      res.on("finish", () => {
+        const latencyMs = Date.now() - start;
+
+        // [FINOPS] Sampling for successful high-frequency routes
+        let samplingRate = 1.0;
+        if (res.statusCode === 200) {
+          if (req.url === "/health" || req.url === "/api/health") samplingRate = 0;
+          else if (req.url.startsWith("/api/venues")) samplingRate = 0.1;
+        }
+
+        logger.info(`${req.method} ${req.url} - ${res.statusCode}`, {
+          route: req.route?.path || req.url,
+          status: res.statusCode,
+          latencyMs,
+          userAgent,
+        }, samplingRate);
+      });
+
+      next();
+    }
+  );
 });
 
 /**
@@ -705,8 +708,6 @@ v1Router.post(
   async (req, res) => {
     const { id } = req.params;
     const { googlePlaceId } = req.body;
-    const requestingUserId = (req as any).user.uid;
-
     try {
       const { syncVenueWithGoogle } = await import("./venueService.js");
       const result = await syncVenueWithGoogle(id, googlePlaceId);
@@ -1018,7 +1019,6 @@ v1Router.post(
   requireRole(["admin", "super-admin"]),
   async (req, res) => {
     const { id } = req.params;
-    const { BountyReviewSchema } = await import("./utils/validation.js");
     const validation = BountyReviewSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
@@ -1176,7 +1176,8 @@ v1Router.get("/places/search", async (req, res) => {
       sessionToken as string,
     );
     res.json(predictions);
-  } catch (error) {
+  } catch (error: any) {
+    logger.error("Places search failed", error);
     res.status(500).json({ error: "Places search failed" });
   }
 });
@@ -1193,7 +1194,8 @@ v1Router.get("/places/details/:placeId", async (req, res) => {
     const details = await getPlaceDetails(placeId, sessionToken as string);
     if (!details) return res.status(404).json({ error: "Place not found" });
     res.json(details);
-  } catch (error) {
+  } catch (error: any) {
+    logger.error("Place details failed", error);
     res.status(500).json({ error: "Place details failed" });
   }
 });
@@ -1351,7 +1353,8 @@ v1Router.post("/admin/setup-super", async (req, res) => {
     let user;
     try {
       user = await auth.getUserByEmail(email);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error(`User ${email} not found in Auth`, error);
       return res
         .status(404)
         .json({ error: `User ${email} not found in Auth.` });
@@ -1397,6 +1400,7 @@ v1Router.get("/activity/recent", async (req, res) => {
     const logs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(logs);
   } catch (error: any) {
+    logger.error("Failed to fetch activity logs", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1438,7 +1442,7 @@ v1Router.get("/events", async (req, res) => {
 
     res.json(events);
   } catch (error: any) {
-    log("ERROR", "Failed to fetch events", { error: error.message });
+    logger.error("Failed to fetch events", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -1777,8 +1781,8 @@ v1Router.post("/ai/generate-description", async (req, res) => {
             city = `${parts[1].trim()}, ${parts[2].trim().split(" ")[0]}`;
           }
         }
-      } catch (e) {
-        log("WARNING", "Address parsing failed", { address: venue.address });
+      } catch (error: any) {
+        logger.warn("Address parsing failed", { address: venue.address, error: error.message });
       }
     }
 

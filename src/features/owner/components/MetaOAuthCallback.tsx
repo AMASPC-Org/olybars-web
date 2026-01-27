@@ -5,7 +5,11 @@ import { useToast } from '../../../components/ui/BrandedToast';
 import { auth } from '../../../lib/firebase';
 import { API_ENDPOINTS } from '../../../lib/api-config';
 
-export const MetaOAuthCallback: React.FC = () => {
+interface MetaOAuthCallbackProps {
+    onClose?: () => void;
+}
+
+export const MetaOAuthCallback: React.FC<MetaOAuthCallbackProps> = ({ onClose }) => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { showToast } = useToast();
@@ -103,7 +107,7 @@ export const MetaOAuthCallback: React.FC = () => {
                         <h2 className="text-2xl font-black text-white uppercase tracking-tight">Authentication Error</h2>
                         <p className="text-red-400/80 text-sm font-bold uppercase tracking-widest">{error}</p>
                         <button
-                            onClick={() => navigate('/owner')}
+                            onClick={() => onClose ? onClose() : navigate('/owner')}
                             className="w-full bg-slate-800 hover:bg-slate-700 text-white font-black py-4 rounded-xl uppercase tracking-widest text-xs transition-all"
                         >
                             Return to Dashboard

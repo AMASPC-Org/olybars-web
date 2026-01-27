@@ -18,6 +18,8 @@ import {
 import { geocodeAddress } from "./utils/geocodingService.js";
 import { searchPlace, getPlaceDetails } from "./utils/placesService.js";
 import { BADGES } from "../../src/config/badges.js";
+import { logger } from "./utils/logger.js";
+import { BouncerService } from "./services/BouncerService.js";
 
 // In-memory cache for venues (TTL: 60 seconds)
 let venueCache: { data: Venue[]; lastFetched: number } | null = null;
@@ -103,28 +105,6 @@ const sortVenuesByBuzzClock = (venues: Venue[]): Venue[] => {
   });
 };
 
-/**
- * Geofencing: Haversine distance in meters
- */
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number => {
-  const R = 6371e3; // metres
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // in metres
-};
 
 /**
  * Buzz Algorithm (Doc 05 Rulebook):
@@ -439,29 +419,46 @@ export const clockIn = async (
 ) => {
   const venueDoc = await db.collection("venues").doc(venueId).get();
   if (!venueDoc.exists) throw new Error("Venue not found");
-
   const venueData = venueDoc.data() as Venue;
-  if (!venueData.location) {
-    // If no real location set, skip geofencing for dev
-    console.warn(`Geofencing skipped for ${venueId} - no location set.`);
-  } else {
-    const distance = calculateDistance(
-      userLat,
-      userLng,
-      venueData.location.lat,
-      venueData.location.lng,
-    );
-    if (distance > PULSE_CONFIG.SPATIAL.GEOFENCE_RADIUS) {
-      throw new Error(
-        `Too far away! You are ${Math.round(distance)}m from ${venueData.name}.`,
-      );
-    }
+
+  // --- BOUNCER VALIDATION ---
+  const timestamp = Date.now();
+
+  // 1. Location & Geofence (Wait for real coordinates if available)
+  const locCheck = BouncerService.verifyLocation(userLat, userLng, venueData);
+  if (!locCheck.allowed) {
+    logger.warn(`[ANTI-CHEAT] Geofence Violation`, { userId, venueId, ...locCheck });
+    throw new Error(locCheck.reason);
   }
 
-  // [BETA BATTALION] Add Signal BEFORE point checks to ensure consensus accuracy
-  // even if the user is point-capped or throttled.
-  const timestamp = Date.now();
-  const expiresAt = new Date(timestamp + 7 * 24 * 60 * 60 * 1000); // [FINOPS] 7-day TTL for ephemeral signals
+  // 2. Conflict of Interest Check (Rule 03-B)
+  if (venueData.ownerId === userId || venueData.managerIds?.includes(userId)) {
+    throw new Error("Conflict of Interest: Venue staff and management are not eligible for League points at their own establishment.");
+  }
+
+  // 3. Superman Rule (Impossible Movement)
+  const supermanCheck = await BouncerService.checkSupermanRule(userId, venueId, userLat, userLng, timestamp);
+  if (!supermanCheck.allowed) {
+    throw new Error(supermanCheck.reason);
+  }
+
+  // 4. Nightly Cap (LCB Compliance)
+  const capCheck = await BouncerService.checkNightlyCap(userId, timestamp);
+  if (!capCheck.allowed) {
+    throw new Error(capCheck.reason);
+  }
+
+  // 5. Camper Rule (Same-Venue Cooldown)
+  const camperCheck = await BouncerService.checkCamperRule(userId, venueId, "clock_in", timestamp);
+  if (!camperCheck.allowed) {
+    throw new Error(camperCheck.reason);
+  }
+
+  // --- VALIDATION PASSED, NOW WRITE SIGNAL ---
+  const expiresAt = new Date(timestamp + 7 * 24 * 60 * 60 * 1000); // 7-day TTL
+
+
+  // --- VALIDATION PASSED, NOW WRITE SIGNAL ---
 
   const signal: Partial<Signal> = {
     venueId,
@@ -473,6 +470,7 @@ export const clockIn = async (
   };
 
   // Check for recent signal from this user to prevent double-counting/spam (5 min window)
+  // This is a safety check for concurrency/double-instantiation more than business logic
   const recentDuplicate = await db
     .collection("signals")
     .where("userId", "==", userId)
@@ -484,107 +482,6 @@ export const clockIn = async (
 
   if (recentDuplicate.empty) {
     await db.collection("signals").add(signal);
-  }
-  if (venueData.ownerId === userId || venueData.managerIds?.includes(userId)) {
-    throw new Error(
-      "Conflict of Interest: Venue staff and management are not eligible for League points at their own establishment.",
-    );
-  }
-
-  // 1. Conflict of Interest Check (Rule 03-B)
-
-  // 2. LCB Compliance Check (Rule 03-A) & Nightly Cap
-  // WA State law limits users to 2 League clock-ins per 12-hour window.
-  // Also enforcing the OlyBars 4:00 AM Business Day cap of 2.
-  const today4AM = new Date();
-  today4AM.setHours(4, 0, 0, 0);
-  const businessDayStart =
-    timestamp < today4AM.getTime()
-      ? today4AM.getTime() - 24 * 60 * 60 * 1000
-      : today4AM.getTime();
-
-  const lcbWindowAgo = timestamp - PULSE_CONFIG.WINDOWS.LCB_WINDOW;
-  const windowStart = Math.min(businessDayStart, lcbWindowAgo);
-
-  const clockinsLastWindow = await db
-    .collection("signals")
-    .where("userId", "==", userId)
-    .where("type", "==", "clock_in")
-    .where("timestamp", ">", windowStart)
-    .get();
-
-  if (clockinsLastWindow.size >= 2) {
-    throw new Error(
-      "Nightly Cap Reached: You have reached the limit of 2 League clock-ins for this window. Please try again tomorrow after 4:00 AM!",
-    );
-  }
-
-  // 3. Throttling & Impossible Movement (Rule 03-C)
-  const recentSignals = await db
-    .collection("signals")
-    .where("userId", "==", userId)
-    .where("type", "==", "clock_in")
-    .orderBy("timestamp", "desc")
-    .limit(1)
-    .get();
-
-  if (!recentSignals.empty) {
-    const lastClockIn = recentSignals.docs[0].data() as Signal;
-    const timeSinceLast = timestamp - lastClockIn.timestamp;
-    const timeDiffSec = timeSinceLast / 1000;
-
-    // Impossible Movement Check (Centralized from Frontend)
-    if (venueData.location && lastClockIn.venueId !== venueId) {
-      const lastVenueDoc = await db
-        .collection("venues")
-        .doc(lastClockIn.venueId)
-        .get();
-      const lastVenueData = lastVenueDoc.data() as Venue;
-
-      if (lastVenueData?.location) {
-        const distMeters = calculateDistance(
-          lastVenueData.location.lat,
-          lastVenueData.location.lng,
-          venueData.location.lat,
-          venueData.location.lng,
-        );
-
-        // Threshold: 100mph (approx 44.7 m/s)
-        const speedMps = distMeters / timeDiffSec;
-        if (speedMps > 44.7 && timeDiffSec > 60) {
-          // 1 min buffer for very close venues
-          console.warn(
-            `[ANTI-CHEAT] Impossible Movement: ${userId} moved ${Math.round(distMeters)}m in ${Math.round(timeDiffSec)}s (${Math.round(speedMps * 2.237)} mph)`,
-          );
-          throw new Error(
-            "Impossible Movement detected! Please engage responsibly and stay within local travel speeds.",
-          );
-        }
-      }
-    }
-
-    // Global Throttle
-    if (timeSinceLast < PULSE_CONFIG.WINDOWS.CLOCK_IN_THROTTLE) {
-      const minutesSinceLast = Math.floor(timeSinceLast / (60 * 1000));
-      const waitTime =
-        PULSE_CONFIG.WINDOWS.CLOCK_IN_THROTTLE / (60 * 1000) - minutesSinceLast;
-      throw new Error(
-        `Slow down, League Legend! The Pulse needs a bit more time. You can clock in again in ${Math.ceil(waitTime)} minutes.`,
-      );
-    }
-
-    // Same-Venue Throttle
-    if (
-      lastClockIn.venueId === venueId &&
-      timeSinceLast < PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE
-    ) {
-      const waitTime =
-        (PULSE_CONFIG.WINDOWS.SAME_VENUE_THROTTLE - timeSinceLast) /
-        (60 * 1000);
-      throw new Error(
-        `Already clocked in here recently! Please wait another ${Math.floor(waitTime / 60)} hours and ${Math.ceil(waitTime % 60)} minutes before clocking into ${venueData.name} again.`,
-      );
-    }
   }
 
   // [REMOVED] Signal added earlier above
@@ -621,33 +518,25 @@ export const clockIn = async (
     console.error("[EVENT_BONUS_ERROR] Failed to check for events:", e);
   }
 
-  // Calculate Dynamic Points (The Pioneer Curve - Refactored Jan 2026)
-  // Mellow: 100, Chill: 50, Buzzing: 25, Packed: 10
-  const basePoints =
-    (PULSE_CONFIG.POINTS.VIBE_POINTS as any)[venueData.status] ||
-    PULSE_CONFIG.POINTS.VIBE_POINTS.trickle; // CHANGED FROM mellow TO trickle
+  // Calculate Points using Bouncer Service
+  const basePoints = BouncerService.calculatePoints("clock_in", venueData);
   let points = basePoints + eventBonus;
-  const isLocalMakerSupporter = venueData.isLocalMaker === true;
 
-  if (isLocalMakerSupporter) {
-    points = Math.round(basePoints * 1.5 + eventBonus);
-  }
+  const metadata = {
+    basePoints,
+    eventBonus,
+    multiplier: venueData.isLocalMaker ? 1.5 : 1,
+    isLocalMaker: venueData.isLocalMaker,
+    vibeAtClockIn: venueData.status || "trickle",
+  };
 
-  // Pass calculated points to the activity logger
-  // We log it here to ensure backend source of truth
   await logUserActivity({
     userId,
     type: "clock_in",
     venueId,
     points,
     verificationMethod,
-    metadata: {
-      basePoints,
-      eventBonus,
-      multiplier: isLocalMakerSupporter ? 1.5 : 1,
-      isLocalMakerSupporter,
-      vibeAtClockIn: venueData.status || "mellow",
-    },
+    metadata,
   });
 
   // Recalculate Buzz
@@ -713,25 +602,34 @@ export const performVibeCheck = async (
   const venueData = venueDoc.data() as Venue;
   const now = Date.now();
 
-  // 1. Calculate Points
-  // Base Vibe Report: 5.0 (PULSE_CONFIG.POINTS.VIBE_REPORT)
-  // Photo Bonus: 10.0 (PULSE_CONFIG.POINTS.PHOTO_VIBE)
-  // Consent Bonus: 15.0 (PULSE_CONFIG.POINTS.VERIFIED_BONUS)
+  // --- BOUNCER VALIDATION ---
+  // 1. Superman Rule (Vibe checks earn points, so protect them)
+  // We need basic lat/lng for Superman rule. If not provided, we might have to relax it for now
+  // but usually verificationMethod === 'gps' implies we should have coords?
+  // Current client-side API call might not send coords for vibe check yet.
+  // If no coords, we skip Superman but keep Camper.
 
-  let immediatePoints = PULSE_CONFIG.POINTS.VIBE_REPORT; // 5
-  let bountyPoints = 0;
-  let bountyPending = false;
+  // 2. Camper Rule (Same-Venue Cooldown for Vibe Reports)
+  const camperCheck = await BouncerService.checkCamperRule(userId, venueId, "vibe_report", now);
+  if (!camperCheck.allowed) {
+    throw new Error(camperCheck.reason);
+  }
 
-  // Game Status Bonus (Flat 5 points for any update)
+  // 3. Point Calculation
+  const immediatePoints = BouncerService.calculatePoints("vibe_report", venueData);
   let gameBonus = 0;
   if (gameStatus && Object.keys(gameStatus).length > 0) {
     gameBonus = PULSE_CONFIG.POINTS.GAME_REPORT_BONUS;
-    immediatePoints += gameBonus;
+    // Note: immediatePoints already calculated, we add game bonus manually here or in calculatePoints
   }
+  const totalImmediatePoints = immediatePoints + gameBonus;
+
+  let bountyPoints = 0;
+  let bountyPending = false;
 
   // Photo & Consent Validation (2-Hour Rule)
   if (photoUrl) {
-    // Enforce 2-hour rule: Must be clocked in at this venue within last 2 hours
+    // Enforce 2-hour rule
     const twoHoursAgo = now - 2 * 60 * 60 * 1000;
     const recentClockIn = await db
       .collection("signals")
@@ -743,15 +641,10 @@ export const performVibeCheck = async (
       .get();
 
     if (recentClockIn.empty) {
-      throw new Error(
-        `Bounty Error: You must be clocked in at ${venueData.name} within the last 2 hours to submit visual proof.`,
-      );
+      throw new Error(`Bounty Error: You must be clocked in at ${venueData.name} within the last 2 hours to submit visual proof.`);
     }
 
-    bountyPoints += PULSE_CONFIG.POINTS.PHOTO_VIBE; // 10
-    if (hasConsent) {
-      bountyPoints += PULSE_CONFIG.POINTS.VERIFIED_BONUS; // 15
-    }
+    bountyPoints = BouncerService.calculatePoints("photo", venueData, hasConsent);
     bountyPending = true;
   }
 
@@ -779,7 +672,7 @@ export const performVibeCheck = async (
     userId,
     type: "vibe",
     venueId,
-    points: immediatePoints,
+    points: totalImmediatePoints,
     hasConsent,
     verificationMethod,
     metadata: {
@@ -928,12 +821,12 @@ export const performVibeCheck = async (
 
   return {
     success: true,
-    pointsAwarded: immediatePoints,
+    pointsAwarded: totalImmediatePoints,
     bountyPending,
     submissionId: bountyPending ? submissionId : undefined,
     message: bountyPending
-      ? `Vibe Verified! +${immediatePoints} Ops. Photo sent to Commissioner for ${bountyPoints}pt Bounty review.`
-      : `Vibe Checked! You earned ${immediatePoints} Ops.`,
+      ? `Vibe Verified! +${totalImmediatePoints} Ops. Photo sent to Commissioner for ${bountyPoints}pt Bounty review.`
+      : `Vibe Checked! You earned ${totalImmediatePoints} Ops.`,
   };
 };
 
@@ -1708,8 +1601,8 @@ export const onboardVenue = async (
       status: "OPEN",
       type: "bar",
       clockIns: 0,
-      vibe: "CHILL",
-      vibeDefault: "CHILL",
+      vibe: "flowing",
+      vibeDefault: "flowing",
       assets: {},
       createdAt: Date.now(),
       updatedAt: Date.now(),

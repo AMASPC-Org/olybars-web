@@ -3,5 +3,14 @@
     "default": "ama-ecosystem-prod",
     "staging": "ama-ecosystem-dev-9ceda"
   },
+  "targets": {
+    "ama-ecosystem-dev-9ceda": {
+      "hosting": {
+        "dev": [
+          "ama-ecosystem-dev-9ceda"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

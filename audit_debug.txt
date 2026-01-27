@@ -1,0 +1,14 @@
+﻿
+> olybars-production@1.0.0 guardrail:audit
+> tsx scripts/guardrails/audit-compliance.ts
+
+≡ƒ¢í∩╕Å  [GUARDRAIL] Starting Audit & Compliance Suite...
+≡ƒöì [GUARDRAIL] Running WSLCB Keyword Sentinel...
+Γ£à [PASS] WSLCB Keyword Sentinel cleared.
+≡ƒöì [GUARDRAIL] Auditing API Keys for ama-ecosystem-prod...
+Γ£à [SECURE] Maps API Key "olybars-frontend-maps-key" is restricted.
+Γä╣∩╕Å  [ALLOWLIST] Maps API Key "Browser key (auto created by Firebase)" is currently exempted from strict referrer checks.
+Γ£à [SECURE] Maps API Key "Maps Platform API Key" is restricted.
+≡ƒöì [GUARDRAIL] Running IAM Sentinel (Least Privilege Check)...
+≡ƒöì Checking permissions for: ryan@amaspc.com (Type: User)
+Γä╣∩╕Å  [SKIP] Skipping IAM Sentinel for human user account.

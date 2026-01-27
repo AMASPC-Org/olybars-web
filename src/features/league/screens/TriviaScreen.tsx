@@ -15,6 +15,7 @@ import {
   generateArtieHook,
 } from "../../social/services/VibeReceiptService";
 import { CheatCodeWidget } from "../../history/components/CheatCodeWidget";
+import { StaggerContainer } from "../../../components/ui/StaggerContainer";
 
 interface TriviaScreenProps {
   venues: Venue[];
@@ -139,7 +140,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({
             </div>
 
             {searchResults.length > 0 ? (
-              <div className="grid grid-cols-1 gap-2">
+              <StaggerContainer className="grid grid-cols-1 gap-2">
                 {searchResults.map(({ venue, feature }, idx) => (
                   <GameFeatureCard
                     key={`${venue.id}-${feature.id}-${idx}`}
@@ -148,7 +149,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({
                     onClockIn={handlePlayClockIn}
                   />
                 ))}
-              </div>
+              </StaggerContainer>
             ) : (
               <div className="text-center py-12 bg-slate-900/50 rounded-3xl border border-dashed border-white/5 mx-2">
                 <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">
@@ -234,7 +235,7 @@ export const TriviaScreen: React.FC<TriviaScreenProps> = ({
                   <button
                     key={activity}
                     onClick={() => setSearchQuery(activity)}
-                    className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-left hover:border-primary/50 transition-all group"
+                    className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-left hover:border-primary/50 transition-all duration-300 group active:scale-97 active:brightness-90 ease-spring-smooth"
                   >
                     <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-1">
                       Quick Search

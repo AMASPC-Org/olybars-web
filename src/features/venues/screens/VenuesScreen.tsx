@@ -2,11 +2,9 @@ import React, { useState, useMemo } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Beer,
-  Bot,
   ChevronRight,
   Clock,
   Crown,
-  Filter,
   Flame,
   MapPin,
   Music,
@@ -42,15 +40,17 @@ interface VenuesScreenProps {
   handleVibeCheck?: (v: Venue) => void;
   lastVibeChecks?: Record<string, number>;
   lastGlobalVibeCheck?: number;
+  isLoading?: boolean;
+  initialMode?: "list" | "map";
 }
 
 type SortOption = "alpha" | "distance" | "energy" | "buzz";
 
+import { Skeleton } from "../../../components/ui/Skeleton";
+
 export const VenuesScreen: React.FC<VenuesScreenProps> = ({
   venues,
-  handleVibeCheck,
-  lastVibeChecks,
-  lastGlobalVibeCheck,
+  isLoading,
 }) => {
   const navigate = useNavigate();
   const { coords } = useGeolocation();
@@ -135,13 +135,13 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
         distance:
           coords && v.location
             ? metersToMiles(
-                calculateDistance(
-                  coords.latitude,
-                  coords.longitude,
-                  v.location.lat,
-                  v.location.lng,
-                ),
-              )
+              calculateDistance(
+                coords.latitude,
+                coords.longitude,
+                v.location.lat,
+                v.location.lng,
+              ),
+            )
             : null,
       }))
       .filter((v) => v.isActive !== false); // Filter out Soft Deleted / Archived venues
@@ -652,11 +652,10 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
             <button
               key={type.id}
               onClick={() => setActiveType(type.id as VenueType | "all")}
-              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
-                activeType === type.id
-                  ? "bg-white text-black border-white"
-                  : "bg-transparent text-slate-500 border-slate-800 hover:border-slate-600"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap border ${activeType === type.id
+                ? "bg-white text-black border-white"
+                : "bg-transparent text-slate-500 border-slate-800 hover:border-slate-600"
+                }`}
             >
               {type.label}
             </button>
@@ -668,25 +667,25 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <button
               onClick={() => setActiveSort("buzz")}
-              className={`flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === "buzz" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
+              className={`flex items-center gap-1 px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap font-league ${activeSort === "buzz" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
             >
               <Flame size={12} fill="currentColor" /> Buzz Clock
             </button>
             <button
               onClick={() => setActiveSort("alpha")}
-              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === "alpha" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
+              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap font-league ${activeSort === "alpha" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
             >
               Alphabetical
             </button>
             <button
               onClick={() => setActiveSort("distance")}
-              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === "distance" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
+              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap font-league ${activeSort === "distance" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
             >
               Nearest
             </button>
             <button
               onClick={() => setActiveSort("energy")}
-              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap font-league ${activeSort === "energy" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
+              className={`px-4 py-2 rounded-xl border-2 font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 whitespace-nowrap font-league ${activeSort === "energy" ? "bg-primary text-black border-black shadow-[2px_2px_0px_0px_#fff]" : "bg-surface text-slate-400 border-slate-800"}`}
             >
               Vibe Check
             </button>
@@ -711,7 +710,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
                 <button
                   key={tag}
                   onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                  className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all whitespace-nowrap ${activeTag === tag ? "bg-primary/20 text-primary border-primary" : "bg-transparent text-slate-500 border-slate-800"}`}
+                  className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all active:scale-95 whitespace-nowrap ${activeTag === tag ? "bg-primary/20 text-primary border-primary" : "bg-transparent text-slate-500 border-slate-800"}`}
                 >
                   {tag}
                 </button>
@@ -719,7 +718,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
             </div>
             <button
               onClick={() => setShowOpenOnly(!showOpenOnly)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all ${showOpenOnly ? "bg-green-500/20 text-green-400 border-green-500" : "bg-transparent text-slate-500 border-slate-800"}`}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all active:scale-95 ${showOpenOnly ? "bg-green-500/20 text-green-400 border-green-500" : "bg-transparent text-slate-500 border-slate-800"}`}
             >
               <Clock size={12} />
               Open Now
@@ -746,7 +745,22 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
           targetVibe={alertTargetVibe}
         />
 
-        {processedVenues.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-slate-900/50 rounded-3xl p-4 border border-white/5 space-y-3">
+                <Skeleton variant="rect" height={192} className="w-full rounded-2xl" />
+                <div className="flex justify-between items-center">
+                  <div className="space-y-2 w-2/3">
+                    <Skeleton variant="text" width="60%" height={24} />
+                    <Skeleton variant="text" width="40%" height={16} />
+                  </div>
+                  <Skeleton variant="circle" width={40} height={40} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : processedVenues.length === 0 ? (
           <div className="space-y-6">
             <div className="text-center py-20 bg-surface/30 rounded-3xl border-2 border-dashed border-slate-800">
               <Sparkles className="w-12 h-12 text-slate-700 mx-auto mb-4" />
@@ -889,7 +903,7 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
 
                     let liveBounty =
                       venue.activeFlashBounty?.isActive &&
-                      (venue.activeFlashBounty.endTime || 0) > now
+                        (venue.activeFlashBounty.endTime || 0) > now
                         ? venue.activeFlashBounty
                         : null;
                     let activeHH = rules.find((r) => {
@@ -919,18 +933,18 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
 
                     let staticDeal =
                       venue.deal &&
-                      ![
-                        "none",
-                        "draft",
-                        "false",
-                        "",
-                        "mellow",
-                        "chill",
-                        "flowing",
-                        "gushing",
-                        "flooded",
-                        "packed",
-                      ].includes(venue.deal.toLowerCase())
+                        ![
+                          "none",
+                          "draft",
+                          "false",
+                          "",
+                          "mellow",
+                          "chill",
+                          "flowing",
+                          "gushing",
+                          "flooded",
+                          "packed",
+                        ].includes(venue.deal.toLowerCase())
                         ? venue.deal
                         : null;
 
@@ -1077,8 +1091,8 @@ export const VenuesScreen: React.FC<VenuesScreenProps> = ({
                           e.stopPropagation();
                           showToast(
                             "Find the physical Vibe Spot QR code inside " +
-                              venue.name +
-                              " to report a vibe.",
+                            venue.name +
+                            " to report a vibe.",
                             "info",
                           );
                         }}

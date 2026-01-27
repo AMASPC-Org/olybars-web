@@ -73,3 +73,19 @@ To prevent accidental credential leaks (like service-account.json):
 - **Sensitive Directory Guard**: Any `git add` in `functions/src/config/`, `server/src/`, or the project root MUST use explicit file arguments.
 - **Secret Hygiene**: If a `.json`, `.env`, or `.key` file appears in `git status` that you did not explicitly create as a non-secret, do NOT stage it. Check for `.gitignore` effectiveness immediately.
 - **History Purge**: If you realize a secret was committed, STOP. Perform a `git reset --soft HEAD~1` and `git rm --cached <file>` immediately. Do NOT push.
+
+### 9. Destructive Command Guard
+
+> [!CRITICAL]
+> **STOP BEFORE YOU WIPE**
+> The following commands are **FORBIDDEN** without a prior `git status` check AND explicit user user verification of the output:
+> - `git reset --hard`
+> - `git clean -df`
+> - `git push --force`
+
+**Protocol for State Reset:**
+If you must reset to a clean state:
+1.  **Check**: Run `git status` FIRST.
+2.  **Assess**: Identify exactly which untracked files or uncommitted changes will be destroyed.
+3.  **Offer**: Propose `git stash` to the user as a non-destructive alternative.
+4.  **Confirm**: Only run the destructive command if the user explicitly approves the specific data loss.

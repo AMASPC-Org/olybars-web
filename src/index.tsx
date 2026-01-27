@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import { logErrorToBackend } from './services/errorService';
+import { BreadcrumbService } from './services/breadcrumbService';
 
 // --- GLOBAL OBSERVABILITY ---
 // Catch runtime crashes
@@ -17,10 +18,25 @@ window.onunhandledrejection = (event) => {
   logErrorToBackend(event.reason, 'window.onunhandledrejection');
 };
 
+// --- INTERACTION TRACKING ---
+// Track global clicks to establish user intent before a crash
+window.addEventListener('click', (e) => {
+  const target = e.target as HTMLElement;
+  if (target && typeof target.getAttribute === 'function') {
+    const label = target.innerText?.trim().slice(0, 30) || target.getAttribute('aria-label') || target.id || target.tagName;
+    BreadcrumbService.trackClick(target.id || 'anonymous', label);
+  }
+}, true);
+
+// Track back/forward navigation
+window.addEventListener('popstate', () => {
+  BreadcrumbService.trackNavigation(window.location.pathname);
+});
+
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
 import { ToastProvider } from './components/ui/BrandedToast';
-import { PersonaProvider } from './contexts';
+import { PersonaProvider, UserProvider, GamificationProvider } from './contexts';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -32,11 +48,15 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
-          <PersonaProvider>
-            <App />
-          </PersonaProvider>
-        </BrowserRouter>
+        <UserProvider>
+          <GamificationProvider>
+            <BrowserRouter>
+              <PersonaProvider>
+                <App />
+              </PersonaProvider>
+            </BrowserRouter>
+          </GamificationProvider>
+        </UserProvider>
       </ToastProvider>
     </QueryClientProvider>
   </React.StrictMode>

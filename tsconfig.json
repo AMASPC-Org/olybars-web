@@ -30,6 +30,8 @@
     },
     "allowImportingTsExtensions": true,
     "strict": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "noEmit": true
   },
   "include": [

@@ -1,5 +1,6 @@
 import { Signal } from '../../../src/types.js';
 import { PULSE_CONFIG } from '../../../src/config/pulse.js';
+import { logger } from './logger.js';
 
 /**
  * [SCORING ENGINE]
@@ -44,25 +45,26 @@ export const calculateDampedScore = (signals: Signal[], now: number = Date.now()
     // We only damp the *recent* signals. Old signals (organic history) retain full value (subject to decay).
     const dampingFactor = burstCount > 1 ? 1 / Math.sqrt(burstCount) : 1.0;
 
+    logger.trace('SCORING', 'Calculating Damped Score', {
+        burstCount,
+        dampingFactor,
+        totalSignals: sortedSignals.length
+    });
+
     for (const signal of sortedSignals) {
-        // Determine Base Value
+        // ... existing logic ...
         let val = 0;
         if (signal.type === 'clock_in') val = PULSE_CONFIG.POINTS.CLOCK_IN; // 10
         if (signal.type === 'vibe_report') val = PULSE_CONFIG.POINTS.VIBE_REPORT; // 5
-        // Add other types if needed (photo, etc) - for now relying on primary signals
 
-        // Apply Recency Decay (50% per hour)
         const ageMs = now - signal.timestamp;
         const decayHalflifeMs = PULSE_CONFIG.WINDOWS.DECAY_HALFLIFE || MILLIS_PER_HOUR;
 
-        // Safety: Don't score future signals or ancient ones
         if (ageMs < 0) continue;
 
-        // age in half-lives
         const ageInHalfLives = ageMs / decayHalflifeMs;
         const decayedValue = val * Math.pow(0.5, ageInHalfLives);
 
-        // Apply Damping if it's part of the recent burst
         if (ageMs < BURST_WINDOW_MS) {
             score += decayedValue * dampingFactor;
         } else {
@@ -70,6 +72,7 @@ export const calculateDampedScore = (signals: Signal[], now: number = Date.now()
         }
     }
 
+    logger.trace('SCORING', 'Calculation Complete', { finalScore: score });
     return score;
 };
 

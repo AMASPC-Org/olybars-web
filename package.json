@@ -27,7 +27,7 @@
     "deploy:firestore:prod": "firebase deploy -P default --only firestore",
     "deploy:functions:dev": "firebase deploy -P staging --only functions",
     "deploy:functions:prod": "firebase deploy -P default --only functions",
-    "deploy:backend:dev": "gcloud run deploy olybars-backend --source . --project ama-ecosystem-dev-9ceda --region us-west1 --allow-unauthenticated --set-env-vars FRONTEND_URL=https://ama-ecosystem-dev-9ceda.web.app,NODE_ENV=production --set-secrets VITE_GOOGLE_BROWSER_KEY=VITE_GOOGLE_BROWSER_KEY:latest",
+    "deploy:backend:dev": "gcloud run deploy olybars-backend --source . --project ama-ecosystem-dev-9ceda --region us-west1 --allow-unauthenticated --set-env-vars FRONTEND_URL=https://ama-ecosystem-dev-9ceda.web.app,NODE_ENV=production,GOOGLE_CLOUD_PROJECT=ama-ecosystem-dev-9ceda --set-secrets VITE_GOOGLE_BROWSER_KEY=VITE_GOOGLE_BROWSER_KEY:latest",
     "deploy:backend:prod": "gcloud run deploy olybars-backend --source . --project ama-ecosystem-prod --region us-west1 --allow-unauthenticated --set-env-vars FRONTEND_URL=https://olybars.com,NODE_ENV=production,GOOGLE_CLOUD_PROJECT=ama-ecosystem-prod,INTERNAL_HEALTH_TOKEN=oly-internal-default-shared --set-secrets VITE_GOOGLE_BROWSER_KEY=GOOGLE_BROWSER_KEY:latest,GOOGLE_BACKEND_KEY=GOOGLE_BACKEND_KEY:latest,MASTER_SETUP_KEY=MASTER_SETUP_KEY:latest",
     "deploy:dev": "cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-dev-9ceda npm run artie:sync && npm run build:dev && node scripts/check-env.js development && npm run deploy:backend:dev && firebase deploy -P staging --only hosting:dev,firestore,functions && cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-dev-9ceda npm run seed:dev && npm run smoke:dev",
     "deploy:prod": "cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-prod npm run artie:sync && npm run build:prod && node scripts/check-env.js production && npm run deploy:backend:prod && firebase deploy -P default --only hosting:prod,firestore,functions && cross-env GOOGLE_CLOUD_PROJECT=ama-ecosystem-prod npm run seed:prod && npm run smoke:prod",
@@ -45,7 +45,8 @@
     "predev": "npm run guardrail:local",
     "predeploy:dev": "npm run guardrail:dev",
     "predeploy:prod": "npm run guardrail:prod",
-    "prepare": "husky"
+    "prepare": "husky",
+    "janitor": "npx tsx scripts/janitor.ts"
   },
   "dependencies": {
     "@genkit-ai/ai": "^1.27.0",
@@ -101,6 +102,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "nodemon": "^3.1.0",
+    "playwright": "^1.58.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "ts-node": "^10.9.2",

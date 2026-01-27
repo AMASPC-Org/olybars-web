@@ -104,6 +104,7 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({
       id: crypto.randomUUID(),
       url,
       target: type,
+      extractionMode: type,
       isEnabled: true,
       status: "pending",
       frequency,
@@ -258,12 +259,12 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({
                 <span className="block text-xs font-black text-white uppercase tracking-widest">
                   {automationStatus?.lastSyncAt
                     ? formatDistanceToNow(
-                        typeof automationStatus.lastSyncAt.toMillis ===
-                          "function"
-                          ? automationStatus.lastSyncAt.toMillis()
-                          : Date.now(),
-                        { addSuffix: true },
-                      )
+                      typeof automationStatus.lastSyncAt.toMillis ===
+                        "function"
+                        ? automationStatus.lastSyncAt.toMillis()
+                        : Date.now(),
+                      { addSuffix: true },
+                    )
                     : "Never"}
                 </span>
               </div>
@@ -279,13 +280,12 @@ export const ScraperManagementTab: React.FC<ScraperManagementTabProps> = ({
                 className={`
                         relative overflow-hidden
                         flex items-center gap-2 px-4 py-3 rounded-xl border transition-all
-                        ${
-                          !isScrapingEnabled
-                            ? "opacity-50 cursor-not-allowed bg-slate-900 border-white/5 text-slate-500"
-                            : isSyncing
-                              ? "bg-primary/20 border-primary/20 text-primary"
-                              : "bg-primary text-black hover:bg-primary/90 border-primary"
-                        }
+                        ${!isScrapingEnabled
+                    ? "opacity-50 cursor-not-allowed bg-slate-900 border-white/5 text-slate-500"
+                    : isSyncing
+                      ? "bg-primary/20 border-primary/20 text-primary"
+                      : "bg-primary text-black hover:bg-primary/90 border-primary"
+                  }
                     `}
               >
                 <RefreshCw

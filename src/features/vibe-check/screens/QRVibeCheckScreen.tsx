@@ -50,7 +50,7 @@ export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, ha
                     <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h2 className="text-xl font-black text-white uppercase font-league">Invalid QR Code</h2>
                     <p className="text-slate-400 text-sm mt-2">This code does not match any active venue.</p>
-                    <button onClick={() => navigate('/')} className="mt-6 w-full bg-slate-800 py-3 rounded-xl font-bold uppercase text-xs">Return Home</button>
+                    <button onClick={() => navigate('/')} className="mt-6 w-full bg-slate-800 py-3 rounded-xl font-bold uppercase text-xs active:scale-95 transition-transform">Return Home</button>
                 </div>
             </div>
         );
@@ -88,7 +88,7 @@ export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, ha
                                     <p className="text-slate-400 text-sm">You are on-site! Claim your verification check.</p>
                                     <button
                                         onClick={() => setShowModal(true)}
-                                        className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest text-lg shadow-lg hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2"
+                                        className="w-full bg-primary text-black font-black py-4 rounded-xl uppercase tracking-widest text-lg shadow-lg hover:bg-yellow-400 active:scale-95 transition-all flex items-center justify-center gap-2"
                                     >
                                         Verify & Vibe <ArrowRight className="w-5 h-5" />
                                     </button>
@@ -103,7 +103,7 @@ export const QRVibeCheckScreen: React.FC<QRVibeCheckScreenProps> = ({ venues, ha
                                     </div>
                                     <button
                                         onClick={requestLocation}
-                                        className="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-slate-700 transition-colors"
+                                        className="w-full bg-slate-800 text-white font-black py-4 rounded-xl uppercase tracking-widest text-xs hover:bg-slate-700 active:scale-95 transition-all"
                                     >
                                         Retry Location
                                     </button>

@@ -14,7 +14,7 @@ export const PlayClockInSchema = z.object({
 
 export const VibeCheckSchema = z.object({
   venueId: z.string().min(1),
-  status: z.enum(["dead", "mellow", "chill", "buzzing", "packed"]),
+  status: z.enum(["trickle", "flowing", "gushing", "flooded"]),
   hasConsent: z.boolean(),
   photoUrl: z.string().optional(),
   verificationMethod: z.enum(["gps", "qr"]).optional(),
@@ -156,7 +156,7 @@ export const VenueUpdateSchema = z.object({
     )
     .optional(),
   vibe: z.string().optional(),
-  vibeDefault: z.enum(["CHILL", "BUZZING", "PACKED"]).optional(),
+  vibeDefault: z.enum(["trickle", "flowing", "gushing", "flooded"]).optional(),
   assets: z.record(z.string(), z.boolean()).optional(),
   originStory: z.string().optional(),
   insiderVibe: z.string().optional(),
@@ -404,7 +404,7 @@ export const VenueSchema = z.object({
   foodService: z
     .enum(["full_kitchen", "limited_kitchen", "snacks", "none_byof"])
     .optional(),
-  status: z.enum(["dead", "mellow", "chill", "buzzing", "packed"]).optional(),
+  status: z.enum(["trickle", "flowing", "gushing", "flooded"]).optional(),
   clockIns: z.number().optional(),
   capacity: z.number().optional(),
   isPaidLeagueMember: z.boolean().optional(),

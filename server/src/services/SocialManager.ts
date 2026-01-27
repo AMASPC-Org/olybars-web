@@ -47,16 +47,35 @@ export class SocialManager {
             const lastSync = venue.partnerConfig.metaSync.lastSync || 0;
             const newPosts = rawContent.data.filter((post: any) => new Date(post.timestamp).getTime() > lastSync);
 
-            for (const post of newPosts) {
-                // 3. Draft creation
-                // In a full implementation, we'd use Gemini to classify content here.
-                // For now, we create a generic draft if it looks like an event.
-                const isLikelyEvent = post.caption?.toLowerCase().includes('trivia') ||
-                    post.caption?.toLowerCase().includes('karaoke') ||
-                    post.caption?.toLowerCase().includes('live music');
+            const gemini = new (await import('./geminiService.js')).GeminiService();
+            const today = new Date().toISOString().split('T')[0];
 
-                if (isLikelyEvent) {
-                    await this.createDraftForApproval(venue.id, post);
+            // Context Prep
+            let city = "Olympia, WA";
+            if (venue.address) {
+                const parts = venue.address.split(",");
+                if (parts.length >= 2) {
+                    city = parts[1].trim(); // Usually the city
+                }
+            }
+            const venueContext = { city, timezone: "America/Los_Angeles" };
+
+            for (const post of newPosts) {
+                // 3. Draft creation using AI Brain
+                console.log(`[SOCIAL_MANAGER] Analyzing post ${post.id} for venue ${venue.id}`);
+                const analysis = await gemini.analyzeScrapedContent(
+                    post.caption || '',
+                    today,
+                    venueContext,
+                    'SOCIAL_FEED'
+                );
+
+                if (analysis && analysis.sourceConfidence > 0.7) {
+                    if (analysis.classification === 'EVENT' && analysis.extractedEvent) {
+                        await this.createEventDraft(venue.id, post, analysis.extractedEvent);
+                    } else if (analysis.classification === 'MENU_UPDATE' || analysis.classification === 'NEWS') {
+                        await this.createGeneralDraft(venue.id, post, analysis);
+                    }
                 }
             }
 
@@ -73,24 +92,48 @@ export class SocialManager {
     private async fetchMetaContent(instagramId: string, accessToken: string) {
         const url = `https://graph.facebook.com/v18.0/${instagramId}/media?fields=id,caption,media_type,media_url,timestamp,permalink&access_token=${accessToken}&limit=5`;
         const response = await fetch(url);
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Meta API Error: ${response.status} - ${error}`);
+        }
+
         return await response.json();
     }
 
-    private async createDraftForApproval(venueId: string, post: any) {
-        // Create an event draft in a dedicated collection or field
-        // This allows owners to "Approve" a sync in the dashboard.
+    private async createEventDraft(venueId: string, post: any, extractedEvent: any) {
         const draftEvent = {
             venueId,
-            title: 'Instagram Sync: ' + (post.caption ? post.caption.substring(0, 30) + '...' : 'New Post'),
+            title: extractedEvent.title || 'Instagram Sync Event',
+            description: post.caption,
+            date: extractedEvent.date,
+            time: extractedEvent.time,
+            sourceUrl: post.permalink,
+            imageUrl: post.media_url,
+            status: 'pending-approval',
+            createdAt: Date.now(),
+            metaPostId: post.id,
+            origin: 'social_sync'
+        };
+
+        await db.collection('event_drafts').add(draftEvent);
+    }
+
+    private async createGeneralDraft(venueId: string, post: any, analysis: any) {
+        const draft = {
+            venueId,
+            type: analysis.classification === 'MENU_UPDATE' ? 'menu_highlight' : 'news_post',
+            highlights: analysis.extractedHighlights || [],
             description: post.caption,
             sourceUrl: post.permalink,
             imageUrl: post.media_url,
             status: 'pending-approval',
             createdAt: Date.now(),
-            metaPostId: post.id
+            metaPostId: post.id,
+            origin: 'social_sync'
         };
 
-        await db.collection('event_drafts').add(draftEvent);
+        await db.collection('general_drafts').add(draft);
     }
 
     /**
