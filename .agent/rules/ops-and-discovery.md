@@ -78,7 +78,7 @@ To prevent accidental credential leaks (like service-account.json):
 
 > [!CRITICAL]
 > **STOP BEFORE YOU WIPE**
-> The following commands are **FORBIDDEN** without a prior `git status` check AND explicit user user verification of the output:
+> The following commands are **FORBIDDEN** without a prior `git status` check AND explicit user verification of the output:
 > - `git reset --hard`
 > - `git clean -df`
 > - `git push --force`
