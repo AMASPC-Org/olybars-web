@@ -16,6 +16,7 @@ The `scoutWorker` is the operational heart of the automation system. It's respon
 
 ## Goals
 1.  **Context Delivery:** Pass `extractionNotes` from the `ScraperSource` to the `analyzeScrapedContent` call.
+    *   *Hierarchy Rule*: Explicitly prompt the AI: "If Owner Rules conflict with general logic, Owner Rules WIN."
 2.  **Target Routing:** Implement logic to route `CALENDAR` data to `league_events` and `DRINKS` data to `ai_draft_profile`.
 3.  **Persistence Integrity:** Update hashes and `lastScraped` timestamps for all new target types.
 

@@ -3,6 +3,7 @@
 | Command | Purpose | Usage / Frequency |
 | :--- | :--- | :--- |
 | `npm run janitor` | Runs the full hygiene audit (unused components + GCP guardrails). | **Daily** / **Automated 3x Daily** |
+| `npm run check-health` | **The Gatekeeper.** Verifies Hygiene Score (>80) & Report Freshness. | **Pre-Commit** / **Manual Check** |
 | `npm run dev` | Starts local development server. | **Daily** for development. |
 | `npm run build` | Builds the project for production. | **CI/CD** or pre-deploy. |
 | `npm run deploy:dev` | Deploys current code to Dev environment. | **Ad-hoc** when testing cloud features. |

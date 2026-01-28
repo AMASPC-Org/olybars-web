@@ -30,7 +30,12 @@ The "Intelligence" of the OlyBars ingestor lies within the `GeminiService`. Curr
 
 ### 2. Rule Injection
 - [ ] Update `analyzeScrapedContent` to accept `rules?: string`.
-- [ ] Inject as: `[OWNER RULES]: ${rules}` into the top of the prompt.
+33. - [ ] Inject as block:
+    ```
+    === OWNER RULES OF ENGAGEMENT ===
+    ${rules}
+    =================================
+    ```
 
 ### 3. Calendar Logic (CALENDAR)
 - [ ] Create a specialized mode for `CALENDAR` text.

@@ -18,7 +18,8 @@ The "Scraper Management" tab in the Brew House dashboard is where venue owners i
 1.  **Tab Reordering:** Prioritize the targets as: **Menu, Drinks, Calendar, Website**.
 2.  **Instructional Clarity:** Update placeholders in the `extractionNotes` field to match the selected target. Clear examples are essential for training the user to train the AI.
 3.  **Visual Hierarchy:** Improve the "Source Card" to clearly show the status and target type.
-4.  **Simulated Execution (Preview):** Create a "Scout Preview" button hook that allowsowners to trigger a sample extraction to test their rules immediately.
+4.  **Simulated Execution (Preview):** Create a "Scout Preview" button hook.
+    *   *Crucial UX*: Requires "Optimistic UI" or "Streaming Status" (e.g., "Connecting to Scout...", "Parsing content..."). A frozen button for 30s is unacceptable.
 
 ## Implementation Details
 

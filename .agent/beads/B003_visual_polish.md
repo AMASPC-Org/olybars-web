@@ -15,6 +15,7 @@
 ## Goals
 1.  **Global Depth System**: Standardize our "Glass" effect (`backdrop-blur-xl`, `border-white/10`, `shadow-2xl`).
 2.  **Interaction Audit**: Add `active:scale-95` and `transition-all` to ALL primary actions.
+    *   *A11y*: Must include `motion-reduce:transform-none` to respect OS accessibility settings.
 3.  **Loading/Empty Polish**: Replace generic spinners with branded "Pulse" animations or Skeleton loaders where appropriate.
 
 ## Implementation Details
