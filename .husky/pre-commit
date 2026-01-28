@@ -1,2 +1,6 @@
 #!/usr/bin/env sh
+# 1. Health Check (The Gatekeeper)
+npm run check-health
+
+# 2. Linting (The Polisher) - Only runs if Health is Good
 npx lint-staged

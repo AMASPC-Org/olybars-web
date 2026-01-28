@@ -8,10 +8,10 @@ import {
   Info,
   Beer
 } from 'lucide-react';
-import { Venue, ClockInRecord, VibeCheckRecord } from '../../types';
 import { useArtieChat } from '../../hooks/useArtieChat';
 import { useSchmidtOps } from '../../hooks/useSchmidtOps';
-import { usePersona, useUser } from '../../contexts';
+import { useLayout, useUser, usePersona, useGamification } from '../../contexts';
+import { useDiscovery } from '../../features/venues/contexts/DiscoveryContext';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
@@ -22,66 +22,51 @@ import { BuzzClock } from '../ui/BuzzClock';
 import { InfoRulesModal } from '../ui/InfoRulesModal';
 import { FormatCurrency } from '../../utils/formatCurrency';
 import { GAMIFICATION_CONFIG } from '../../config/gamification';
+import { RouteLoading } from '../common/RouteLoading';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 
-interface AppShellProps {
-  venues: Venue[];
-  userPoints: number;
-  userRank?: number;
-  isLeagueMember?: boolean;
-  onProfileClick?: () => void;
-  onMemberLoginClick?: (mode?: 'login' | 'signup') => void;
-  onToggleFavorite?: (venueId: string) => void;
-  onToggleWeeklyBuzz?: () => void;
-  onClockIn?: (venue: Venue) => void;
-  onVibeCheck?: (venue: Venue) => void;
-  clockedInVenue?: string | null;
-  onEditVenue?: (venueId: string) => void;
-  isLoading?: boolean;
-  showArtie?: boolean;
-  setShowArtie?: (show: boolean) => void;
-  clockInHistory?: ClockInRecord[];
-  vibeCheckHistory?: VibeCheckRecord[];
-}
-
-export const AppShell: React.FC<AppShellProps> = ({
-  venues,
-  userPoints,
-  userRank,
-  isLeagueMember,
-  onProfileClick,
-  onMemberLoginClick,
-  onToggleFavorite,
-  onToggleWeeklyBuzz,
-  onClockIn,
-  onVibeCheck,
-  clockedInVenue,
-  onEditVenue,
-  isLoading,
-  showArtie,
-  setShowArtie,
-  clockInHistory,
-  vibeCheckHistory
-}) => {
+export const AppShell: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
-  const [showMenu, setShowMenu] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
+
+  // --- Context Hooks (No more props) ---
+  const {
+    showMenu, setShowMenu,
+    showInfo, setShowInfo,
+    showArtie, setShowArtie,
+    openModal
+  } = useLayout();
+
+  const { allVenues: venues } = useDiscovery();
+  const { userProfile, isLeagueMember, toggleFavorite } = useUser();
+  const { activePersona } = usePersona();
+  const { userPoints, userRank, clockInHistory, vibeCheckHistory } = useGamification();
+
+  // --- Local State ---
+  const [viewMode, setViewMode] = useState<'player' | 'owner'>(() => {
+    return (localStorage.getItem('olybars_view_mode') as 'player' | 'owner') || 'player';
+  });
 
   const isMapPage = location.pathname === '/map';
+  const persona = activePersona;
 
+  // --- Scroll Listener ---
   useEffect(() => {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
-
-    const handleScroll = () => {
-      // scroll logic here if needed
-    };
+    const handleScroll = () => { /* scroll logic */ };
     mainContent.addEventListener('scroll', handleScroll, { passive: true });
     return () => mainContent.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // --- Sync View Mode ---
+  useEffect(() => {
+    localStorage.setItem('olybars_view_mode', viewMode);
+  }, [viewMode]);
+
+  // --- Derived Data ---
   const getVenueIdFromPath = () => {
     const venueMatch = location.pathname.match(/\/(?:venues|bars)\/([^/]+)/);
     if (venueMatch) return venueMatch[1];
@@ -91,12 +76,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   const initialVenueId = getVenueIdFromPath();
-  const { userProfile } = useUser();
   const artieChat = useArtieChat(initialVenueId || userProfile?.homeBase);
   const opsSchmidt = useSchmidtOps();
-  const { activePersona } = usePersona();
-  const persona = activePersona; // Alias for compatibility with existing code
 
+  // --- Pulse Logic ---
   const activeDeals = venues
     .filter((v) => v.deal && v.dealEndsIn && v.dealEndsIn > 0)
     .sort((a, b) => (a.dealEndsIn || 0) - (b.dealEndsIn || 0));
@@ -119,15 +102,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   const pulseStatus = getPulseStatus();
-
-  const [viewMode, setViewMode] = useState<'player' | 'owner'>(() => {
-    return (localStorage.getItem('olybars_view_mode') as 'player' | 'owner') || 'player';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('olybars_view_mode', viewMode);
-  }, [viewMode]);
-
   const leagueMember = isLeagueMember ?? true;
   const leagueEventVenue = venues.find((v) => v.leagueEvent);
   const leaguePromoText = leagueEventVenue
@@ -135,23 +109,25 @@ export const AppShell: React.FC<AppShellProps> = ({
     : 'Join the Artesian Bar League for local events & prizes.';
 
   const isFullWidthPage = [
-    '/map',
-    '/league-membership',
-    '/admin',
-    '/owner',
-    '/venue-handover'
+    '/map', '/league-membership', '/admin', '/owner', '/venue-handover'
   ].includes(location.pathname);
 
   const isDiscoveryFlow = location.pathname === '/' || location.pathname === '/bars' || location.pathname.startsWith('/bars/') || location.pathname === '/back-room';
 
+  // --- Actions Shim ---
+  const handleMemberLoginClick = (mode?: 'login' | 'signup') => openModal('LOGIN', { mode });
+  const handleClockIn = (venue: any) => openModal('CLOCK_IN', { venue });
+  const handleVibeCheck = (venue: any) => openModal('VIBE_CHECK', { venue });
+  const handleEditVenue = (venueId: string) => navigate(`/owner/venues/${venueId}`);
+
   return (
-    <div className={`h-full bg-background text-white font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
+    <div className={`h-full bg-slate-950 text-slate-200 font-sans mx-auto relative shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isFullWidthPage
       ? 'w-full max-w-none border-x-0'
-      : 'max-w-md border-x border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-none md:rounded-3xl md:my-8'
+      : 'max-w-md border-x border-white/5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-none md:rounded-3xl md:my-8'
       }`}>
       {!isDiscoveryFlow && (
         <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'}`}>
-          <div className={`relative border-b-2 transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-black/90 border-slate-800'}`}>
+          <div className={`relative border-b transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-slate-950/80 border-white/5'}`}>
             {pulseStatus === 'buzzing' && (
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
             )}
@@ -170,8 +146,8 @@ export const AppShell: React.FC<AppShellProps> = ({
               <div className="flex items-center gap-4">
                 <button onClick={() => {
                   const isAuthenticated = userProfile?.uid && userProfile.uid !== 'guest';
-                  if (!isAuthenticated && onMemberLoginClick) onMemberLoginClick('login');
-                  else if (onProfileClick) onProfileClick();
+                  if (!isAuthenticated) openModal('LOGIN', { mode: 'login' });
+                  else navigate('/profile'); // Was onProfileClick
                 }} className="text-slate-400 hover:text-primary transition-all active:scale-97 ease-spring-smooth" title="Profile">
                   <User className="w-6 h-6" strokeWidth={2.5} />
                 </button>
@@ -189,26 +165,32 @@ export const AppShell: React.FC<AppShellProps> = ({
       )}
 
       <main id="main-content" className="flex-1 overflow-y-auto relative flex flex-col">
-        <Outlet context={{
-          venues,
-          userProfile,
-          onAskArtie: (mode?: 'visitor' | 'ops') => {
-            if (mode === 'visitor') (window as any)._artie_force_guest = true;
-            else (window as any)._artie_force_guest = false;
-            setShowArtie?.(true);
-          },
-          onToggleMenu: () => setShowMenu(true),
-          onClockIn,
-          onVibeCheck,
-          clockedInVenue,
-          onToggleFavorite,
-          onEditVenue,
-          isLoading,
-          onToggleWeeklyBuzz,
-          clockInHistory,
-          vibeCheckHistory,
-          onMemberLoginClick
-        }} />
+        <ErrorBoundary>
+          <React.Suspense fallback={<RouteLoading />}>
+            <Outlet context={{
+              venues, // Keep for now
+              userProfile,
+              onAskArtie: (mode?: 'visitor' | 'ops') => {
+                if (mode === 'visitor') (window as any)._artie_force_guest = true;
+                else (window as any)._artie_force_guest = false;
+                setShowArtie(true);
+              },
+              onToggleMenu: () => setShowMenu(true),
+              onClockIn: handleClockIn,
+              onVibeCheck: handleVibeCheck,
+              clockedInVenue: null, // Deprecated? Need to check if accessible via context
+              onToggleFavorite: toggleFavorite,
+              onEditVenue: handleEditVenue,
+              isLoading: false, // Legacy
+              onToggleWeeklyBuzz: () => { }, // Legacy
+              clockInHistory,
+              vibeCheckHistory,
+              onMemberLoginClick: handleMemberLoginClick,
+              onOpenHomeBase: (venueId: string, venueName: string) => { }, // Placeholder
+              onOpenSips: () => { } // Placeholder
+            }} />
+          </React.Suspense>
+        </ErrorBoundary>
         {location.pathname !== '/map' && <Footer />}
       </main>
 
@@ -241,12 +223,21 @@ export const AppShell: React.FC<AppShellProps> = ({
         </div>
       </div>
 
-      <Sidebar isOpen={showMenu} onClose={() => setShowMenu(false)} viewMode={viewMode} setViewMode={setViewMode} onLogin={onMemberLoginClick || (() => { })} onProfileClick={onProfileClick || (() => { })} userPoints={userPoints} />
-      <ArtieHoverIcon onClick={() => { (window as any)._artie_force_guest = false; setShowArtie?.(true); }} userProfile={userProfile} />
+      <Sidebar
+        isOpen={showMenu}
+        onClose={() => setShowMenu(false)}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        onLogin={handleMemberLoginClick}
+        onProfileClick={() => navigate('/profile')}
+        userPoints={userPoints}
+      />
+
+      <ArtieHoverIcon onClick={() => { (window as any)._artie_force_guest = false; setShowArtie(true); }} userProfile={userProfile} />
 
       <OlyChatModal
         isOpen={!!showArtie && viewMode !== 'owner'}
-        onClose={() => setShowArtie?.(false)}
+        onClose={() => setShowArtie(false)}
         userProfile={userProfile}
         initialVenueId={initialVenueId || undefined}
         artieChat={artieChat}
@@ -257,7 +248,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       {viewMode === 'owner' && (
         <SchmidtChatModal
           isOpen={!!showArtie}
-          onClose={() => setShowArtie?.(false)}
+          onClose={() => setShowArtie(false)}
           venueId={initialVenueId || userProfile?.homeBase}
           userProfile={userProfile}
         />

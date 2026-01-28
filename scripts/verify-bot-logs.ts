@@ -22,8 +22,10 @@ async function verifyBotLogs() {
       const ts = data.timestamp?.toDate ? data.timestamp.toDate() : (data.timestamp ? new Date(data.timestamp) : new Date());
       console.log(` - Timestamp: ${ts.toISOString()}`);
 
-      if (data.status === 'AI_BOT_DETECTED' && data.userAgent?.includes('GPTBot')) {
+      if (data.botName === 'GPTBOT') {
         console.log('[AUDIT] SUCCESS: Found recent GPTBot detection log with metadata.');
+      } else if (data.userAgent?.includes('GPTBot')) {
+        console.log('[AUDIT] PARTIAL SUCCESS: UserAgent matches GPTBot but botName mismatch?');
       }
     });
   } catch (error: any) {

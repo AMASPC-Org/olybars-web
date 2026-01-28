@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
 import { Venue } from '../../../types';
+import { useDiscovery } from '../../venues/contexts/DiscoveryContext';
 
-interface LiveMusicScreenProps {
-    venues: Venue[];
-}
-
-export const LiveMusicScreen: React.FC<LiveMusicScreenProps> = ({ venues }) => {
+export const LiveMusicScreen: React.FC = () => {
+    const { allVenues: venues } = useDiscovery();
     const [searchQuery, setSearchQuery] = useState('');
 
     const musicVenues = venues.filter(v =>
@@ -59,5 +57,3 @@ export const LiveMusicScreen: React.FC<LiveMusicScreenProps> = ({ venues }) => {
         </ArenaLayout>
     );
 };
-
-

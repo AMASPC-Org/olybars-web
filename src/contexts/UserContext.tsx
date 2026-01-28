@@ -12,6 +12,8 @@ interface UserContextType {
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
   refreshProfile: () => Promise<void>;
   logout: () => Promise<void>;
+  isLeagueMember: boolean;
+  toggleFavorite: (venueId: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -115,10 +117,15 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         userProfile,
         isAuthenticated: userProfile.uid !== "guest",
+        isLeagueMember: userProfile.role === 'maker' || userProfile.role === 'admin' || userProfile.role === 'super-admin',
         isLoading,
         setUserProfile,
         refreshProfile,
-        logout
+        logout,
+        toggleFavorite: async (venueId: string) => {
+          console.log('Toggle favorite:', venueId);
+          // TODO: Implement toggle favorite logic
+        }
       }}
     >
       {children}

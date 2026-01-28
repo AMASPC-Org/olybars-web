@@ -37,7 +37,7 @@ export const artieChatLogic = genkitAi.defineFlow({
     }),
     outputSchema: z.any(),
 }, async (input) => {
-    const { history, question, userId, userRole, venueId, contextDate } = input;
+    const { history, question, userId, contextDate } = input;
 
     try {
         const service = getGemini();
@@ -52,7 +52,7 @@ export const artieChatLogic = genkitAi.defineFlow({
         const pulseContext = await ArtieContextService.getPulsePromptSnippet();
 
         // 2. Prepare System Instructions
-        const universalSystemInstruction = await GeminiService.generateSystemPrompt("artie", userId, userRole, venueId);
+        const universalSystemInstruction = await GeminiService.generateSystemPrompt("artie");
 
         let timeContext = '';
         if (contextDate) {

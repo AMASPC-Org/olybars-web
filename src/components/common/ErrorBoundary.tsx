@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         // Log to Backend
-        logErrorToBackend(error, 'ErrorBoundary', errorInfo.componentStack);
+        logErrorToBackend(error, 'ErrorBoundary', errorInfo.componentStack || undefined);
 
         // Log to console for local dev
         console.error('Uncaught error:', error, errorInfo);

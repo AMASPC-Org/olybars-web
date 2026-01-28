@@ -74,7 +74,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
     setProcessingId(notificationId || event.id);
     try {
       await updateDoc(doc(db, "league_events", event.id), {
-        status: "APPROVED",
+        status: "approved",
       });
       if (notificationId) {
         await VenueOpsService.resolveNotification(venueId, notificationId);
@@ -95,7 +95,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
     setProcessingId(notificationId || event.id);
     try {
       await updateDoc(doc(db, "league_events", event.id), {
-        status: "REJECTED",
+        status: "rejected",
       });
       if (notificationId) {
         await VenueOpsService.resolveNotification(venueId, notificationId);
@@ -111,19 +111,17 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
   const handleApprovePhoto = async (photo: any, notificationId?: string) => {
     setProcessingId(notificationId || photo.id || photo.url);
     try {
-      const { VenueOpsService } =
-        await import("../../../services/VenueOpsService");
       const venue = await VenueOpsService.getVenue(venueId);
       if (!venue || !venue.photos) return;
 
       const updatedPhotos = venue.photos.map((p) =>
         p.id === photo.id || p.url === photo.url
           ? ({
-              ...p,
-              marketingStatus: "approved",
-              venueAdminApprovedBy: "owner",
-              isApprovedForFeed: true,
-            } as any)
+            ...p,
+            marketingStatus: "approved",
+            venueAdminApprovedBy: "owner",
+            isApprovedForFeed: true,
+          } as any)
           : p,
       );
 
@@ -142,8 +140,6 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
   const handleRejectPhoto = async (photo: any, notificationId?: string) => {
     setProcessingId(notificationId || photo.id || photo.url);
     try {
-      const { VenueOpsService } =
-        await import("../../../services/VenueOpsService");
       const venue = await VenueOpsService.getVenue(venueId);
       if (!venue || !venue.photos) return;
 
@@ -160,6 +156,43 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
       showToast("Photo rejected.", "success");
     } catch (e) {
       showToast("Failed to reject photo.", "error");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleSpark = async (notificationId: string, description: string) => {
+    setProcessingId(notificationId);
+    try {
+      const result = await rewriteDescription({ description });
+      const newDesc = (result.data as any).polished;
+      setEditForm((prev) => ({ ...prev, description: newDesc }));
+      showToast("Polished with AI!", "success");
+    } catch (e: any) {
+      showToast("Failed to polish.", "error");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleSaveEdit = async (notificationId: string) => {
+    setProcessingId(notificationId);
+    try {
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (!notification) return;
+      const eventId =
+        notification.payload.eventData?.id || notification.payload.id;
+
+      if (eventId) {
+        await updateDoc(doc(db, "league_events", eventId), {
+          title: editForm.title,
+          description: editForm.description,
+        });
+        showToast("Event updated.", "success");
+        setEditingId(null);
+      }
+    } catch (e) {
+      showToast("Failed to save changes.", "error");
     } finally {
       setProcessingId(null);
     }
@@ -199,11 +232,10 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-black/40 border rounded-xl p-4 group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5 ${
-                  notification.priority === 1
-                    ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)] animate-pulse-subtle"
-                    : "border-white/10 hover:border-white/20"
-                }`}
+                className={`bg-black/40 border rounded-xl p-4 group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/5 ${notification.priority === 1
+                  ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)] animate-pulse-subtle"
+                  : "border-white/10 hover:border-white/20"
+                  }`}
               >
                 {notification.type === "GUEST_EVENT_PENDING" && (
                   <GuestEventApprovalCard
@@ -343,7 +375,7 @@ export const NotificationsTab: React.FC<NotificationsTabProps> = ({
 };
 
 const OpportunityCard: React.FC<{
-  opportunity: SystemNotification;
+  opportunity: VenueNotification;
   isProcessing: boolean;
   onAskSchmidt: () => void;
   onDismiss: () => void;
@@ -387,7 +419,7 @@ const OpportunityCard: React.FC<{
 );
 
 const WeatherWarningCard: React.FC<{
-  alert: SystemNotification;
+  alert: VenueNotification;
   onJump: () => void;
 }> = ({ alert, onJump }) => (
   <div className="flex items-start gap-4 animate-in slide-in-from-left-4 duration-500">
@@ -443,112 +475,112 @@ const EventReviewCard: React.FC<{
   onReject,
   onSpark,
 }) => (
-  <div className="space-y-4">
-    <div className="flex items-start justify-between">
-      <div className="flex gap-4">
-        <div className="bg-slate-800 p-2 rounded text-center min-w-[50px] border border-white/5">
-          <span className="block text-[10px] font-black text-red-400 uppercase tracking-widest mb-0.5">
-            {event.date ? format(parseISO(event.date), "MMM") : "???"}
-          </span>
-          <span className="block text-xl font-black text-white leading-none">
-            {event.date ? format(parseISO(event.date), "dd") : "??"}
-          </span>
-        </div>
-        <div>
-          {isEditing ? (
-            <input
-              value={editForm.title}
-              onChange={(e) => onUpdateEditForm({ title: e.target.value })}
-              className="bg-black border border-white/20 rounded px-2 py-1 text-white font-black uppercase text-sm w-full mb-1"
-            />
-          ) : (
-            <h4 className="text-lg font-black text-white uppercase italic tracking-tight">
-              {event.title}
-            </h4>
-          )}
-          <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {event.time}
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
+        <div className="flex gap-4">
+          <div className="bg-slate-800 p-2 rounded text-center min-w-[50px] border border-white/5">
+            <span className="block text-[10px] font-black text-red-400 uppercase tracking-widest mb-0.5">
+              {event.date ? format(parseISO(event.date), "MMM") : "???"}
             </span>
-            <span className="text-slate-600">|</span>
-            <span className="text-primary italic font-black">EVENT REVIEW</span>
+            <span className="block text-xl font-black text-white leading-none">
+              {event.date ? format(parseISO(event.date), "dd") : "??"}
+            </span>
+          </div>
+          <div>
+            {isEditing ? (
+              <input
+                value={editForm.title}
+                onChange={(e) => onUpdateEditForm({ title: e.target.value })}
+                className="bg-black border border-white/20 rounded px-2 py-1 text-white font-black uppercase text-sm w-full mb-1"
+              />
+            ) : (
+              <h4 className="text-lg font-black text-white uppercase italic tracking-tight">
+                {event.title}
+              </h4>
+            )}
+            <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {event.time}
+              </span>
+              <span className="text-slate-600">|</span>
+              <span className="text-primary italic font-black">EVENT REVIEW</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div className="bg-slate-900/50 p-3 rounded-lg border border-white/5 relative">
-      {isEditing ? (
-        <div className="relative">
-          <textarea
-            value={editForm.description}
-            onChange={(e) => onUpdateEditForm({ description: e.target.value })}
-            rows={3}
-            className="w-full bg-transparent text-xs text-slate-300 outline-none resize-none placeholder:text-slate-600 font-medium leading-relaxed"
-            placeholder="Enter event description..."
-          />
-          <button
-            onClick={onSpark}
-            disabled={isProcessing}
-            className="mt-2 text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:text-yellow-300 flex items-center gap-1 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20"
-          >
-            <Sparkles className="w-3 h-3" />
-            {isProcessing ? "Sparking..." : "AI Remix"}
-          </button>
-        </div>
-      ) : (
-        <p className="text-xs text-slate-400 leading-relaxed font-medium">
-          {event.description || "No description provided."}
-        </p>
-      )}
-    </div>
+      <div className="bg-slate-900/50 p-3 rounded-lg border border-white/5 relative">
+        {isEditing ? (
+          <div className="relative">
+            <textarea
+              value={editForm.description}
+              onChange={(e) => onUpdateEditForm({ description: e.target.value })}
+              rows={3}
+              className="w-full bg-transparent text-xs text-slate-300 outline-none resize-none placeholder:text-slate-600 font-medium leading-relaxed"
+              placeholder="Enter event description..."
+            />
+            <button
+              onClick={onSpark}
+              disabled={isProcessing}
+              className="mt-2 text-[9px] font-black text-yellow-400 uppercase tracking-widest hover:text-yellow-300 flex items-center gap-1 bg-yellow-400/10 px-2 py-1 rounded border border-yellow-400/20"
+            >
+              <Sparkles className="w-3 h-3" />
+              {isProcessing ? "Sparking..." : "AI Remix"}
+            </button>
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400 leading-relaxed font-medium">
+            {event.description || "No description provided."}
+          </p>
+        )}
+      </div>
 
-    <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
-      {isEditing ? (
-        <>
-          <button
-            onClick={onCancelEdit}
-            className="px-3 py-1.5 rounded text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onSaveEdit}
-            disabled={isProcessing}
-            className="bg-green-500 text-black px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-green-400 flex items-center gap-1"
-          >
-            <Check className="w-3 h-3" /> Save & Approve
-          </button>
-        </>
-      ) : (
-        <>
-          <button
-            onClick={onEdit}
-            disabled={isProcessing}
-            className="px-3 py-1.5 rounded text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white bg-white/5 hover:bg-white/10 flex items-center gap-1 border border-white/5 mr-auto"
-          >
-            <Edit2 className="w-3 h-3" /> Edit
-          </button>
-          <button
-            onClick={onReject}
-            disabled={isProcessing}
-            className="px-3 py-1.5 rounded text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-500/10 flex items-center gap-1 border border-transparent hover:border-red-500/20"
-          >
-            <X className="w-3 h-3 stroke-[3]" /> Reject
-          </button>
-          <button
-            onClick={onApprove}
-            disabled={isProcessing}
-            className="bg-primary text-black px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 flex items-center gap-1 shadow-lg shadow-primary/10"
-          >
-            <Check className="w-3 h-3 stroke-[3]" /> Approve
-          </button>
-        </>
-      )}
+      <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
+        {isEditing ? (
+          <>
+            <button
+              onClick={onCancelEdit}
+              className="px-3 py-1.5 rounded text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onSaveEdit}
+              disabled={isProcessing}
+              className="bg-green-500 text-black px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-green-400 flex items-center gap-1"
+            >
+              <Check className="w-3 h-3" /> Save & Approve
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={onEdit}
+              disabled={isProcessing}
+              className="px-3 py-1.5 rounded text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white bg-white/5 hover:bg-white/10 flex items-center gap-1 border border-white/5 mr-auto"
+            >
+              <Edit2 className="w-3 h-3" /> Edit
+            </button>
+            <button
+              onClick={onReject}
+              disabled={isProcessing}
+              className="px-3 py-1.5 rounded text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-500/10 flex items-center gap-1 border border-transparent hover:border-red-500/20"
+            >
+              <X className="w-3 h-3 stroke-[3]" /> Reject
+            </button>
+            <button
+              onClick={onApprove}
+              disabled={isProcessing}
+              className="bg-primary text-black px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 flex items-center gap-1 shadow-lg shadow-primary/10"
+            >
+              <Check className="w-3 h-3 stroke-[3]" /> Approve
+            </button>
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 
 const PhotoApprovalCard: React.FC<{
   photo: NonNullable<Venue["photos"]>[number];
@@ -818,9 +850,9 @@ const HolidayCard: React.FC<{
           <Clock className="w-3 h-3" />
           {(notification.action_context as any)?.eventDate
             ? format(
-                new Date((notification.action_context as any).eventDate),
-                "MMM d",
-              )
+              new Date((notification.action_context as any).eventDate),
+              "MMM d",
+            )
             : "Soon"}
         </div>
       </div>

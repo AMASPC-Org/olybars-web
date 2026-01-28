@@ -465,9 +465,9 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
 
-            <div className="bg-surface border-2 border-primary/20 w-full max-w-sm h-[600px] rounded-3xl shadow-2xl overflow-hidden flex flex-col relative z-10 animate-in zoom-in-95 duration-300">
+            <div className="glass-panel w-full max-w-sm h-[600px] rounded-3xl overflow-hidden flex flex-col relative z-10 animate-in zoom-in-95 duration-300 border-primary/20">
                 {/* Header */}
-                <div className="bg-primary/10 border-b border-primary/20 p-4 flex justify-between items-center">
+                <div className="bg-white/5 border-b border-white/5 p-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         <div className="bg-primary p-0.5 rounded-xl shadow-lg shadow-primary/20 overflow-hidden w-14 h-14 flex items-center justify-center">
                             <img
@@ -601,11 +601,11 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
                                         Action Required
                                     </span>
                                 </div>
-                                <h4 className="text-white font-black text-base mb-2 uppercase tracking-tight">
+                                <h4 className="type-h3 text-base mb-2">
                                     {pendingAction.skill.split('_').join(' ')}
                                 </h4>
-                                <div className="bg-black/40 p-3 rounded-2xl border border-white/10 mb-5">
-                                    <p className="text-slate-200 text-xs font-semibold leading-relaxed italic line-clamp-3">
+                                <div className="glass-panel-deep p-3 rounded-2xl border border-white/10 mb-5">
+                                    <p className="type-body text-xs italic line-clamp-3">
                                         &ldquo;{pendingAction.params.summary || pendingAction.params.topic || pendingAction.params.prompt || 'Review details below...'}&rdquo;
                                     </p>
                                 </div>
@@ -739,11 +739,11 @@ export const OlyChatModal: React.FC<ArtieChatModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-4 pb-2 bg-surface text-center">
-                    <p className="text-[9px] text-slate-600 font-medium leading-tight">
+                <div className="px-4 pb-2 bg-black/20 text-center">
+                    <p className="type-label text-[9px] leading-tight opacity-70">
                         Powered by the Artesian Well. Verify critical info.
                         <br />
-                        <span className="opacity-80 cursor-pointer hover:text-primary transition-colors" onClick={handleContactSupport}>
+                        <span className="cursor-pointer hover:text-primary transition-colors" onClick={handleContactSupport}>
                             Need help? Contact HQ
                         </span>
                     </p>

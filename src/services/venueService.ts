@@ -373,7 +373,8 @@ export const validateInvite = async (
       throw new Error("This invite has expired.");
     }
 
-    return { id: inviteDoc.id, ...data };
+    const { id: _unusedId, ...rest } = data;
+    return { id: inviteDoc.id, ...rest };
   } catch (error: any) {
     console.error("Error validating invite:", error);
     throw error;

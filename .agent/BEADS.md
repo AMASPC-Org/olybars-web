@@ -32,7 +32,7 @@
 | **P0** | `SEC-01` | **DONE** | - | **Persona Manifest** | Define Guest/Owner/Staff roles. | The "LeverageLoop" concept is defined here. |
 | **P0** | `SEC-02` | **DONE** | `SEC-01` | **Frontend Guardrails** | `usePersona` hook for UI gating. | Never rely on client-side checks for security. |
 | **P0** | `SEC-03` | **DONE** | `SEC-02` | **Backend Zero-Trust** | Firestore Rules & Middleware. | Middleware must reject invalid tokens 403. |
-| **P1** | `API-01` | **CLAIMED** | `SEC-03` | **Strict Type Hardening** | `noImplicitAny` rollout. | A "Perfect Backend" has zero type gaps. |
+| **P1** | `API-01` | **DONE** | `SEC-03` | **Strict Type Hardening** | `noImplicitAny` rollout. | A "Perfect Backend" has zero type gaps. |
 | **P2** | `API-02` | **OPEN** | `API-01` | **Edge Caching** | CDN rules for public endpoints. | Cache public venue data for 60s. |
 
 ## 3. Frontend & Vibe (Visual/UX)
@@ -54,7 +54,7 @@
 | **P0** | `DATA-01` | **DONE** | - | **Scraper Foundations** | `Scraper` Schema definition. | V3R1 alignment. |
 | **P1** | `DATA-02` | **DONE** | `DATA-01` | **AI Brain Expansion** | Gemini extraction logic. | Pass `extractionNotes` to context. |
 | **P1** | `DATA-03` | **DONE** | `DATA-02` | **Scout Worker** | Distributed scraping jobs. | Persistence integrity check needed. |
-| **P2** | `DATA-04` | **OPEN** | `DATA-03` | **Live Debugger** | Real-time scraper logs in UI. | Stream logs to `UX-04` dashboard. |
+| **P2** | `DATA-04` | **CLAIMED** | `DATA-03` | **Live Debugger** | Real-time scraper logs in UI. | Stream logs to `UX-04` dashboard. |
 
 ## 5. Completed / Archived
 *Reference for historical context only.*

@@ -569,17 +569,30 @@ export interface Venue {
     inventory?: {
       local_makers_featured: string[];
       signature_drinks: string[];
+      draft_list?: {
+        name: string;
+        style: string;
+        abv: string;
+        brewery: string;
+      }[];
     };
     menu_highlights?: {
       hero_item?: string;
       breakfast_service_level?: "Full" | "Limited" | "None";
       kitchen_status?: string;
+      summary?: string; // [B009] AI Overview
+      items?: string[]; // [B009] Top 3-5 items
     };
+    deals?: {
+      title: string;
+      details: string;
+    }[];
     vibe: {
       headline: string;
       insider_tip: string;
       audience_tags: string[];
     };
+    amenities?: string[]; // [scout] extracted text list
     metadata: {
       confidence_score: number;
       data_sources: string[];

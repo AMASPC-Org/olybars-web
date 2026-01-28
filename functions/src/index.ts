@@ -111,12 +111,21 @@ export const schmidtChat = onRequest(
     corsHandler(req, res, async () => {
       await validateFirebaseIdToken(req, res, async () => {
         try {
-          const { schmidtChatLogic } = await import("./flows/schmidtChat.js");
           const user = (req as any).user;
+
+          // [SEC-03] ZERO TRUST ENFORCEMENT
+          // We do not trust the client. We trust the Token.
+          if (user.role !== 'owner') {
+            logger.warn(`[Security] Blocked unauthorized Schmidt access by ${user.uid}`);
+            res.status(403).json({ error: "Permission Denied: Owners Only." });
+            return;
+          }
+
+          const { schmidtChatLogic } = await import("./flows/schmidtChat.js");
           const secureContext = {
             ...req.body,
             userId: user.uid,
-            userRole: user.role || "guest",
+            userRole: user.role, // Guaranteed to be 'owner' now
           };
 
           const result = await schmidtChatLogic(secureContext);

@@ -8,11 +8,11 @@ import { format } from 'date-fns';
 interface PassportScreenProps {
     venues: Venue[];
     userProfile: UserProfile;
-    clockInHistory: ClockInRecord[];
-    vibeCheckHistory: VibeCheckRecord[];
+    clockInHistory?: ClockInRecord[];
+    vibeCheckHistory?: VibeCheckRecord[];
 }
 
-export const PassportScreen: React.FC<PassportScreenProps> = ({ venues, userProfile, clockInHistory, vibeCheckHistory }) => {
+export const PassportScreen: React.FC<PassportScreenProps> = ({ venues, userProfile, clockInHistory = [], vibeCheckHistory = [] }) => {
     const navigate = useNavigate();
     const [filter, setFilter] = useState<'all' | 'stamps' | 'vibes'>('all');
 

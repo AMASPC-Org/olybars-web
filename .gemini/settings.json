@@ -4,6 +4,7 @@
   },
   "reviewPolicy": "Agent Decides",
   "validationGates": [
-    ".agent/rules/full-stack-integrity.md"
+    ".agent/rules/full-stack-integrity.md",
+    ".agent/workflows/Unified_Skill_Workflow.md"
   ]
 }

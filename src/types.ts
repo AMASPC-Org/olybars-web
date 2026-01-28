@@ -9,3 +9,4 @@ export * from "./types/chat.js";
 export * from "./types/buzz.js";
 export * from "./types/context_system.js";
 export * from "./types/owner.js";
+export * from "./types/scraper.js";

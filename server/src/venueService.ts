@@ -46,9 +46,9 @@ const stripSensitiveVenueData = (venue: Venue, brief = false): Venue => {
   // 2. Menu level metadata (Margin Tiers)
   if (stripped.fullMenu) {
     stripped.fullMenu = stripped.fullMenu.map((item) => {
-      const safeItem = { ...item };
-      delete (safeItem as any).margin_tier;
-      return safeItem as any;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { margin_tier, ...safeItem } = item as any;
+      return safeItem;
     });
   }
 
@@ -707,11 +707,11 @@ export const performVibeCheck = async (
         photoUrl,
         bounty: venueData.activeFlashBounty?.title || "Flash Bounty",
       },
-    } as any);
+    });
   }
 
   // 4. Update Venue Data (Status, Photos, Games)
-  const venueUpdates: any = {
+  const venueUpdates: Record<string, unknown> = {
     updatedAt: now,
     status: status, // Direct update (Buzz algo will eventually read signal too)
     "currentBuzz.lastUpdated": now,
@@ -990,15 +990,21 @@ export const checkAndAwardBadges = async (
 /**
  * Log user activity and update user points in Firestore.
  */
-export const logUserActivity = async (data: {
+interface ActivityLogPayload {
   userId: string;
   type: string;
   venueId?: string;
   points: number;
   hasConsent?: boolean;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   verificationMethod?: "gps" | "qr";
-}) => {
+  status?: string;
+}
+
+/**
+ * Log user activity and update user points in Firestore.
+ */
+export const logUserActivity = async (data: ActivityLogPayload) => {
   const timestamp = Date.now();
   const logItem = {
     ...data,
@@ -1014,11 +1020,12 @@ export const logUserActivity = async (data: {
   const userDoc = await userRef.get();
 
   // [FLASH_BOUNTY] Skip point increment if status is PENDING
-  const isPending = (data as any).status === "PENDING";
+  const isPending = data.status === "PENDING";
 
   if (userDoc.exists) {
     const userData = userDoc.data();
-    const updates: any = {
+    // Use Record for dynamic keys to avoid 'any'
+    const updates: Record<string, number> = {
       "stats.lifetimeClockins":
         data.type === "clock_in" || data.type === "clockin"
           ? (userData?.stats?.lifetimeClockins || 0) + 1

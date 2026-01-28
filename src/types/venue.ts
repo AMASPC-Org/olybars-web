@@ -1,4 +1,4 @@
-export type VenueStatus = "trickle" | "flowing" | "gushing" | "flooded";
+export type VenueStatus = "trickle" | "flowing" | "gushing" | "flooded" | "buzzing" | "packed";
 
 export enum PartnerTier {
   LOCAL = "local",

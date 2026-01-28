@@ -26,6 +26,14 @@ import { API_ENDPOINTS } from "../lib/api-config";
 
 export class VenueOpsService {
   /**
+   * Fetch a venue by ID (Proxy to venueService for consistency)
+   */
+  static async getVenue(venueId: string) {
+    if (!venueId) throw new Error("Venue ID is required.");
+    const { fetchVenueById } = await import("./venueService");
+    return fetchVenueById(venueId);
+  }
+  /**
    * [SECURITY] Zero-Trust Private Data Fetch
    */
   static async getPrivateData(venueId: string) {

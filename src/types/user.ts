@@ -1,6 +1,6 @@
 import { SystemRole, VenueRole } from './auth_schema.js';
 
-export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin' | 'PLAYER';
+export type UserRole = 'guest' | 'user' | 'manager' | 'owner' | 'admin' | 'super-admin' | 'PLAYER' | 'maker';
 
 export interface NotificationSettings {
     allow_league_intel: boolean;   // Master toggle for gameplay hints/events

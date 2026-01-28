@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trophy, Users, ShieldCheck, Ticket, ChevronRight, Info, Crown, Star, Gift, Zap, ArrowRight } from 'lucide-react';
-import { Venue } from '../../../types';
 import { fetchSystemStats } from '../../../services/userService';
+import { useUser } from '../../../contexts/UserContext';
+import { useLayout } from '../../../contexts/LayoutContext';
 
-interface LeagueHQScreenProps {
-  venues: Venue[];
-  isLeagueMember?: boolean;
-  onJoinClick?: (mode?: 'login' | 'signup') => void;
-  onAskArtie?: () => void;
-  onPassportClick?: () => void;
-}
-
-export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeagueMember = true, onJoinClick, onAskArtie, onPassportClick }) => {
+export const LeagueHQScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { userProfile } = useUser();
+  const { openModal } = useLayout();
   const [totalMembers, setTotalMembers] = useState(0);
+
+  const isLeagueMember = userProfile && userProfile.uid !== 'guest';
 
   useEffect(() => {
     const loadStats = async () => {
@@ -34,7 +31,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
     <div className="bg-background text-white min-h-screen flex flex-col font-sans relative">
       {/* Header */}
       <div className="pt-6 pb-4 px-4 flex items-center gap-3 relative z-10">
-        <button className="text-primary hover:text-white transition-colors" onClick={() => {/* Open Info Modal Placeholder */ }}>
+        <button className="text-primary hover:text-white transition-colors" onClick={() => openModal('MAKER_MODAL')}>
           <Info size={24} />
         </button>
         <h1 className="text-primary font-league font-black text-3xl uppercase tracking-tighter shadow-gold">
@@ -119,7 +116,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
               <h3 className="text-black font-league font-black text-2xl uppercase leading-none mb-2">Not a Member Yet?</h3>
               <p className="text-black text-xs font-bold uppercase mb-6 leading-tight">Join {totalMembers > 0 ? totalMembers : 'locals'} competing for glory and free gear.</p>
               <button
-                onClick={() => onJoinClick?.('signup')}
+                onClick={() => openModal('LOGIN')}
                 className="w-full bg-black text-white font-league font-black py-4 rounded-xl uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
               >
                 JOIN THE LEAGUE <ArrowRight size={18} />
@@ -132,7 +129,7 @@ export const LeagueHQScreen: React.FC<LeagueHQScreenProps> = ({ venues, isLeague
       {/* Bottom Anchor: User Identity / Passport */}
       <div className="p-4 relative z-20 mt-auto bg-gradient-to-t from-black via-black/90 to-transparent pt-12">
         <div
-          onClick={onPassportClick || (() => navigate('/passport'))}
+          onClick={() => navigate('/passport')}
           className="bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 flex items-center justify-between shadow-2xl hover:bg-slate-800 transition-all cursor-pointer group"
         >
           <div className="flex items-center gap-4">

@@ -83,7 +83,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <div className="relative">
                             <div className="w-14 h-14 bg-black rounded-full border-2 border-primary overflow-hidden shadow-[0_0_15px_-3px_rgba(251,191,36,0.3)] group-hover:scale-105 transition-transform">
                                 <User className="w-full h-full p-3 text-primary" strokeWidth={2} />
-                                {/* If we had a real photo: <img src={userProfile.photoURL} ... /> */}
                             </div>
                             <div className="absolute -bottom-1 -right-1 bg-primary text-black text-[9px] font-black px-1.5 py-0.5 rounded border border-black">
                                 LVL {Math.floor((userPoints || 0) / 100) + 1}
@@ -91,11 +90,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
 
                         <div>
-                            <h3 className="text-white font-black uppercase text-lg leading-none tracking-tight">
+                            <h3 className="type-h3 leading-none tracking-tight text-white">
                                 {userProfile?.handle ? `#${userProfile.handle}` : (userProfile?.displayName || 'Guest Player')}
                             </h3>
                             <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-[10px] font-bold text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 tracking-wider">
+                                <span className="type-label text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
                                     {(userProfile?.role === 'owner') ? 'Venue Operator' : 'League Member'}
                                 </span>
                             </div>
@@ -114,25 +113,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 {/* 1. Main Navigation */}
                 <div className="space-y-2">
-                    <button onClick={() => handleNavigation('/league')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center gap-4 hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth">
+                    <button onClick={() => handleNavigation('/league')} className="w-full glass-interactive p-4 rounded-xl flex items-center gap-4 group">
                         <Crown className="w-6 h-6 text-yellow-400" />
-                        <span className="text-sm font-bold uppercase text-white tracking-widest">League</span>
+                        <span className="type-h3 text-sm">League</span>
                     </button>
 
-                    <button onClick={() => handleNavigation('/playbook')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-yellow-400/50 transition-all active:scale-97 ease-spring-smooth group">
+                    <button onClick={() => handleNavigation('/playbook')} className="w-full glass-interactive p-4 rounded-xl flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                             <BookOpen className="w-5 h-5 text-yellow-400" />
-                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Pulse Playbook</span>
+                            <span className="type-h3 text-sm">The Pulse Playbook</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-yellow-400 transition-colors" />
                     </button>
 
-                    <button onClick={() => handleNavigation('/back-room')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
+                    <button onClick={() => handleNavigation('/back-room')} className="w-full glass-interactive p-4 rounded-xl flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                             <Key className="w-5 h-5 text-primary" />
-                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Back Room</span>
+                            <span className="type-h3 text-sm">The Back Room</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                     </button>
                 </div>
 
@@ -140,20 +139,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* 2. Manual & Glossary */}
                 <div className="space-y-2">
-                    <button onClick={() => handleNavigation('/faq')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
+                    <button onClick={() => handleNavigation('/faq')} className="w-full glass-interactive p-4 rounded-xl flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                             <HelpCircle className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-bold uppercase text-white tracking-widest">The Manual</span>
+                            <span className="type-h3 text-sm text-slate-200">The Manual</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                     </button>
 
-                    <button onClick={() => handleNavigation('/glossary')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
+                    <button onClick={() => handleNavigation('/glossary')} className="w-full glass-interactive p-4 rounded-xl flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                             <Info className="w-5 h-5 text-slate-400" />
-                            <span className="text-sm font-bold uppercase text-white tracking-widest">Glossary</span>
+                            <span className="type-h3 text-sm text-slate-200">Glossary</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                     </button>
                 </div>
 
@@ -162,21 +161,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* 3. Settings & Legal */}
                 <div className="space-y-2">
                     {userProfile?.uid && userProfile.uid !== 'guest' && (
-                        <button onClick={() => handleNavigation('/settings')} className="w-full bg-slate-900 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-97 ease-spring-smooth group">
+                        <button onClick={() => handleNavigation('/settings')} className="w-full glass-interactive p-4 rounded-xl flex items-center justify-between group">
                             <div className="flex items-center gap-4">
                                 <Activity className="w-5 h-5 text-slate-400" />
-                                <span className="text-sm font-bold uppercase text-white tracking-widest">Settings</span>
+                                <span className="type-h3 text-sm text-slate-200">Settings</span>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary" />
+                            <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-primary transition-colors" />
                         </button>
                     )}
 
-                    <button onClick={() => handleNavigation('/meet-artie')} className="w-full bg-slate-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all active:scale-[0.98] group">
+                    <button onClick={() => handleNavigation('/meet-artie')} className="w-full glass-ghost p-4 rounded-xl flex items-center justify-between group">
                         <div className="flex items-center gap-4">
                             <Bot className="w-4 h-4 text-primary" />
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">About the AI Assistant</span>
+                            <span className="type-label">About the AI Assistant</span>
                         </div>
-                        <ChevronRight className="w-3 h-3 text-slate-700 group-hover:text-primary" />
+                        <ChevronRight className="w-3 h-3 text-slate-700 group-hover:text-primary transition-colors" />
                     </button>
 
                     {/* Collapsible Legal */}
@@ -187,7 +186,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         >
                             <div className="flex items-center gap-4">
                                 <Shield className="w-5 h-5 text-slate-500" />
-                                <span className="text-sm font-black uppercase text-slate-400 tracking-wide">Legal</span>
+                                <span className="type-label">Legal</span>
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-600 transition-transform ${legalOpen ? 'rotate-90' : ''}`} />
                         </button>

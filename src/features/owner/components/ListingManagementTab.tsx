@@ -336,11 +336,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
                       : [...currentTags, tag.value as SceneTag];
                     setFormData((prev) => ({ ...prev, sceneTags: newTags }));
                   }}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
-                    (formData.sceneTags || []).includes(tag.value as SceneTag)
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${(formData.sceneTags || []).includes(tag.value as SceneTag)
                       ? "bg-primary text-black border-primary shadow-[0_0_20px_rgba(251,191,36,0.2)] scale-105"
                       : "bg-black/40 text-slate-500 border-white/10 hover:border-white/30"
-                  }`}
+                    }`}
                 >
                   {tag.label}
                 </button>
@@ -1048,11 +1047,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
                     },
                   }));
                 }}
-                className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                  item.isEnabled
+                className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${item.isEnabled
                     ? "bg-primary/10 border-primary/40 text-primary"
                     : "bg-black/20 border-white/5 text-slate-500 hover:border-white/20"
-                }`}
+                  }`}
               >
                 <item.icon className="w-4 h-4" />
                 <span className="text-[10px] font-black uppercase tracking-widest">
@@ -1108,13 +1106,14 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
               // Determine Active State
               let isActive = false;
               if (amenity.isTag) {
-                isActive = formData.sceneTags?.includes(amenity.tagValue);
+                isActive =
+                  formData.sceneTags?.includes(amenity.tagValue) || false;
               } else if (amenity.isGameFeature) {
                 isActive = !!formData.gameFeatures?.find(
                   (gf) => gf.name === amenity.gameName,
                 );
               } else {
-                isActive = (formData as any)[amenity.id];
+                isActive = (formData as any)[amenity.id] || false;
               }
 
               return (
@@ -1166,11 +1165,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
                       }));
                     }
                   }}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                    isActive
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${isActive
                       ? "bg-primary/10 border-primary/40 text-primary"
                       : "bg-black/20 border-white/5 text-slate-500 hover:border-white/20"
-                  }`}
+                    }`}
                 >
                   <amenity.icon className="w-4 h-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">
@@ -1183,11 +1181,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
             <button
               type="button"
               onClick={handleSoberToggle}
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                formData.isSoberFriendly
+              className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${formData.isSoberFriendly
                   ? "bg-blue-500/10 border-blue-500/40 text-blue-400"
                   : "bg-black/20 border-white/5 text-slate-500 hover:border-white/20"
-              }`}
+                }`}
             >
               <Shield className="w-4 h-4" />
               <span className="text-[10px] font-black uppercase tracking-widest">
@@ -1249,11 +1246,10 @@ export const ListingManagementTab: React.FC<ListingManagementTabProps> = ({
                       }));
                     }
                   }}
-                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
-                    isSelected
+                  className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${isSelected
                       ? "bg-primary/10 border-primary/40 text-primary"
                       : "bg-black/20 border-white/5 text-slate-500 hover:border-white/20"
-                  }`}
+                    }`}
                 >
                   <Gamepad2 className="w-4 h-4" />
                   <span className="text-[10px] font-black uppercase tracking-widest">

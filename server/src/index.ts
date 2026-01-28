@@ -17,6 +17,10 @@ import {
 import { vibeNormalizer } from "./middleware/vibeNormalizer.js";
 import { RequestContext } from "./utils/context.js";
 import { logger } from "./utils/logger.js";
+import { ScraperService } from "./services/scraperService.js";
+import { WorkerService } from "./services/workerService.js";
+import { SchedulerService } from "./services/schedulerService.js";
+import { enqueueScraperRun } from "./utils/cloudTasks.js";
 
 import {
   ClockInSchema,
@@ -1981,6 +1985,107 @@ v1Router.post("/utils/send-email", verifyToken, async (req, res) => {
   } catch (error: any) {
     log("ERROR", "Email Dispatch Failed", { error: error.message });
     res.status(500).json({ error: "Failed to send email." });
+  }
+});
+
+// --- PARTNERS SCRAPER API ---
+const partnersRouter = express.Router();
+v1Router.use("/partners", partnersRouter);
+
+partnersRouter.get("/scrapers", verifyToken, requireVenueAccess("manager"), async (req, res) => {
+  const venueId = req.query.venueId as string;
+  if (!venueId) return res.status(400).json({ error: "venueId required" });
+  try {
+    const scrapers = await ScraperService.listScrapers(venueId);
+    res.json(scrapers);
+  } catch (e: any) {
+    log("ERROR", "Failed to list scrapers", { error: e?.message });
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+partnersRouter.post("/scrapers", verifyToken, requireVenueAccess("manager"), async (req, res) => {
+  const { venueId, ...data } = req.body;
+  if (!venueId) return res.status(400).json({ error: "venueId required" });
+  try {
+    const id = await ScraperService.createScraper({ ...data, venueId });
+    res.json({ id });
+  } catch (e: any) {
+    log("ERROR", "Failed to create scraper", { error: e?.message });
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+partnersRouter.put("/scrapers/:id", verifyToken, requireVenueAccess("manager"), async (req, res) => {
+  const { id } = req.params;
+  const { venueId, ...updates } = req.body;
+  if (!venueId) return res.status(400).json({ error: "venueId required" });
+  try {
+    await ScraperService.updateScraper(venueId, id, updates);
+    res.json({ success: true });
+  } catch (e: any) {
+    log("ERROR", "Failed to update scraper", { error: e?.message });
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+partnersRouter.delete("/scrapers/:id", verifyToken, requireVenueAccess("manager"), async (req, res) => {
+  const { id } = req.params;
+  const { venueId } = req.body; // or query param if DELETE body not supported effectively?
+  // DELETE requests should ideally have venueId in query param or body. Axios supports body.
+  // If not, use query.
+  const vId = venueId || req.query.venueId as string;
+
+  if (!vId) return res.status(400).json({ error: "venueId required" });
+  try {
+    await ScraperService.deleteScraper(vId, id);
+    res.json({ success: true });
+  } catch (e: any) {
+    log("ERROR", "Failed to delete scraper", { error: e?.message });
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+partnersRouter.post("/scrapers/:id/run", verifyToken, requireVenueAccess("manager"), async (req, res) => {
+  const { id } = req.params;
+  const { venueId } = req.body;
+  if (!venueId) return res.status(400).json({ error: "venueId required" });
+  try {
+    const result = await ScraperService.reserveQuotaAndCreateRun(venueId, id, "MANUAL");
+    if (!result.allowed) {
+      return res.status(402).json({ error: result.reason || "Quota Exceeded" });
+    }
+    await enqueueScraperRun(result.runId);
+    res.json(result);
+  } catch (e: any) {
+    log("ERROR", "Failed to run scraper", { error: e?.message });
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// --- INTERNAL WORKER & SCHEDULER API ---
+const internalRouter = express.Router();
+app.use("/internal", internalRouter);
+
+internalRouter.post("/tasks/run", async (req, res) => {
+  const { runId } = req.body;
+  try {
+    if (!runId) return res.status(400).json({ error: "Missing runId" });
+    await WorkerService.executeRun(runId);
+    res.json({ success: true });
+  } catch (e: any) {
+    log("ERROR", "Worker Task Failed", { error: e?.message });
+    res.status(500).json({ error: e?.message });
+  }
+});
+
+internalRouter.get("/scheduler/tick", async (req, res) => {
+  try {
+    await SchedulerService.tick();
+    res.json({ success: true });
+  } catch (e: any) {
+    log("ERROR", "Scheduler Tick Failed", { error: e?.message });
+    res.status(500).json({ error: e?.message });
   }
 });
 

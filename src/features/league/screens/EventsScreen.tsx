@@ -5,13 +5,10 @@ import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
 import { Venue } from '../../../types';
 import { Ticket, Plus, Sparkles, Loader2, List, Music, Mic, Star } from 'lucide-react';
 import { EventSubmissionModal } from '../components/EventSubmissionModal';
-
-interface EventsScreenProps {
-  venues: Venue[];
-}
+import { useDiscovery } from '../../venues/contexts/DiscoveryContext';
 
 // Local Helper Type (Flexible source of truth)
-interface UnifiedEvent {
+export interface UnifiedEvent {
   id: string;
   venueId: string;
   venueName: string;
@@ -24,7 +21,9 @@ interface UnifiedEvent {
   score?: number;
   is_ritual?: boolean;
 }
-export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
+
+export const EventsScreen: React.FC = () => {
+  const { allVenues: venues, isLoading: isVenuesLoading } = useDiscovery();
   const { id: venueId } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const eventTypeFilter = (searchParams.get('type') as 'all' | 'music' | 'activities') || 'all';
@@ -36,6 +35,9 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
 
   // --- UNIFIED FEED ENGINE ---
   useEffect(() => {
+    // If venues are still loading, wait
+    if (isVenuesLoading && venues.length === 0) return;
+
     const generateFeed = async () => {
       setIsLoading(true);
       const today = new Date();
@@ -117,8 +119,8 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
       setIsLoading(false);
     };
 
-    if (venues.length > 0) generateFeed();
-  }, [venues]);
+    generateFeed();
+  }, [venues, isVenuesLoading]);
 
   const setFilterAndUrl = (type: string) => {
     setSearchParams(prev => {
@@ -186,7 +188,7 @@ export const EventsScreen: React.FC<EventsScreenProps> = ({ venues }) => {
           <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" /> Submit New Event
         </button>
 
-        {isLoading ? (
+        {isLoading || (isVenuesLoading && events.length === 0) ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-500 space-y-4">
             <Loader2 className="w-8 h-8 animate-spin" />
             <p className="font-black uppercase tracking-widest text-xs animate-pulse">refreshing the wire...</p>

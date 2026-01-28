@@ -78,11 +78,7 @@ import {
   updateUserProfile,
   logUserActivity,
 } from "../../../services/userService";
-
-interface VenueProfileScreenProps {
-  onOpenSips?: () => void;
-  onOpenHomeBase?: (venueId: string, venueName: string) => void;
-}
+import { useLayout } from "../../../contexts/LayoutContext";
 
 const VENUE_TYPE_LABELS: Record<string, string> = {
   bar_pub: "Bar / Pub",
@@ -93,10 +89,8 @@ const VENUE_TYPE_LABELS: Record<string, string> = {
   brewpub: "Brewpub",
 };
 
-export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
-  onOpenSips,
-  onOpenHomeBase,
-}) => {
+export const VenueProfileScreen: React.FC = () => {
+  const { openModal } = useLayout();
   const {
     venues,
     userProfile,
@@ -105,6 +99,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     clockedInVenue,
     onToggleFavorite: handleToggleFavoriteProp,
     onEditVenue: onEdit,
+    onOpenHomeBase,
+    onOpenSips,
   } = useOutletContext<{
     venues: Venue[];
     userProfile: UserProfile;
@@ -113,6 +109,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
     clockedInVenue?: string | null;
     onToggleFavorite: (venueId: string) => void;
     onEditVenue?: (venueId: string) => void;
+    onOpenHomeBase?: (venueId: string, venueName: string) => void;
+    onOpenSips?: () => void;
   }>();
 
   const { id } = useParams<{ id: string }>();
@@ -540,8 +538,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
           <button
             onClick={() => onToggleFavorite(venue.id)}
             className={`p-2 bg-black/50 backdrop-blur-md rounded-full border transition-colors active:scale-90 ${userProfile.favorites?.includes(venue.id)
-                ? "border-primary text-primary"
-                : "border-white/10 text-white hover:bg-black"
+              ? "border-primary text-primary"
+              : "border-white/10 text-white hover:bg-black"
               }`}
           >
             <Star
@@ -656,10 +654,10 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
             {venue.physicalRoom !== false ? (
               <div
                 className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest ${status === "open"
-                    ? "bg-green-500/10 text-green-400 border-green-400/30"
-                    : status === "last_call"
-                      ? "bg-red-600/20 text-red-500 border-red-500/50 animate-pulse"
-                      : "bg-red-500/10 text-red-400 border-red-400/30"
+                  ? "bg-green-500/10 text-green-400 border-green-400/30"
+                  : status === "last_call"
+                    ? "bg-red-600/20 text-red-500 border-red-500/50 animate-pulse"
+                    : "bg-red-500/10 text-red-400 border-red-400/30"
                   }`}
               >
                 {status === "open"
@@ -1111,9 +1109,9 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                 (venue.membershipRequired && !isMembershipVerified)
               }
               className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ||
-                  (venue.membershipRequired && !isMembershipVerified)
-                  ? "bg-slate-800 text-slate-500 border border-slate-700"
-                  : "bg-primary text-black hover:scale-[1.02] active:scale-95"
+                (venue.membershipRequired && !isMembershipVerified)
+                ? "bg-slate-800 text-slate-500 border border-slate-700"
+                : "bg-primary text-black hover:scale-[1.02] active:scale-95"
                 }`}
             >
               <MapPin className="w-4 h-4" />
@@ -1123,8 +1121,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
               onClick={() => handleVibeCheck(venue)}
               disabled={venue.membershipRequired && !isMembershipVerified}
               className={`flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${venue.membershipRequired && !isMembershipVerified
-                  ? "opacity-50 grayscale cursor-not-allowed"
-                  : ""
+                ? "opacity-50 grayscale cursor-not-allowed"
+                : ""
                 }`}
             >
               <div className="flex items-center gap-2">
@@ -1453,8 +1451,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                                 <button
                                   onClick={() => toggleFlightItem(item)}
                                   className={`p-1.5 rounded-lg border transition-all ${isInFlight
-                                      ? "bg-primary text-black border-primary"
-                                      : "border-slate-700 text-slate-500 hover:border-primary hover:text-primary"
+                                    ? "bg-primary text-black border-primary"
+                                    : "border-slate-700 text-slate-500 hover:border-primary hover:text-primary"
                                     }`}
                                 >
                                   <Beer size={14} />
@@ -1564,8 +1562,8 @@ export const VenueProfileScreen: React.FC<VenueProfileScreenProps> = ({
                     <div
                       key={feature.id}
                       className={`border rounded-xl p-3 flex items-center gap-3 relative overflow-hidden ${isOutOfOrder
-                          ? "bg-red-900/10 border-red-500/30"
-                          : "bg-slate-900/40 border-white/5"
+                        ? "bg-red-900/10 border-red-500/30"
+                        : "bg-slate-900/40 border-white/5"
                         }`}
                     >
                       <div

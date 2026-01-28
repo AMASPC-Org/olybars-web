@@ -270,9 +270,11 @@ export const scoutWorker = onMessagePublished(
       }
 
       const venueContext = { city, timezone: "America/Los_Angeles" };
-      const todayPST = new Date().toLocaleDateString("en-US", {
+      const nowPST = new Date().toLocaleString("en-US", {
         timeZone: "America/Los_Angeles",
       });
+      const todayDate = new Date(nowPST);
+      const todayPST = todayDate.toISOString().split("T")[0]; // YYYY-MM-DD
 
       const targetType = source.extractionMode || source.target || "EVENTS";
       let geminiTarget: "EVENTS" | "CALENDAR" | "MENU" | "DRINKS" | "NEWSLETTER" | "SOCIAL_FEED" | "WEBSITE" = "EVENTS";
@@ -282,12 +284,32 @@ export const scoutWorker = onMessagePublished(
       if (targetType === "NEWSLETTER") geminiTarget = "NEWSLETTER";
       if (targetType === "WEBSITE") geminiTarget = "WEBSITE";
 
+      // [B010] Step 2.5: Anti-Bloat - Fetch Existing Intelligence
+      let existingData: any = undefined;
+      if (geminiTarget === "EVENTS" || geminiTarget === "CALENDAR") {
+        // Fetch future events for Context/Anti-Duplication
+        // Note: limiting to 20 to avoid token overflow, sorted by date
+        const eventsSnap = await db.collection("league_events")
+          .where("venueId", "==", venueId)
+          .where("date", ">=", todayPST) // String comparison works for ISO dates
+          .limit(20)
+          .get();
+
+        existingData = eventsSnap.docs.map(d => {
+          const data = d.data();
+          return { title: data.title, date: data.date, time: data.time };
+        });
+      } else if (geminiTarget === "MENU" || geminiTarget === "DRINKS") {
+        existingData = venueData.ai_draft_profile;
+      }
+
       const extractedData = await gemini.analyzeScrapedContent(
         rawText,
         todayPST,
         venueContext,
         geminiTarget,
-        source.extractionNotes
+        source.extractionNotes,
+        existingData
       );
 
       // Step 4: The Scribe (Save Results)
@@ -314,10 +336,18 @@ export const scoutWorker = onMessagePublished(
           }
         } else if (geminiTarget === "MENU" || geminiTarget === "DRINKS") {
           const venueRef_forUpdate = db.collection("venues").doc(venueId);
-          batch.update(venueRef_forUpdate, {
-            "ai_draft_profile.menu_highlights": extractedData
-          });
-          console.log(`[Worker] Updated Menu/Drinks highlights.`);
+          // [B010] Granular Updates based on B009 Schema
+          const updates: any = {};
+
+          if (extractedData.highlights) updates["ai_draft_profile.menu_highlights.items"] = extractedData.highlights;
+          if (extractedData.menuSummary) updates["ai_draft_profile.menu_highlights.summary"] = extractedData.menuSummary;
+          if (extractedData.draftList) updates["ai_draft_profile.inventory.draft_list"] = extractedData.draftList;
+          if (extractedData.deals) updates["ai_draft_profile.deals"] = extractedData.deals;
+
+          if (Object.keys(updates).length > 0) {
+            batch.update(venueRef_forUpdate, updates);
+            console.log(`[Worker] Updated ${geminiTarget} intelligence.`);
+          }
         } else if (geminiTarget === "WEBSITE") {
           const venueRef_forUpdate = db.collection("venues").doc(venueId);
           const websitePayload: any = {};

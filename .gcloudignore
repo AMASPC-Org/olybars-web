@@ -7,3 +7,9 @@ dist
 .github
 tests
 _archive
+
+# OlyBars Standard Exclusions
+tests/
+docs/
+src/
+tsconfig.json

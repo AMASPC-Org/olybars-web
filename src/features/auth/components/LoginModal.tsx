@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X, User, Hash, Home, Beer, Mail, Phone, ChevronRight, Shield, Lock, Facebook, Smartphone, Zap
+  X, Hash, Home, Beer, Mail, Phone, Shield, Lock, Facebook, Smartphone, Zap
 } from 'lucide-react';
 import {
   createUserWithEmailAndPassword,
@@ -10,46 +10,71 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, googleProvider, facebookProvider, db } from '../../../lib/firebase';
+import { auth, db } from '../../../lib/firebase';
 import { UserProfile, Venue, UserRole, SystemRole } from '../../../types';
 import { MfaService } from '../../../services/mfaService';
-import { isSystemAdmin } from '../../../types/auth_schema';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { mapAuthErrorToMessage } from '../utils/authErrorHandler';
 import { AuthService } from '../../../services/authService';
+import { useUser, useLayout } from '../../../contexts';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  loginMode: 'user' | 'owner';
-  setLoginMode: (mode: 'user' | 'owner') => void;
-  userSubMode: 'login' | 'signup';
-  setUserSubMode: (mode: 'login' | 'signup') => void;
-  userProfile: UserProfile;
-  setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
-  venues: Venue[];
-  alertPrefs: any;
-  setAlertPrefs: (prefs: any) => void;
-  openInfo: (title: string, text: string) => void;
-  onOwnerSuccess: () => void;
+  // Optional props for standalone usage (otherwise uses Context users/state)
+  loginMode?: 'user' | 'owner';
+  setLoginMode?: (mode: 'user' | 'owner') => void;
+  userSubMode?: 'login' | 'signup';
+  setUserSubMode?: (mode: 'login' | 'signup') => void;
+  userProfile?: UserProfile;
+  setUserProfile?: React.Dispatch<React.SetStateAction<UserProfile>>;
+  venues?: Venue[];
+  alertPrefs?: any;
+  setAlertPrefs?: (prefs: any) => void;
+  openInfo?: (title: string, text: string) => void;
+  onOwnerSuccess?: () => void;
+  // New props for GlobalModals support
+  initialMode?: 'user' | 'live' | 'signup' | 'login';
+  onSuccess?: () => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
-  loginMode,
-  setLoginMode,
-  userSubMode,
-  setUserSubMode,
-  userProfile,
-  setUserProfile,
-  venues,
+  loginMode: propLoginMode,
+  setLoginMode: propSetLoginMode,
+  userSubMode: propUserSubMode,
+  setUserSubMode: propSetUserSubMode,
+  userProfile: propUserProfile,
+  setUserProfile: propSetUserProfile,
+  venues, // Unused
   alertPrefs,
   setAlertPrefs,
-  openInfo,
-  onOwnerSuccess
+  openInfo: propOpenInfo,
+  onOwnerSuccess,
+  initialMode = 'user',
+  onSuccess
 }) => {
   const { showToast } = useToast();
+
+  // Context Fallbacks
+  const { userProfile: contextUserProfile, setUserProfile: contextSetUserProfile } = useUser();
+  const { openModal } = useLayout(); // fallback for openInfo logic if needed (usually unrelated)
+
+  // Resolve Effective State/Setters
+  const userProfile = propUserProfile || contextUserProfile;
+  const setUserProfile = propSetUserProfile || contextSetUserProfile;
+
+  // Internal State for Modes if props not provided
+  const [internalLoginMode, setInternalLoginMode] = useState<'user' | 'owner'>((initialMode === 'live' || initialMode === 'user') ? 'user' : 'owner');
+  const [internalUserSubMode, setInternalUserSubMode] = useState<'login' | 'signup'>(initialMode === 'signup' ? 'signup' : 'login');
+
+  const loginMode = propLoginMode || internalLoginMode;
+  const setLoginMode = propSetLoginMode || setInternalLoginMode;
+
+  const userSubMode = propUserSubMode || internalUserSubMode;
+  const setUserSubMode = propSetUserSubMode || setInternalUserSubMode;
+
   const [email, setEmail] = useState(userProfile.email || '');
   const [password, setPassword] = useState('');
   const [handle, setHandle] = useState(userProfile.handle || '');
@@ -231,7 +256,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         }
       };
 
-      setAlertPrefs({
+      setAlertPrefs?.({
         ...alertPrefs,
         weeklyDigest: true
       });
@@ -317,7 +342,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
         }, { merge: true });
 
         setUserProfile({ ...profileData, ...superAdminData });
-        onOwnerSuccess();
+        if (onOwnerSuccess) onOwnerSuccess();
+        if (onSuccess) onSuccess();
         onClose();
         showToast(`Logged in as SUPER - ADMIN(Golden Ticket)`, 'success');
         return;
@@ -343,10 +369,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           showToast('MFA ENROLLMENT REQUIRED FOR PARTNER ACCESS', 'info');
           return; // Block further login progress
         }
-        onOwnerSuccess();
+        if (onOwnerSuccess) onOwnerSuccess();
+        if (onSuccess) onSuccess();
         onClose();
         showToast(`Logged in as ${profileData.handle || 'Owner'} `, 'success');
       } else {
+        if (onSuccess) onSuccess();
         onClose();
         showToast(`Welcome back, ${profileData.handle || 'Legend'} !`, 'success');
       }
@@ -412,9 +440,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
       <div className="glass-panel w-full max-w-sm rounded-xl relative flex flex-col max-h-[90vh] overflow-hidden">
         {userSubMode === 'login' && !showMfaStep && (
-          <div className="flex border-b-2 border-slate-700">
-            <button onClick={() => setLoginMode('user')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-400'}`}>Player</button>
-            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-3 font-bold uppercase ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-400'}`}>Partner</button>
+          <div className="flex border-b border-white/10">
+            <button onClick={() => setLoginMode('user')} className={`flex-1 py-4 font-black uppercase tracking-wider transition-colors ${loginMode === 'user' ? 'bg-primary text-black' : 'text-slate-500 hover:text-white'}`}>Player</button>
+            <button onClick={() => setLoginMode('owner')} className={`flex-1 py-4 font-black uppercase tracking-wider transition-colors ${loginMode === 'owner' ? 'bg-primary text-black' : 'text-slate-500 hover:text-white'}`}>Partner</button>
           </div>
         )}
 
@@ -530,8 +558,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <>
               <form onSubmit={(e) => { e.preventDefault(); userSubMode === 'signup' ? saveUser() : handleUserLogin(); }} className="space-y-4">
                 <div className="text-center">
-                  <h3 className="text-xl font-bold uppercase">{userSubMode === 'signup' ? 'Create Account' : 'Player Login'}</h3>
-                  <p className="text-[10px] text-slate-400 uppercase">{userSubMode === 'signup' ? 'Join the nightlife network' : 'Level up your night'}</p>
+                  <h3 className="type-h2">{userSubMode === 'signup' ? 'Create Account' : 'Player Login'}</h3>
+                  <p className="type-label mt-1">{userSubMode === 'signup' ? 'Join the nightlife network' : 'Level up your night'}</p>
                 </div>
 
                 <div className="space-y-2 pb-4 border-b border-slate-700">

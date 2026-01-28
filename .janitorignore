@@ -1,0 +1,9 @@
+# Features in development or temporarily disabled
+src/components/auth/PersonaGuard.tsx
+src/components/events/EventCreationWizard.tsx
+src/components/OwnerMarketingPromotions.tsx
+src/components/partners/AssetToggleGrid.tsx
+src/components/ui/AgeGate.tsx
+src/components/ui/InfoPopup.tsx
+src/components/ui/OnboardingModal.tsx
+src/components/VibeMugs.tsx

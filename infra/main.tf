@@ -38,3 +38,50 @@ resource "google_cloud_run_v2_service" "backend" {
 
 # Firestore is typically managed via the Google Cloud Console or gcloud for simple setups,
 # but can be added here if full IaC is desired.
+
+# --- BREW HOUSE SCRAPER INFRASTRUCTURE ---
+
+# 1. Cloud Tasks Queue
+resource "google_cloud_tasks_queue" "default" {
+  name     = "brew-house-worker"
+  location = "us-west1"
+
+  rate_limits {
+    max_dispatches_per_second = 10
+    max_concurrent_dispatches = 5
+  }
+
+  retry_config {
+    max_attempts       = 5
+    max_retry_duration = "3600s" # 1 hour
+    min_backoff        = "5s"
+    max_backoff        = "300s"
+    max_doublings      = 4
+  }
+}
+
+# Data source for default SA
+data "google_compute_default_service_account" "default" {
+}
+
+# 2. Cloud Scheduler Job (Tick)
+resource "google_cloud_scheduler_job" "scraper_tick" {
+  name             = "scraper-tick-job"
+  description      = "Triggers the OlyBars Scraper Scheduler every 15 minutes"
+  schedule         = "*/15 * * * *"
+  time_zone        = "America/Los_Angeles"
+  attempt_deadline = "320s"
+
+  retry_config {
+    retry_count = 1
+  }
+
+  http_target {
+    http_method = "GET"
+    uri         = "${google_cloud_run_v2_service.backend.uri}/internal/scheduler/tick"
+
+    oidc_token {
+      service_account_email = data.google_compute_default_service_account.default.email
+    }
+  }
+}

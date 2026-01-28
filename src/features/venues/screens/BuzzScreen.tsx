@@ -87,11 +87,14 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
   );
 };
 
+// Status priority order
 const STATUS_ORDER: Record<VenueStatus, number> = {
-  flooded: 0,
-  gushing: 1,
-  flowing: 2,
-  trickle: 3,
+  packed: 0,
+  flooded: 1,
+  gushing: 2,
+  buzzing: 3,
+  flowing: 4,
+  trickle: 5,
 };
 
 const EventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
@@ -169,7 +172,7 @@ const VenueListItem = ({
 
   // Resolving Deal Display
   const scheduledDeal = upcomingDeals[venue.id]?.sort(
-    (a, b: any) => a.startTime - b.startTime,
+    (a: ScheduledDeal, b: ScheduledDeal) => a.startTime - b.startTime,
   )[0];
   const isUpcoming = !hasActiveBounty && !!scheduledDeal;
 

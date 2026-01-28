@@ -15,6 +15,8 @@ export type SystemRole = 'guest' | 'admin';
  */
 export type VenueRole = 'owner' | 'manager' | 'staff';
 
+export type AdmissionStatus = 'approved' | 'pending' | 'rejected' | 'banned';
+
 export interface UserAuthProfile {
     uid: string;
     email: string;

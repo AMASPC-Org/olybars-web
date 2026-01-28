@@ -112,6 +112,17 @@ service cloud.firestore {
       allow read: if true;
     }
 
+    // 5. LEAGUE EVENTS (Scraper Output)
+    match /league_events/{eventId} {
+      // Owners can read/write their own events. SuperAdmin varies.
+      allow read, write: if isAuthenticated() && (
+        resource.data.venueId == request.auth.uid || 
+        resource == null // Allow creation where data doesn't exist yet
+      );
+      // Correction: Create logic needs 'request.resource.data.venueId'
+      allow create: if isAuthenticated() && request.resource.data.venueId == request.auth.uid;
+    }
+
     // Default deny for all other collections
     match /{document=**} {
       allow read, write: if isSuperAdmin();

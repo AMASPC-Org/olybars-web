@@ -13,7 +13,7 @@ export const Footer = () => {
                 </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 my-3 text-[7px] font-bold text-slate-600 uppercase tracking-widest">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 my-3 type-label text-[7px] text-slate-500">
                 <Link to="/about" className="hover:text-primary transition-colors">About</Link>
                 <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
                 <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
@@ -21,7 +21,7 @@ export const Footer = () => {
                 <Link to="/security" className="hover:text-primary transition-colors">Security</Link>
             </div>
 
-            <p className="text-[7px] text-slate-700 font-bold uppercase tracking-widest">
+            <p className="type-label text-[7px] text-slate-600">
                 © 2026 OlyBars | Part of the AMA Network
             </p>
         </footer>

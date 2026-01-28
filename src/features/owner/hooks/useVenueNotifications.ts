@@ -23,6 +23,7 @@ export const useVenueNotifications = (venueId?: string) => {
   const [state, setState] = useState<VenueNotificationState>({
     notifications: [],
     count: 0,
+    hasNotifications: false,
     loading: true,
     error: null,
   });

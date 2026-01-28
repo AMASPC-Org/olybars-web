@@ -23,6 +23,8 @@ export const GAMIFICATION_CONFIG = {
         flowing: 50,
         gushing: 25,
         flooded: 10,
+        packed: 5,
+        buzzing: 35,
         dead: 100
     },
     LIMITS: {

@@ -7,8 +7,8 @@ interface AuthPageProps {
     userProfile: UserProfile;
     setUserProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
     venues: Venue[];
-    alertPrefs: any;
-    setAlertPrefs: (prefs: any) => void;
+    alertPrefs?: any;
+    setAlertPrefs?: (prefs: any) => void;
     openInfo: (title: string, text: string) => void;
     onOwnerSuccess: () => void;
     loginMode: 'user' | 'owner';
@@ -53,9 +53,9 @@ export const AuthPage: React.FC<AuthPageProps> = (props) => {
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Ambient Background */}
+            {/* Ambient Background - CSS only, no external SVG */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black" />
-            <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:24px_24px] opacity-20" />
 
             <LoginModal
                 {...props}

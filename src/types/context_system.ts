@@ -41,13 +41,13 @@ export interface DiscoveredHoliday {
 
 export interface SystemNotification {
   id: string;
-  type: "opportunity" | "alert" | "weather_warning";
+  type: "opportunity" | "alert" | "weather_warning" | "upcoming_holiday";
   title: string;
   message: string;
   action_label?: string;
   action_context?: {
     topic: string;
-    intent: "MARKETING_PROMO" | "SYSTEM_ALERT" | "INFO";
+    intent: "MARKETING_PROMO" | "SYSTEM_ALERT" | "INFO" | "PLANNING";
     constraints?: string[];
     [key: string]: any;
   };

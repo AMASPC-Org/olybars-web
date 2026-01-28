@@ -1,6 +1,17 @@
 import React, { useState } from "react";
-import { X, Globe, Plus, AlertCircle, Clock } from "lucide-react";
-import { ScrapeTarget, PartnerTier } from "../../../../types/venue";
+import {
+  X,
+  Globe,
+  Plus,
+  Instagram,
+  Facebook,
+  Layout,
+  ChevronRight,
+  ArrowLeft,
+  CheckCircle2,
+} from "lucide-react";
+import { ScrapeTarget } from "../../../../types/venue";
+import { cn } from "../../../../lib/utils";
 
 interface AddSourceModalProps {
   isOpen: boolean;
@@ -9,205 +20,261 @@ interface AddSourceModalProps {
     url: string,
     target: ScrapeTarget,
     frequency: "daily" | "weekly" | "monthly",
-    description?: string,
+    description?: string
   ) => void;
   existingUrls: string[];
-  tier: PartnerTier;
 }
+
+type PresetType = "instagram" | "facebook" | "website" | "custom";
+
+interface PresetConfig {
+  id: PresetType;
+  label: string;
+  icon: React.ElementType;
+  target: ScrapeTarget;
+  placeholder: string;
+  description: string;
+  color: string;
+}
+
+const PRESETS: PresetConfig[] = [
+  {
+    id: "instagram",
+    label: "Connect Instagram",
+    icon: Instagram,
+    target: "SOCIAL_FEED",
+    placeholder: "https://instagram.com/yourvenue",
+    description: "Syncs latest posts & event flyers.",
+    color: "bg-pink-500",
+  },
+  {
+    id: "facebook",
+    label: "Connect Facebook",
+    icon: Facebook,
+    target: "EVENTS",
+    placeholder: "https://facebook.com/yourvenue/events",
+    description: "Syncs official event calendar.",
+    color: "bg-blue-600",
+  },
+  {
+    id: "website",
+    label: "Track Website",
+    icon: Globe,
+    target: "WEBSITE",
+    placeholder: "https://www.yourvenue.com/events",
+    description: "Monitors page for changes.",
+    color: "bg-emerald-500",
+  },
+];
 
 export const AddSourceModal: React.FC<AddSourceModalProps> = ({
   isOpen,
   onClose,
   onAdd,
   existingUrls,
-  tier,
+  // tier, // Unused in v2 (Presets drive logic)
 }) => {
-  const [url, setUrl] = useState("");
-  const [target, setTarget] = useState<ScrapeTarget>("EVENTS");
-  const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly">(
-    "monthly",
+  const [step, setStep] = useState<"SELECT" | "CONFIGURE">("SELECT");
+  const [selectedPreset, setSelectedPreset] = useState<PresetConfig | null>(
+    null
   );
-  const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
+  const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  // Tier Logic
-  const canDoWeekly = [PartnerTier.PRO, PartnerTier.AGENCY].includes(tier);
-  const canDoDaily = tier === PartnerTier.AGENCY;
 
   if (!isOpen) return null;
 
+  const handleSelect = (preset: PresetType) => {
+    if (preset === "custom") {
+      // Manual fallback
+      setSelectedPreset({
+        id: "custom",
+        label: "Custom Source",
+        icon: Layout,
+        target: "WEBSITE",
+        placeholder: "https://...",
+        description: "Configure advanced scraper settings.",
+        color: "bg-violet-500",
+      });
+    } else {
+      const config = PRESETS.find((p) => p.id === preset);
+      if (config) setSelectedPreset(config);
+    }
+    setStep("CONFIGURE");
+    setError(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    if (!url) return;
 
-    // Validation 1: URL Format
-    let cleanUrl = url.trim();
-    if (!cleanUrl.startsWith("http")) {
-      cleanUrl = "https://" + cleanUrl;
+    // Basic Validation
+    if (existingUrls.includes(url)) {
+      setError("This URL is already being tracked.");
+      return;
     }
 
     try {
-      new URL(cleanUrl);
+      new URL(url); // Check valid URL format
     } catch {
-      setError("Please enter a valid URL (e.g. https://instagram.com/...)");
+      setError("Please enter a valid URL (e.g. https://...)");
       return;
     }
 
-    // Validation 2: Duplication
-    if (existingUrls.includes(cleanUrl)) {
-      setError("This URL is already connected.");
-      return;
-    }
+    onAdd(url, selectedPreset!.target, "daily", notes); // Default to daily for now
+    handleClose();
+  };
 
-    // Validation 3: Limit
-    if (existingUrls.length >= 5) {
-      setError("Maximum of 5 sources allowed. Please remove one first.");
-      return;
-    }
-
-    onAdd(cleanUrl, target, frequency, description);
+  const handleClose = () => {
+    setStep("SELECT");
+    setSelectedPreset(null);
     setUrl("");
-    setDescription("");
+    setNotes("");
+    setError(null);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#0f172a] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-        <div className="p-4 border-b border-white/5 flex justify-between items-center bg-black/40">
-          <h3 className="text-sm font-black text-white uppercase tracking-widest font-league">
-            Connect New Source
-          </h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-zinc-900 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between bg-white/5 px-6 py-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            {step === "CONFIGURE" && (
+              <button
+                onClick={() => setStep("SELECT")}
+                className="rounded-full p-1 hover:bg-white/10 transition-colors"
+                type="button"
+              >
+                <ArrowLeft className="h-5 w-5 text-white/70" />
+              </button>
+            )}
+            <h2 className="text-lg font-semibold text-white">
+              {step === "SELECT" ? "Add Intelligence Source" : selectedPreset?.label}
+            </h2>
+          </div>
           <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-white transition-colors"
+            onClick={handleClose}
+            className="rounded-full p-1 text-white/50 hover:bg-white/10 hover:text-white"
+            type="button"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-              Source Type
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  "MENU",
-                  "DRINKS",
-                  "EVENTS",
-                  "CALENDAR",
-                  "WEBSITE",
-                  "SOCIAL_FEED",
-                  "NEWSLETTER",
-                ] as ScrapeTarget[]
-              ).map((t) => (
+        {/* Content */}
+        <div className="p-6">
+          {step === "SELECT" ? (
+            <div className="grid gap-3">
+              {PRESETS.map((preset) => (
                 <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTarget(t)}
-                  className={`px-4 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${target === t
-                      ? "bg-primary text-black border-primary"
-                      : "bg-black border-white/10 text-slate-500 hover:border-white/20"
-                    }`}
+                  key={preset.id}
+                  onClick={() => handleSelect(preset.id)}
+                  className="group flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-4 transition-all hover:border-white/20 hover:bg-white/10"
                 >
-                  {t.replace("_", " ")}
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-full bg-opacity-20",
+                        preset.color.replace("bg-", "bg-opacity-20 ") +
+                        " " +
+                        preset.color.replace("bg-", "text-")
+                      )}
+                    >
+                      <preset.icon className="h-6 w-6" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-white">{preset.label}</h3>
+                      <p className="text-sm text-white/50">
+                        {preset.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-white/30 transition-transform group-hover:translate-x-1" />
                 </button>
               ))}
+
+              <div className="my-2 border-t border-white/5" />
+
+              <button
+                onClick={() => handleSelect("custom")}
+                className="group flex w-full items-center justify-between rounded-xl border border-dashed border-white/20 bg-transparent p-4 transition-all hover:border-white/40 hover:bg-white/5"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800">
+                    <Layout className="h-5 w-5 text-white/50" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-medium text-white/90">Custom Source</h3>
+                    <p className="text-sm text-white/40">
+                      Configure manual scraper settings (Legacy).
+                    </p>
+                  </div>
+                </div>
+                <Plus className="h-5 w-5 text-white/30" />
+              </button>
             </div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* URL Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/70">
+                  Source URL
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder={selectedPreset?.placeholder}
+                    className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder-white/30 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    autoFocus
+                  />
+                  {url && !error && (
+                    <CheckCircle2 className="absolute right-3 top-3.5 h-5 w-5 text-emerald-500" />
+                  )}
+                </div>
+                {error && <p className="text-sm text-red-400">{error}</p>}
+                <p className="text-xs text-white/40">
+                  Schmidt will automatically detect events and menu updates from
+                  this page.
+                </p>
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
-              <Clock className="w-3 h-3 text-slate-400" />
-              Update Frequency
-            </label>
-            <select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as any)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:border-primary/50 outline-none font-medium appearance-none"
-            >
-              <option value="monthly">Monthly (Included)</option>
-              <option value="weekly" disabled={!canDoWeekly}>
-                Weekly {canDoWeekly ? "(Pro)" : "(Pro Only 🔒)"}
-              </option>
-              <option value="daily" disabled={!canDoDaily}>
-                Daily {canDoDaily ? "(Agency)" : "(Agency Only 🔒)"}
-              </option>
-            </select>
-          </div>
+              {/* Notes Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/70">
+                  Internal Note (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="e.g. Main Events Page"
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white placeholder-white/30 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-              URL / Web Address
-            </label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 w-4 h-4" />
-              <input
-                type="text"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder={
-                  target === "EVENTS" || target === "CALENDAR"
-                    ? "https://facebook.com/events/..."
-                    : target === "WEBSITE"
-                      ? "https://yourvenue.com"
-                      : target === "SOCIAL_FEED"
-                        ? "https://instagram.com/yourvenue"
-                        : "https://yourvenue.com/menu"
-                }
-                className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:border-primary/50 outline-none font-medium"
-                autoFocus
-              />
-            </div>
-          </div>
-
-          {/* Context Field for Instructions */}
-          <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
-              {target === "SOCIAL_FEED" ? "Feed Instructions (Sync Logic)" : "Scraper Instructions (Optional)"}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={
-                target === "MENU" || target === "DRINKS"
-                  ? "e.g. Only extract Draft Beer, ignore the wine list..."
-                  : target === "CALENDAR"
-                    ? "e.g. Grab recurring weekly trivia on Tuesdays..."
-                    : target === "SOCIAL_FEED"
-                      ? "e.g. Ignore 'link in bio' posts, only sync real events..."
-                      : "e.g. Look for the 'Live Music' section on the homepage and grab dates..."
-              }
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-sm text-white focus:border-primary/50 outline-none font-medium min-h-[80px]"
-            />
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 mt-2 text-red-400 text-[10px] font-bold uppercase tracking-wide">
-              <AlertCircle className="w-3 h-3" />
-              {error}
-            </div>
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="flex-1 rounded-xl bg-white/5 px-4 py-3 font-medium text-white hover:bg-white/10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!url}
+                  className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add Source
+                </button>
+              </div>
+            </form>
           )}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-primary text-black px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2"
-            >
-              <Plus className="w-3 h-3 stroke-[3]" />
-              Add Source
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

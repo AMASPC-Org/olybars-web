@@ -46,7 +46,7 @@ export interface ActivityBase {
 /**
  * League Events: Point-awarding activities (+25 pts).
  */
-export interface LeagueEvent extends ActivityBase {
+export interface TaxonomyLeagueEvent extends ActivityBase {
     type: TaxonomyType.LEAGUE_EVENT;
     category: EventCategory;
     startTime: string; // ISO String

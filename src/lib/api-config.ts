@@ -52,6 +52,9 @@ export const API_ENDPOINTS = {
         ONBOARD: `${API_BASE_URL}/partners/onboard`,
         PHONE_CALL: `${API_BASE_URL}/partners/verify/phone/call`,
         PHONE_VERIFY: `${API_BASE_URL}/partners/verify/phone/verify`,
+        SCRAPERS: (venueId?: string) => `${API_BASE_URL}/partners/scrapers${venueId ? `?venueId=${venueId}` : ""}`,
+        SCRAPER_DETAIL: (id: string, venueId?: string) => `${API_BASE_URL}/partners/scrapers/${id}${venueId ? `?venueId=${venueId}` : ""}`,
+        SCRAPER_RUN: (id: string) => `${API_BASE_URL}/partners/scrapers/${id}/run`,
     },
     USER: {
         ACTIVITY: `${API_BASE_URL}/activity`,

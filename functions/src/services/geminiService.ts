@@ -48,9 +48,7 @@ export class GeminiService {
    */
   static async generateSystemPrompt(
     agent: "artie" | "schmidt",
-    _userId?: string,
-    _role?: string,
-    _venueId?: string,
+    // _userId, _role, _venueId removed as unused
   ): Promise<string> {
     if (agent === "schmidt") {
       return GeminiService.SCHMIDT_PERSONA;
@@ -220,7 +218,7 @@ export class GeminiService {
 
     try {
       return JSON.parse(text);
-    } catch (_e) {
+    } catch {
       console.error("JSON Parse Error on Artie Analysis:", text);
       return {
         confidenceScore: 0,
@@ -232,7 +230,7 @@ export class GeminiService {
     }
   }
 
-  async getTriage(question: string): Promise<string> {
+  async getTriage(_question: string): Promise<string> {
     return "I'm ready to serve, boss.";
   }
 
@@ -285,7 +283,7 @@ export class GeminiService {
 
     try {
       return JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.error("JSON Parse Error on Schmidt Suggestion:", text);
       return null;
     }
@@ -351,7 +349,7 @@ export class GeminiService {
 
     try {
       return JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.error("JSON Parse Error on Flyer Analysis:", text);
       throw new Error("Failed to parse flyer data.");
     }
@@ -473,7 +471,7 @@ export class GeminiService {
     try {
       const json = JSON.parse(result);
       return json.rewritten;
-    } catch (e) {
+    } catch {
       return result; // Fallback to raw text if JSON parse fails
     }
   }
@@ -484,6 +482,7 @@ export class GeminiService {
     venueContext: { city: string; timezone: string },
     target: "CALENDAR" | "EVENTS" | "MENU" | "DRINKS" | "NEWSLETTER" | "SOCIAL_FEED" | "WEBSITE" = "EVENTS",
     rules?: string,
+    existingData?: any
   ): Promise<any> {
     // Default to Olympia if missing (Safety Net)
     const cityString = venueContext?.city || "Olympia, WA";
@@ -497,7 +496,22 @@ export class GeminiService {
     `;
 
     if (rules) {
-      prompt += `\nOWNER INSTRUCTIONS (SUPERSEDE DEFAULT RULES):\n${rules}\n`;
+      prompt += `
+      === OWNER RULES OF ENGAGEMENT ===
+      ${rules}
+      =================================
+      `;
+    }
+
+    if (existingData) {
+      prompt += `
+      === EXISTING INTELLIGENCE ===
+      The following data is ALREADY known.
+      TASK: Compare new findings against this. ONLY return items that are NEW or materially UPDATED (Price/ABV changes).
+      DEDUPLICATION: Do not return exact matches.
+      DATA: ${JSON.stringify(existingData).substring(0, 2000)}
+      =============================
+      `;
     }
 
     if (target === "EVENTS" || target === "CALENDAR") {
@@ -509,7 +523,9 @@ export class GeminiService {
       4. TIME: Convert to 24h format (HH:mm). 
       5. TYPE: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
       6. DESCRIPTION: 1-2 sentence high-energy pitch.
-      ${target === "CALENDAR" ? '7. SPECIAL: Identify recurring weekly events (e.g., "Every Wed") and extract them as a pattern.' : ""}
+      7. RECURRING LOGIC: 
+         - If an event is "Every Tuesday", generate explicit instances for the NEXT 30 DAYS from ${currentTime}.
+         - Mark these as "isRecurring": true.
       
       OUTPUT FORMAT (JSON ARRAY ONLY):
       [{
@@ -526,17 +542,15 @@ export class GeminiService {
       prompt += `
       EXTRACTION RULES:
       1. HIGHLIGHTS: Identify 3-5 distinct items that define this place. 
-      2. If target is DRINKS: Focus on Style (IPA, Sour, etc), ABV, IBU, and Brewery name.
-      3. DEALS: Extract any happy hour rules or time-based offers.
-      4. SUMMARY: A 2-sentence vibe check of the selection.
-
-      CONSISTENCY CHECK:
-      - Compare findings against any existing data mentioned in the input. 
-      - Only return items that are NEW or have UPDATED info (price, ABV).
+      2. MODE: ${target === 'DRINKS' ? 'BEVERAGE INTELLIGENCE' : 'FOOD INTELLIGENCE'}
+      3. ${target === 'DRINKS' ? 'EXTRACT: Style (IPA, Stout), ABV %, IBU, and Brewery Name.' : 'EXTRACT: Ingredients, Price, and "Vibe" (e.g., "Shareable").'}
+      4. DEALS: Extract any happy hour rules or time-based offers.
+      5. CONSISTENCY: Respect the "Existing Intelligence" block. Ignore duplicates.
 
       OUTPUT FORMAT (JSON ONLY):
       {
           "highlights": ["string"],
+          "draftList": ${target === 'DRINKS' ? '[{ "name": "string", "style": "string", "abv": "string", "brewery": "string" }]' : '[]'},
           "deals": [{ "title": "string", "details": "string" }],
           "menuSummary": "string",
           "sourceConfidence": number
@@ -606,12 +620,12 @@ export class GeminiService {
 
     let text = response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     if (!text) return target === "EVENTS" ? [] : null;
-    text = text.replace(/```json\n ?| ```/g, "").trim();
+    text = text.replace(/```json\n?|```/g, "").trim();
 
     try {
       const result = JSON.parse(text);
       return result;
-    } catch (e) {
+    } catch {
       console.error("JSON Parse Error on ScrapedContent Analysis:", text);
       return target === "EVENTS" ? [] : null;
     }

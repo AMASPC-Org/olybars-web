@@ -65,7 +65,7 @@ export const schmidtChatLogic = genkitAi.defineFlow({
     }
 
     // 2. Prepare System Instructions
-    const universalSystemInstruction = await GeminiService.generateSystemPrompt("schmidt", userId, userRole, venueId);
+    const universalSystemInstruction = await GeminiService.generateSystemPrompt("schmidt");
 
     let timeContext = '';
     if (contextDate) {

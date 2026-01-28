@@ -16,14 +16,10 @@ import {
 } from "../../social/services/VibeReceiptService";
 import { CheatCodeWidget } from "../../history/components/CheatCodeWidget";
 import { StaggerContainer } from "../../../components/ui/StaggerContainer";
+import { useDiscovery } from "../../venues/contexts/DiscoveryContext";
 
-interface TriviaScreenProps {
-  venues: Venue[];
-}
-
-export const TriviaScreen: React.FC<TriviaScreenProps> = ({
-  venues,
-}) => {
+export const TriviaScreen: React.FC = () => {
+  const { allVenues: venues } = useDiscovery();
   const { userProfile } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentReceipt, setCurrentReceipt] = useState<VibeReceiptData | null>(

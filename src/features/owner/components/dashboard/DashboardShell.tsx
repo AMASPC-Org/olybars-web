@@ -27,7 +27,7 @@ import { VenueOpsService } from "../../../../services/VenueOpsService";
 
 // Lazy Load Tabs
 const OperationsTab = lazy(() => import("./OperationsTab"));
-const MarketingTab = lazy(() => import("./MarketingTab"));
+const MarketingTab = lazy(() => import("./MarketingTab").then(m => ({ default: m.MarketingTab })));
 const ListingManagementTab = lazy(() =>
   import("../ListingManagementTab").then((module) => ({
     default: module.ListingManagementTab,
@@ -372,13 +372,13 @@ export function DashboardShell({
           <>
             {(isVenueOwner(userProfile, myVenue.id) ||
               myVenue.managersCanAddUsers) && (
-              <button
-                onClick={() => setDashboardView("people")}
-                className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === "people" ? "text-primary border-primary" : "text-slate-500 border-transparent"}`}
-              >
-                People
-              </button>
-            )}
+                <button
+                  onClick={() => setDashboardView("people")}
+                  className={`px-6 py-4 text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all border-b-2 ${dashboardView === "people" ? "text-primary border-primary" : "text-slate-500 border-transparent"}`}
+                >
+                  People
+                </button>
+              )}
             {isVenueManager(userProfile, myVenue.id) && (
               <button
                 onClick={() => setDashboardView("reports")}

@@ -29,7 +29,7 @@ import ReportsTab from "../components/dashboard/ReportsTab";
 import { ScraperManagementTab } from "../components/ScraperManagementTab";
 import { PartnerManualTab } from "../components/PartnerManualTab";
 import { BackRoomManagementTab } from "../components/BackRoomManagementTab";
-import { OperationsTab } from "../components/OperationsTab";
+import OperationsTab from "../components/dashboard/OperationsTab";
 import { MarketingTab } from "../components/dashboard/MarketingTab";
 import { TreasuryManagementTab } from "../components/TreasuryManagementTab";
 
@@ -312,13 +312,18 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
                 <NotificationsTab
                   venueId={myVenue.id}
                   onNavigate={(view) => handleTabChange(view as any)}
-                  onDraftPost={() => {}} // Placeholder as activePostDraft was removed
+                  onDraftPost={() => { }} // Placeholder as activePostDraft was removed
                   onCreateEvent={setActiveEventDraft}
                 />
               )}
 
               {myVenue && dashboardView === "operations" && (
-                <OperationsTab venue={myVenue} />
+                <OperationsTab
+                  venue={myVenue}
+                  updateVenue={updateVenue}
+                  setDashboardView={setDashboardView}
+                  userProfile={userProfile}
+                />
               )}
 
               {myVenue && dashboardView === "marketing" && (

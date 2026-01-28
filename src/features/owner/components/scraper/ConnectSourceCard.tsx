@@ -53,7 +53,7 @@ export const ConnectSourceCard: React.FC<ConnectSourceCardProps> = ({ source, on
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => onToggle(source.id, !source.isEnabled)}
-                        className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded transition-colors ${source.isEnabled
+                        className={`text-[9px] font-black uppercase tracking-widest px-4 py-2.5 rounded-lg transition-colors ${source.isEnabled
                             ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
                             : 'bg-slate-800 text-slate-500 hover:text-white font-bold'
                             }`}
@@ -62,7 +62,7 @@ export const ConnectSourceCard: React.FC<ConnectSourceCardProps> = ({ source, on
                     </button>
                     <button
                         onClick={() => onDelete(source.id)}
-                        className="p-2 text-slate-600 hover:text-red-500 transition-colors"
+                        className="p-3 text-slate-600 hover:text-red-500 transition-colors bg-white/5 rounded-lg hover:bg-red-500/10"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>

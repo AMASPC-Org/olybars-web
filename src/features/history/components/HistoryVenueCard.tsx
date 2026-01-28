@@ -7,7 +7,7 @@ interface VenueCardProps {
     onClick?: () => void;
 }
 
-export const VenueCard: React.FC<VenueCardProps> = ({ venue, onClick }) => {
+export const HistoryVenueCard: React.FC<VenueCardProps> = ({ venue, onClick }) => {
     return (
         <div
             onClick={onClick}

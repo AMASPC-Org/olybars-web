@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import { ArenaLayout } from '../../../components/layout/ArenaLayout';
 import { UniversalEventCard } from '../../../components/ui/UniversalEventCard';
-import { Venue } from '../../../types';
 import { Mic } from 'lucide-react';
+import { useDiscovery } from '../../venues/contexts/DiscoveryContext';
 
-interface KaraokeScreenProps {
-    venues: Venue[];
-}
-
-export const KaraokeScreen: React.FC<KaraokeScreenProps> = ({ venues }) => {
+export const KaraokeScreen: React.FC = () => {
+    const { allVenues: venues } = useDiscovery();
     const [searchQuery, setSearchQuery] = useState('');
 
     const karaokeVenues = venues.filter(v =>
@@ -60,4 +57,3 @@ export const KaraokeScreen: React.FC<KaraokeScreenProps> = ({ venues }) => {
         </ArenaLayout>
     );
 };
-

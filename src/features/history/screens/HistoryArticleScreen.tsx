@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { HISTORY_ARTICLES } from '../data/historyData';
 import { Venue } from '../../../types';
 import { ChevronLeft, Share2, EyeOff } from 'lucide-react';
-import { VenueCard } from '../components/VenueCard';
+import { HistoryVenueCard } from '../components/HistoryVenueCard';
 import { HistoryFooter } from '../components/HistoryFooter';
 import { useToast } from '../../../components/ui/BrandedToast';
 import { SEO } from '../../../components/common/SEO';
@@ -149,7 +149,7 @@ export const HistoryArticleScreen: React.FC<HistoryArticleScreenProps> = ({ venu
                         if (block.type === 'venue_card') {
                             const venue = venues.find(v => v.id === block.content);
                             if (!venue) return null;
-                            return <VenueCard key={index} venue={venue} onClick={() => navigate(`/bars/${venue.id}`)} />;
+                            return <HistoryVenueCard key={index} venue={venue} onClick={() => navigate(`/bars/${venue.id}`)} />;
                         }
                         if (block.type === 'hidden_fact') {
                             return (

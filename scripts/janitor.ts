@@ -146,7 +146,24 @@ export function findUnusedComponents(files: string[]) {
     }
   }
 
-  return unusedComponents;
+  // Read .janitorignore
+  const ignoreFile = path.join(ROOT_DIR, '.janitorignore');
+  const ignoredFiles = new Set<string>();
+  if (fs.existsSync(ignoreFile)) {
+    const lines = fs.readFileSync(ignoreFile, 'utf-8').split('\n');
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        // Uniform slashes for comparison
+        ignoredFiles.add(trimmed.replace(/\\/g, '/'));
+      }
+    });
+  }
+
+  return unusedComponents.filter(u => {
+    const relPath = path.relative(ROOT_DIR, u.file).replace(/\\/g, '/');
+    return !ignoredFiles.has(relPath);
+  });
 }
 
 // --- GCP Guardrails ---
@@ -175,6 +192,40 @@ export function checkGcpGuardrails() {
   return issues;
 }
 
+// --- Test Coverage Guardrails ---
+function checkTestCoverage(): { score: number; pct: number | null; issues: string[] } {
+  const coverageFile = path.join(ROOT_DIR, 'coverage/coverage-summary.json');
+  const issues: string[] = [];
+  let score = 0;
+  let pct: number | null = null;
+
+  if (fs.existsSync(coverageFile)) {
+    try {
+      const summary = JSON.parse(fs.readFileSync(coverageFile, 'utf-8'));
+      // Handle "Unknown" or missing data
+      if (summary.total && summary.total.lines && summary.total.lines.pct !== 'Unknown') {
+        pct = Number(summary.total.lines.pct);
+      } else {
+        pct = 0;
+      }
+
+      if (pct && pct >= 80) {
+        score = 20; // Gold Standard
+      } else if (pct && pct >= 50) {
+        score = 10; // Bronze Standard
+      } else {
+        issues.push(`Coverage ${pct}% is below 50% threshold.`);
+      }
+    } catch (e) {
+      issues.push('Failed to parse coverage report.');
+    }
+  } else {
+    issues.push('Missing coverage report. Run `npm test`.');
+    score = -5; // Penalty for flying blind
+  }
+
+  return { score, pct, issues };
+}
 
 // --- Main ---
 
@@ -189,12 +240,34 @@ export function main() {
   const files = getAllFiles(SRC_DIR);
   console.log(`Analyzed ${files.length} source files.`);
 
+  // 1. Unused Components
   const unused = findUnusedComponents(files);
+  const unusedScore = unused.length * -3;
+
+  // 2. GCP Guardrails
   const gcpIssues = checkGcpGuardrails();
+  const gcpScore = gcpIssues.length * -15;
+
+  // 3. Test Coverage
+  const coverage = checkTestCoverage();
+
+  // Score Calculation
+  let baseScore = 80;
+  let finalScore = baseScore + unusedScore + gcpScore + coverage.score;
+
+  // Cap at 100, Min 0
+  finalScore = Math.max(0, Math.min(100, finalScore));
 
   // Generate Report
   let report = '# 🧹 Janitor Hygiene Report\n\n';
-  report += `**Generated:** ${new Date().toISOString()}\n\n`;
+  report += `**Generated:** ${new Date().toISOString()}\n`;
+  report += `**Hygiene Score:** ${finalScore}/100\n\n`;
+
+  if (coverage.pct !== null) {
+    report += `## Test Coverage: ${coverage.pct}%\n`;
+  } else {
+    report += `## Test Coverage: N/A (Missing Report)\n`;
+  }
 
   report += '## 1. Potentially Unused Components\n';
   report += '> [!WARNING]\n> These components appear to be exported but not imported or referenced by name in the codebase. Verify manually before deleting.\n\n';
@@ -215,8 +288,33 @@ export function main() {
     gcpIssues.forEach(issue => report += `- ${issue}\n`);
   }
 
+  if (coverage.issues.length > 0) {
+    report += '\n## 3. Test Coverage Issues\n';
+    coverage.issues.forEach(i => report += `- [ ] ❌ ${i}\n`);
+  }
+
   fs.writeFileSync(REPORT_FILE, report);
   console.log(`Report generated at: ${REPORT_FILE}`);
+
+  // Generate Status JSON (Machine Readable)
+  const status = {
+    score: finalScore,
+    generatedAt: new Date().toISOString(),
+    issues: {
+      unusedComponents: unused.length,
+      gcpViolations: gcpIssues.length,
+      coveragePct: coverage.pct,
+      details: {
+        unused: unused.map(u => ({ component: u.component, file: path.relative(ROOT_DIR, u.file) })),
+        gcp: gcpIssues,
+        coverage: coverage.issues
+      }
+    }
+  };
+
+  const jsonPath = path.join(ROOT_DIR, 'hygiene-status.json');
+  fs.writeFileSync(jsonPath, JSON.stringify(status, null, 2));
+  console.log(`Status JSON generated at: ${jsonPath}`);
 }
 
 // Only execute if running directly

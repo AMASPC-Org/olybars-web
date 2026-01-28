@@ -22,6 +22,7 @@ export const ConfigSchema = z.object({
 
     // URLs
     FRONTEND_URL: z.string().default('http://localhost:3000'),
+    BACKEND_URL: z.string().default('http://localhost:8080'),
 
     // Meta Integration (Track A: Venue Sync)
     META_APP_ID: z.string().optional(),

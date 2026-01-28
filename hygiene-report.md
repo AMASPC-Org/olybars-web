@@ -1,15 +1,17 @@
 # 🧹 Janitor Hygiene Report
 
-**Generated:** 2026-01-27T14:01:41.331Z
+**Generated:** 2026-01-28T11:20:24.130Z
+**Hygiene Score:** 80/100
 
+## Test Coverage: 0%
 ## 1. Potentially Unused Components
 > [!WARNING]
 > These components appear to be exported but not imported or referenced by name in the codebase. Verify manually before deleting.
 
-- [ ] **ArtieChatWidget** in `src\components\ArtieChatWidget.tsx`
-- [ ] **EventCreationWizard** in `src\components\events\EventCreationWizard.tsx`
-- [ ] **OwnerMarketingPromotions** in `src\components\OwnerMarketingPromotions.tsx`
-- [ ] **AssetToggle** in `src\components\partners\AssetToggleGrid.tsx`
+_No unused components found._
 
 ## 2. GCP Deployment Guardrails
-- ⚠️ .gcloudignore might be missing exclusions for tests/ or docs/
+✅ GCP configuration looks clean.
+
+## 3. Test Coverage Issues
+- [ ] ❌ Coverage 0% is below 50% threshold.
