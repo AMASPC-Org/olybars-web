@@ -11,7 +11,7 @@ interface VibeMugsProps {
 
 /**
  * VibeMugs: Visual representation of a venue's vibe score (1-4 mugs).
- * Implements the "Project Toast" nomenclature and the legacy DEAD->MELLOW adapter.
+ * Implements the "Project Toast" nomenclature (Hydrology).
  */
 export const VibeMugs: React.FC<VibeMugsProps> = ({
   status,
@@ -19,18 +19,9 @@ export const VibeMugs: React.FC<VibeMugsProps> = ({
   showText = false,
   size = 18,
 }) => {
-  // 1. Legacy Adapter: Normalize old/alias statuses to the 4 Pillars
+  // 1. Normalize status
   const raw = status.toLowerCase();
-  const normalizedStatus =
-    raw === "dead" || raw === "mellow"
-      ? "trickle"
-      : raw === "chill"
-        ? "flowing"
-        : raw === "buzzing" || raw === "fire" || raw === "pop"
-          ? "gushing"
-          : raw === "packed"
-            ? "flooded"
-            : raw;
+  const normalizedStatus = raw as 'trickle' | 'flowing' | 'gushing' | 'flooded';
 
   // 2. Define Mug Counts and Colors (LOCKED: DO NOT EDIT)
   const config: Record<
@@ -41,11 +32,6 @@ export const VibeMugs: React.FC<VibeMugsProps> = ({
     flowing: { count: 2, color: "text-blue-400", label: "Flowing" },
     gushing: { count: 3, color: "text-orange-500", label: "Gushing" },
     flooded: { count: 4, color: "text-red-500", label: "Flooded" },
-    // Backwards compatibility for exact matches
-    mellow: { count: 1, color: "text-slate-400", label: "Trickle" },
-    chill: { count: 2, color: "text-blue-400", label: "Flowing" },
-    buzzing: { count: 3, color: "text-orange-500", label: "Gushing" },
-    packed: { count: 4, color: "text-red-500", label: "Flooded" },
   };
 
   const current = config[normalizedStatus] || config.trickle;

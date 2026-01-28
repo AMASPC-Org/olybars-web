@@ -113,7 +113,7 @@ const ArtieBioScreen = () => {
                             The Guardian of the Vibe
                         </h2>
                         <p className="text-slate-300 leading-relaxed text-sm">
-                            Artie built the Nightlife OS to honor that legacy. He’s not a corporate bot; he’s a local who knows that every "Buzzing" night at The Brotherhood or "Chill" afternoon at The Spar is a chapter in Olympia’s ongoing story. He’s your industry insider—the one who knows the hidden gems and the legendary pours, keeping the 98501 alive and well, one vibe check at a time.
+                            Artie built the Nightlife OS to honor that legacy. He’s not a corporate bot; he’s a local who knows that every "Gushing" night at The Brotherhood or "Trickle" afternoon at The Spar is a chapter in Olympia’s ongoing story. He’s your industry insider—the one who knows the hidden gems and the legendary pours, keeping the 98501 alive and well, one vibe check at a time.
                         </p>
                     </section>
                 </div>

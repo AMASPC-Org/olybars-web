@@ -25,17 +25,12 @@ export const VibeTag: React.FC<{ label: string }> = ({ label }) => (
   </span>
 );
 
-export const HeatIndicator: React.FC<{ level: 'mellow' | 'chill' | 'buzzing' | 'packed' | 'trickle' | 'flowing' | 'gushing' | 'flooded' }> = ({ level }) => {
+export const HeatIndicator: React.FC<{ level: 'trickle' | 'flowing' | 'gushing' | 'flooded' }> = ({ level }) => {
   const config = {
     'trickle': { icon: '🍵', text: 'Trickle', color: 'bg-slate-900/30 text-slate-400' },
     'flowing': { icon: '🧊', text: 'Flowing', color: 'bg-blue-200 text-black' },
     'gushing': { icon: '🔥', text: 'Gushing', color: 'bg-red-500 text-white animate-pulse' },
     'flooded': { icon: '⚡', text: 'Flooded', color: 'bg-pink-500 text-white animate-pulse' },
-    // Legacy mapping (if needed, otherwise can remove)
-    'mellow': { icon: '🍵', text: 'Trickle', color: 'bg-slate-900/30 text-slate-400' },
-    'chill': { icon: '🧊', text: 'Flowing', color: 'bg-blue-200 text-black' },
-    'buzzing': { icon: '🔥', text: 'Gushing', color: 'bg-red-500 text-white animate-pulse' },
-    'packed': { icon: '⚡', text: 'Flooded', color: 'bg-pink-500 text-white animate-pulse' }
   };
 
   const { icon, text, color } = config[level];

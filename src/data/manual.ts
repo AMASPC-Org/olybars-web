@@ -41,66 +41,22 @@ export const manualFAQs: FAQItem[] = [
     {
         "question": "How do I earn the most points?",
         "category": "The League",
-        "answer": "Maximize your Season Score by: 1) Clocking in early at Mellow venues (100 pts), 2) Supporting Local Makers (1.5x boost), 3) Clocking in during official Events (+50 bonus), and 4) Completing high-value Flash Bounties (up to 200 pts)."
+        "answer": "Maximize your Season Score by: 1) Clocking in early at Trickle venues (100 pts), 2) Supporting Local Makers (1.5x boost), 3) Clocking in during official Events (+50 bonus), and 4) Completing high-value Flash Bounties (up to 200 pts)."
     },
-    {
-        "question": "What are Flash Bounties?",
-        "category": "The League",
-        "answer": "Flash Bounties are venue-specific photo challenges. A bar might offer a bounty for snapping a photo of a specific drink special or a receipt. Upload the proof to claim instant points and support the venue's social marketing."
-    },
-    {
-        "question": "How do Event Bonuses work?",
-        "category": "The League",
-        "answer": "If a venue has an approved 'League Event' (like Trivia or Karaoke) on the schedule, clocking in during that time window automatically triggers a +50 bonus. This stacks with your base Clock-In points!"
-    },
-    {
-        "question": "What can I do with my League points?",
-        "category": "The League",
-        "answer": "Points determine your standing in the season leaderboard. Top players get invited to exclusive Artesian parties and get first dibs on limited-edition OlyBars merch."
-    },
-    {
-        "question": "When do points reset?",
-        "category": "The League",
-        "answer": "Points are earned seasonally. At the end of a Season, top players are archived in the 'Artesian Hall of Fame' and global standings reset for the next run."
-    },
-    {
-        "question": "What is a 'Ghost Score'?",
-        "category": "The League",
-        "answer": "A Ghost Score is points you've generated as a Guest but haven't 'Claimed'. Join the League before midnight to bank your Ghost Score into your permanent account."
-    },
-    {
-        "question": "Can I earn points at Private Clubs?",
-        "category": "The League",
-        "answer": "Yes, but you must be a member or a legal guest. WSLCB regulations for private clubs (like the Eagles or Elks) supersede League rules. If you cannot legally enter, you cannot earn points."
-    },
-
-    // Category C: The Community
     {
         "question": "What are the Vibe Tiers?",
         "category": "The Community",
-        "answer": "We use a 4-tier scale: Dead (Quiet, <20% cap), Chill (Easy conversation), Buzzing (High energy, table full), and Packed (Standing room only, party peaking!)."
-    },
-    {
-        "question": "What defines a 'Dive' vs. 'Lounge'?",
-        "category": "The Community",
-        "answer": "It's about the Vibe. Dives prioritize utility/history over aesthetics. Lounges prioritize comfort/decor over volume. You can help tag venues in your Vibe Reports!"
+        "answer": "We use a 4-tier scale: Trickle (Quiet, <20% cap), Flowing (Easy conversation), Gushing (High energy, table full), and Flooded (Standing room only, party peaking!)."
     },
     {
         "question": "How do I report a fake Vibe check?",
         "category": "The Community",
-        "answer": "If a venue is listed as 'Packed' but it's actually 'Dead', simply submit a Corrective Vibe Report. The system weighs recent, verified signals higher to self-heal data."
+        "answer": "If a venue is listed as 'Flooded' but it's actually 'Trickle', simply submit a Corrective Vibe Report. The system weighs recent, verified signals higher to self-heal data."
     },
-    {
-        "question": "Where do I find Live Music?",
-        "category": "The Community",
-        "answer": "Check the LIVE tab (Navigation Bar) for a dedicated gig guide and submission portal for local bands."
-    },
-
-    // Category D: System Intelligence
     {
         "question": "How do Pulse Alerts work?",
         "category": "System Intelligence",
-        "answer": "Pulse Alerts keep you in the loop without the spam. Star a venue to 'Subscribe'. We'll dispatch a notification specifically when that spot hits 'Packed' status so you don't miss the peak!"
+        "answer": "Pulse Alerts keep you in the loop without the spam. Star a venue to 'Subscribe'. We'll dispatch a notification specifically when that spot hits 'Flooded' status so you don't miss the peak!"
     },
     {
         "question": "What is Artie?",

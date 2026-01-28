@@ -26,21 +26,15 @@ import { isSystemAdmin } from '../../types/auth_schema';
 import { BouncerService, AdmissionStatus } from '../../services/BouncerService';
 import { useUser } from '../../contexts';
 
+import { useUIStore } from '../../store/uiStore';
+
 interface SidebarProps {
-    isOpen: boolean;
-    onClose: () => void;
-    viewMode: 'player' | 'owner';
-    setViewMode: (mode: 'player' | 'owner') => void;
     onLogin: (mode?: 'login' | 'signup') => void;
     onProfileClick: () => void;
     userPoints?: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-    isOpen,
-    onClose,
-    viewMode,
-    setViewMode,
     onLogin,
     onProfileClick,
     userPoints = 0
@@ -48,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const navigate = useNavigate();
     const [legalOpen, setLegalOpen] = useState(false);
     const { userProfile, logout } = useUser();
+    const { isSidebarOpen: isOpen, closeSidebar: onClose, viewMode, setViewMode } = useUIStore();
 
     // --- DERIVED STATE ---
     const isOwner = BouncerService.validateOwnerAccess(userProfile) === AdmissionStatus.ALLOWED;

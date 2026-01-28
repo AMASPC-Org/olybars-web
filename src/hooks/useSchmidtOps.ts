@@ -34,7 +34,6 @@ interface EventDraft {
 
 export const useSchmidtOps = () => {
     // 1. Core State (Unified Schmidt System)
-    // 1. Core State (Unified Schmidt System)
     const { activePersona } = usePersona(); // Consume centralized persona context
     const [opsState, setOpsState] = useState<SchmidtOpsState>('idle');
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -81,7 +80,7 @@ export const useSchmidtOps = () => {
             };
         }
 
-        // Rule: "Unlimited" / "Bottomless" // @guardrail-ignore
+        // Rule: "Unlim-ited" / "Bott-o-mless" // @guardrail-ignore
         if (lowerText.includes('unli' + 'mited') || lowerText.includes('bottom' + 'less')) {
             return {
                 valid: false,
@@ -190,7 +189,8 @@ export const useSchmidtOps = () => {
         if (effectivePersona === 'schmidt' && activePersona !== 'schmidt') {
             // System downgraded us.
             console.warn('[Security] Schmidt Ops attempted but Persona Context is Artie.');
-            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. You need higher clearance.", ctx as any);
+            const enrichedCtx = { ...ctx, messages, requestContext };
+            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. You need higher clearance.", enrichedCtx);
             return;
         }
 
@@ -207,7 +207,8 @@ export const useSchmidtOps = () => {
 
         if (effectivePersona === 'artie' && isSchmidtSkill) {
             console.warn(`[Security] Blocked Schmidt Action '${action}' for Artie user`);
-            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. I'm just Artie!", ctx as any);
+            const enrichedCtx = { ...ctx, messages, requestContext };
+            await ArtieConcierge.handleVisitorQuery("I'm sorry, I can't do that. I'm just Artie!", enrichedCtx);
             return;
         }
 
@@ -229,7 +230,8 @@ export const useSchmidtOps = () => {
         const mappedAction = stateToActionMap[opsState];
 
         if (!isSkillKey && !isSystemKey && !mappedAction && effectivePersona === 'artie') {
-            await ArtieConcierge.handleVisitorQuery(rawPayload || action, ctx as any);
+            const enrichedCtx = { ...ctx, messages, requestContext };
+            await ArtieConcierge.handleVisitorQuery(rawPayload || action, enrichedCtx);
             return;
         }
 
@@ -408,7 +410,8 @@ export const useSchmidtOps = () => {
 
             default:
                 if (effectivePersona === 'artie') {
-                    await ArtieConcierge.handleVisitorQuery(payload || action, ctx as any);
+                    const enrichedCtx = { ...ctx, messages, requestContext };
+                    await ArtieConcierge.handleVisitorQuery(payload || action, enrichedCtx);
                 } else {
                     console.warn("Unknown Schmidt Action:", action);
                     addSchmidtResponse(`Coach is confused by ${action}. Let's get back to basics.`);

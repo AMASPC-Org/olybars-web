@@ -1,3 +1,6 @@
+import { EventCategory } from './taxonomy.js';
+import { EventSponsorshipPackage } from './sponsorship.js';
+
 export interface EventAnalysis {
     confidenceScore: number; // 0-100
     issues: string[];
@@ -11,7 +14,7 @@ export interface AppEvent {
     venueId: string;
     venueName: string;
     title: string;
-    type: 'karaoke' | 'trivia' | 'live_music' | 'bingo' | 'openmic' | 'comedy' | 'sports' | 'happy_hour' | 'other';
+    type: EventCategory;
     date: string;
     time: string;
     description?: string;
@@ -23,6 +26,7 @@ export interface AppEvent {
     isLeagueEvent?: boolean;
     analysis?: EventAnalysis;
 
+
     // Rich Metadata (from Well 80 Quiz Specs)
     host?: string;
     prizes?: string;
@@ -32,5 +36,6 @@ export interface AppEvent {
     secondaryImage?: string;
     startTime?: string;
     endTime?: string;
-    sponsorshipPackages?: any[];
+    sponsorshipPackages?: EventSponsorshipPackage[];
 }
+

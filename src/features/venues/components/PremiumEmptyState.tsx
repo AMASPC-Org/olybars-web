@@ -18,7 +18,7 @@ export const PremiumEmptyState: React.FC<PremiumEmptyStateProps> = ({
       {/* Illustration Composition */}
       <div className="relative">
         <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-        <div className="relative bg-slate-900 p-4 rounded-2xl border border-white/10 shadow-xl transform rotate-3">
+        <div className="relative bg-slate-900 p-4 rounded-2xl border border-white/10 shadow-2xl transform rotate-3">
           <Sparkles className="w-12 h-12 text-primary animate-pulse" />
         </div>
       </div>

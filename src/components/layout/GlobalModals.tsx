@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import { useLayout, useGamification, useUser } from '../../contexts';
+import { useGamification, useUser } from '../../contexts';
+import { useUIStore } from '../../store/uiStore'; // Bead 2.0: Migration
 
 // --- LAZY COMPONENTS (Moved from App.tsx) ---
 const LoginModal = lazy(() => import('../../features/auth/components/LoginModal').then(m => ({ default: m.LoginModal })));
@@ -12,7 +13,7 @@ const HomeBaseModal = lazy(() => import('../../features/profile/components/HomeB
 const GatekeeperModal = lazy(() => import('../../features/venues/components/GatekeeperModal').then(m => ({ default: m.GatekeeperModal })));
 
 export const GlobalModals: React.FC = () => {
-  const { activeModal, modalData, closeModal, openModal } = useLayout();
+  const { activeModal, modalData, closeModal, openModal } = useUIStore(); // Bead 2.0: Migration
   const { awardPoints, addToClockInHistory, handleVibeCheckSubmission, currentReceipt, clearReceipt } = useGamification();
   const { userProfile, setUserProfile } = useUser();
 

@@ -40,7 +40,7 @@ export class ScraperService {
         return data;
     }
 
-    static async updateScraper(venueId: string, id: string, updates: Partial<Scraper>): Promise<void> {
+    static async updateScraper(venueId: string, id: string, updates: Partial<Scraper> | Record<string, any>): Promise<void> {
         const docRef = db.collection(SCRAPERS_COLLECTION).doc(id);
         const doc = await docRef.get();
         if (!doc.exists) throw new Error("Scraper not found");
@@ -89,29 +89,30 @@ export class ScraperService {
     ): Promise<{ runId: string, allowed: boolean, reason?: string }> {
 
         return db.runTransaction(async (t) => {
-            // 1. Get Limits (Assume Tier lookup or simplified for now)
-            // Ideally read 'partners/{venueId}' -> tier -> PLANS[tier].monthly_limit
-            // For now, let's look up venue to get tier
-            const venueRef = db.collection("venues").doc(venueId); // Assuming 'venues' holds partner config
+            // 1. Get Limits
+            const venueRef = db.collection("venues").doc(venueId);
             const venueSnap = await t.get(venueRef);
             if (!venueSnap.exists) throw new Error("Venue not found");
 
             const venueData = venueSnap.data();
-            const tier = (venueData?.partnerConfig?.tier as PartnerTier) || "LOCAL"; // Default to LOCAL/FREE
+            const tier = (venueData?.partnerConfig?.tier as PartnerTier) || "LOCAL";
+            const timezone = venueData?.timezone || "America/Los_Angeles";
 
-            // Determine Limit (Hardcoded or imported - importing TIER_CONFIG is better if possible)
+            // Determine Limit
+            // Fixed unrealistic limits. Agency needs to support multiple daily scrapers.
             const LIMITS: Record<string, number> = {
-                "LOCAL": 1,
-                "DIY": 4,
-                "PRO": 8,
-                "AGENCY": 9999
+                "LOCAL": 5,      // Free tier: occasional usage
+                "DIY": 60,       // ~2 daily scrapers
+                "PRO": 300,      // ~10 daily scrapers
+                "AGENCY": 1000   // High volume
             };
 
-            const monthlyLimit = LIMITS[tier] || 1;
+            const monthlyLimit = LIMITS[tier] || 5;
 
             // 2. Check Usage
-            const date = new Date();
-            const monthKey = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            const now = new Date();
+            const monthKey = ScraperService.getMonthlyUsageKey(now, timezone);
+
             const usageRef = db.collection(USAGE_MONTHS_COLLECTION).doc(`${venueId}_${monthKey}`);
 
             const usageSnap = await t.get(usageRef);
@@ -132,7 +133,6 @@ export class ScraperService {
                 status: RunStatus.enum.QUEUED,
                 trigger,
                 createdAt: Date.now(),
-                // quota.reserved flag if we want it explicit
             };
 
             t.set(runRef, runDoc);
@@ -143,7 +143,7 @@ export class ScraperService {
                 updated_at: FieldValue.serverTimestamp()
             }, { merge: true });
 
-            // 5. Add idempotency marker to run subcollection in usage doc? Optional but good.
+            // 5. Add idempotency marker
             const markerRef = usageRef.collection("runs").doc(runId);
             t.set(markerRef, { timestamp: FieldValue.serverTimestamp() });
 
@@ -151,11 +151,76 @@ export class ScraperService {
         });
     }
 
-    static async markRunStarted(runId: string): Promise<void> {
-        await db.collection(RUNS_COLLECTION).doc(runId).update({
-            status: "STARTED", // Using string to match legacy if needed, or RunStatus enum
-            startedAt: Date.now()
+    // ... (markRunStarted, markRunFailed)
+
+    /**
+     * Refunds the quota for a failed system run.
+     * Should be called when a run fails due to internal system error (not user config error).
+     */
+    static async refundQuota(venueId: string, runId: string): Promise<void> {
+        try {
+            await db.runTransaction(async (t) => {
+                // 1. Load Run First to get exact creation time
+                const runRef = db.collection(RUNS_COLLECTION).doc(runId);
+                const runDoc = await t.get(runRef);
+
+                if (!runDoc.exists) {
+                    console.log(`[Quota] Run ${runId} not found, cannot refund.`);
+                    return;
+                }
+                const runData = runDoc.data() as ScraperRun;
+
+                // Idempotency check
+                if (runData?.quotaRefunded) {
+                    console.log(`[Quota] Already refunded for run ${runId}`);
+                    return;
+                }
+
+                // 2. Determine Month Key from Run Creation Time (Accuracy Fix)
+                const venueRef = db.collection("venues").doc(venueId);
+                const venueDoc = await t.get(venueRef);
+                const timezone = venueDoc.exists ? (venueDoc.data()?.timezone || "America/Los_Angeles") : "America/Los_Angeles";
+
+                const createdDate = runData.createdAt ? new Date(runData.createdAt) : new Date();
+                const monthKey = ScraperService.getMonthlyUsageKey(createdDate, timezone);
+
+                const usageDocId = `${venueId}_${monthKey}`;
+                const usageRef = db.collection(USAGE_MONTHS_COLLECTION).doc(usageDocId);
+
+                // 3. Decrement usage
+                // We must check if usage doc exists to avoid creating a negative doc if it was somehow deleted
+                const usageSnap = await t.get(usageRef);
+                if (usageSnap.exists) {
+                    t.update(usageRef, {
+                        run_count_total: FieldValue.increment(-1),
+                        updated_at: FieldValue.serverTimestamp()
+                    });
+                } else {
+                    console.warn(`[Quota] Usage doc ${usageDocId} missing during refund. Skipping decrement.`);
+                }
+
+                // 4. Mark as refunded
+                t.update(runRef, {
+                    quotaRefunded: true,
+                    status: RunStatus.enum.REFUNDED_FAILURE
+                });
+            });
+            console.log(`[Quota] Refunded 1 credit to ${venueId} for run ${runId}`);
+        } catch (e) {
+            console.error(`[Quota] Failed to refund ${venueId} for run ${runId}`, e);
+        }
+    }
+
+    private static getMonthlyUsageKey(date: Date, timezone: string): string {
+        const formatter = new Intl.DateTimeFormat("en-US", {
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit'
         });
+        const parts = formatter.formatToParts(date);
+        const year = parts.find(p => p.type === 'year')?.value;
+        const month = parts.find(p => p.type === 'month')?.value;
+        return `${year}${month}`;
     }
 
     static async markRunComplete(runId: string, status: string, stats?: any, error?: string): Promise<void> {

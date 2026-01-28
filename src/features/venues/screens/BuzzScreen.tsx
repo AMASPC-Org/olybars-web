@@ -89,12 +89,10 @@ const PulseMeter = ({ status }: { status: VenueStatus }) => {
 
 // Status priority order
 const STATUS_ORDER: Record<VenueStatus, number> = {
-  packed: 0,
-  flooded: 1,
-  gushing: 2,
-  buzzing: 3,
-  flowing: 4,
-  trickle: 5,
+  flooded: 0,
+  gushing: 1,
+  flowing: 2,
+  trickle: 3,
 };
 
 const EventCard = ({ event, onClick }: { event: any; onClick: () => void }) => {
@@ -154,10 +152,14 @@ const VenueListItem = ({
   venue,
   onClick,
   upcomingDeals,
+  onClockIn,
+  onVibeCheck,
 }: {
   venue: any;
   onClick: () => void;
   upcomingDeals: any;
+  onClockIn: (v: Venue) => void;
+  onVibeCheck: (v: Venue, hasConsent?: boolean, photoUrl?: string) => void;
 }) => {
   const livePulse = useVenueLiveStatus(venue.id, {
     score: venue.currentBuzz?.score,
@@ -223,7 +225,7 @@ const VenueListItem = ({
           </span>
           <span className="text-slate-700">•</span>
           <span className="text-[10px] font-black text-slate-500 uppercase mb-[1px]">
-            {venue.venueType.replace(/_/g, " ")}
+            {String(venue.venueType || "Unknown").replace(/_/g, " ")}
           </span>
         </div>
 
@@ -264,10 +266,26 @@ const VenueListItem = ({
                 : isUpcoming
                   ? "STARTING SOON: "
                   : ""}
-              {bountyTitle.replace(/⚡/g, "").trim()}
+              {String(bountyTitle).replace(/⚡/g, "").trim()}
             </span>
           </div>
         )}
+
+        {/* DRUNK THUMB ACTIONS (Bead 3.1) */}
+        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onClockIn(venue)}
+            className="flex-1 bg-primary text-black font-black py-3 rounded-xl uppercase text-xs hover:bg-white transition-colors"
+          >
+            Clock In
+          </button>
+          <button
+            onClick={() => onVibeCheck(venue)}
+            className="flex-1 bg-surface-700 text-white border border-white/10 font-bold py-3 rounded-xl uppercase text-xs hover:bg-surface-600 transition-colors"
+          >
+            Vibe Check
+          </button>
+        </div>
       </div>
     </InteractionBaseComponent>
   );
@@ -282,6 +300,8 @@ export const BuzzScreen: React.FC = () => {
     clockedInVenue,
     clockInHistory = [],
     vibeCheckHistory = [],
+    onClockIn,
+    onVibeCheck,
   } = useOutletContext<{
     venues: Venue[];
     userProfile: UserProfile;
@@ -293,7 +313,26 @@ export const BuzzScreen: React.FC = () => {
     onToggleWeeklyBuzz?: () => void;
     clockInHistory?: ClockInRecord[];
     vibeCheckHistory?: VibeCheckRecord[];
-  }>();
+  }>() || {}; // Fallback to empty object to prevent destructing null
+
+  // DEBUG: Check if onClockIn is received
+  React.useEffect(() => {
+    if (!onClockIn) {
+      console.error("⚠️ [BuzzScreen] onClockIn is MISSING from OutletContext!", {
+        userProfile,
+        isLoading
+      });
+    }
+  }, [onClockIn, userProfile, isLoading]);
+
+  // Fallback function to prevent crash if context is missing
+  const safeClockIn = (v: Venue) => {
+    if (onClockIn) {
+      onClockIn(v);
+    } else {
+      console.error("❌ [BuzzScreen] Attempted to Clock In but handler is missing.");
+    }
+  };
 
   const isGuest = userProfile.role === "guest";
   const navigate = useNavigate();
@@ -413,7 +452,7 @@ export const BuzzScreen: React.FC = () => {
         const featureMatch =
           (v.vibe?.toLowerCase().includes(q) ?? false) ||
           (v.sceneTags?.some((tag) =>
-            tag.replace("_", " ").toLowerCase().includes(q),
+            tag && String(tag).replace("_", " ").toLowerCase().includes(q),
           ) ??
             false) ||
           (v.isAllAges && "all ages".includes(q)) ||
@@ -506,7 +545,7 @@ export const BuzzScreen: React.FC = () => {
       if (filterKind === "scene" && sceneFilter !== "all") {
         const q = sceneFilter.toLowerCase();
         return (
-          (v.venueType || "").toLowerCase().includes(q) ||
+          String(v.venueType || "").toLowerCase().includes(q) ||
           (v.sceneTags?.some((tag) => tag.toLowerCase().includes(q)) ??
             false) ||
           (v.vibe?.toLowerCase().includes(q) ?? false)
@@ -647,7 +686,7 @@ export const BuzzScreen: React.FC = () => {
 
   const venuesWithDistance = React.useMemo(
     () =>
-      venues.map((v) => ({
+      (venues || []).map((v) => ({
         ...v,
         isOpen: isVenueOpen(v, selectedDate),
         hourStatus: getVenueStatus(v, selectedDate),
@@ -1050,6 +1089,8 @@ export const BuzzScreen: React.FC = () => {
                       venue={item}
                       upcomingDeals={upcomingDeals}
                       onClick={() => navigate(`/bars/${item.id}`)}
+                      onClockIn={safeClockIn}
+                      onVibeCheck={onVibeCheck}
                     />
                   );
                 })

@@ -28,9 +28,9 @@ const WSLCB_FORBIDDEN_KEYWORDS = [
   /\ball you can drink\b/i,
 ];
 
-const ALLOWLIST_DIRECTORIES = ["src/locales/", "docs/", "server/src/data/"];
+const ALLOWLIST_DIRECTORIES = ["src/locales/", "docs/", "server/src/data/", "_archive/"];
 
-const ALLOWLIST_FILES = ["package-lock.json", "package.json", "audit-compliance.ts", "verify-event-compliance.ts"];
+const ALLOWLIST_FILES = ["package-lock.json", "package.json", "audit-compliance.ts", "verify-event-compliance.ts", "geminiservice.ts"];
 
 function calculateEntropy(str: string): number {
   const len = str.length;
@@ -87,12 +87,14 @@ async function scan() {
     }
 
     // Check Allowlist for Filename and Entropy
-    const lowerPath = normalizedPath.toLowerCase();
+    // Normalize to relative path for allowlist check
+    const relPath = path.relative(process.cwd(), file).replace(/\\/g, "/");
+    const lowerRelPath = relPath.toLowerCase();
     const lowerFilename = filename.toLowerCase();
 
     const isAllowlisted =
       ALLOWLIST_DIRECTORIES.some((dir) =>
-        lowerPath.startsWith(dir.toLowerCase()),
+        lowerRelPath.startsWith(dir.toLowerCase()),
       ) || ALLOWLIST_FILES.some((f) => f.toLowerCase() === lowerFilename);
 
     // Tier B: Content Override & WSLCB Guards

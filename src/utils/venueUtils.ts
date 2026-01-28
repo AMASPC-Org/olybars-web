@@ -27,7 +27,9 @@ export const getVenueStatus = (venue: Venue, now: Date = new Date()): HoursStatu
         // Handle "Closed" or other non-time strings
         if (timeStr.toLowerCase().includes('closed')) return -1;
 
-        const cleanTime = timeStr.replace(/\u2013|\u2014/g, '-').trim();
+        // Safety: Ensure timeStr is a string
+        const safeTimeStr = String(timeStr || "");
+        const cleanTime = safeTimeStr.replace(/\u2013|\u2014/g, '-').trim();
 
         // Try matching AM/PM first
         const ampmMatch = cleanTime.match(/(\d+):?(\d+)?\s*(AM|PM)/i);
@@ -66,7 +68,8 @@ export const getVenueStatus = (venue: Venue, now: Date = new Date()): HoursStatu
 
         let openStr, closeStr;
         if (typeof range === 'string') {
-            const parts = range.replace(/\u2013|\u2014/g, '-').trim().split(/\s*-\s*/);
+            const safeRange = String(range || "");
+            const parts = safeRange.replace(/\u2013|\u2014/g, '-').trim().split(/\s*-\s*/);
             if (parts.length !== 2) return null;
             [openStr, closeStr] = parts;
         } else {

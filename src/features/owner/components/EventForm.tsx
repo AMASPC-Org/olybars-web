@@ -9,6 +9,7 @@ import {
   Save,
 } from "lucide-react";
 import { AppEvent } from "../../../types";
+import { EventCategory } from "../../../types/taxonomy";
 import { EventService } from "../../../services/eventService";
 import { useToast } from "../../../components/ui/BrandedToast";
 
@@ -44,7 +45,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   const [isPolishing, setIsPolishing] = useState(false);
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
-    type: "other",
+    type: EventCategory.OTHER,
     date: "",
     time: "",
     description: "",
@@ -101,16 +102,14 @@ export const EventForm: React.FC<EventFormProps> = ({
   };
 
   const eventTypes = [
-    { value: "karaoke", label: "Karaoke" },
-    { value: "trivia", label: "Trivia" },
-    { value: "live_music", label: "Live Music" },
-    { value: "dj", label: "DJ Set" },
-    { value: "bingo", label: "Bingo" },
-    { value: "openmic", label: "Open Mic" },
-    { value: "happy_hour", label: "Happy Hour" },
-    { value: "sports", label: "Sports" },
-    { value: "comedy", label: "Comedy" },
-    { value: "other", label: "Other/Special" },
+    { value: EventCategory.KARAOKE, label: "Karaoke" },
+    { value: EventCategory.TRIVIA, label: "Trivia" },
+    { value: EventCategory.LIVE_MUSIC, label: "Live Music" },
+    { value: EventCategory.DJ_SET, label: "DJ Set" },
+    { value: EventCategory.BINGO, label: "Bingo" },
+    { value: EventCategory.OTHER, label: "Open Mic / Other" }, // Consolidated
+    { value: EventCategory.TOURNAMENT, label: "Tournament" },
+    { value: EventCategory.COMEDY, label: "Comedy" },
   ];
 
   return (
@@ -139,7 +138,7 @@ export const EventForm: React.FC<EventFormProps> = ({
               className="w-full bg-slate-900 border border-white/10 rounded-lg p-3 pl-10 text-white focus:outline-none focus:border-primary/50 transition-colors appearance-none"
               value={formData.type}
               onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value as any })
+                setFormData({ ...formData, type: e.target.value as EventCategory })
               }
             >
               {eventTypes.map((t) => (

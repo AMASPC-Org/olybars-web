@@ -160,8 +160,8 @@ export const handleGeneratingCreativeCopy = async (payload: string | undefined, 
     ctx.setIsLoading(true);
 
     try {
-        const requestedVibe = (payload && ['hype', 'chill', 'funny', 'standard'].includes(payload))
-            ? (payload as 'hype' | 'chill' | 'funny' | 'standard')
+        const requestedVibe = (payload && ['hype', 'relaxed', 'funny', 'standard'].includes(payload))
+            ? (payload as 'hype' | 'relaxed' | 'funny' | 'standard')
             : (ctx.eventDraft.vibeMode || 'standard');
 
         const copy = await VenueOpsService.generateEventCopy(
@@ -177,7 +177,7 @@ export const handleGeneratingCreativeCopy = async (payload: string | undefined, 
         ctx.addSchmidtResponse(`How does this blurb sound?\n\n"${copy}"`, [
             { id: 'copy_ok', label: 'Looks Great', value: 'copy_approved', icon: '✅' },
             { id: 'regen_hype', label: 'More Hype!', value: 'regen_hype', icon: '🔥' },
-            { id: 'regen_chill', label: 'Chill it out', value: 'regen_chill', icon: '🌊' },
+            { id: 'regen_relaxed', label: 'Relax the tone', value: 'regen_relaxed', icon: '🌊' },
             { id: 'regen_funny', label: 'Make it funny', value: 'regen_funny', icon: '😂' }
         ]);
     } catch (e: any) {

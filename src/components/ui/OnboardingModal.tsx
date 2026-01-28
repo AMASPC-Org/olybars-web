@@ -24,7 +24,7 @@ const renderIconForOnboarding = (step: number) => {
 
 const renderOnboardingContent = (step: number) => {
     switch (step) {
-        case 1: return { title: "Welcome to OlyBars!", text: "The Oly Pulse shows you where the crowd is right now. Find the 'Buzzing' spots and never walk into an empty bar again." };
+        case 1: return { title: "Welcome to OlyBars!", text: "The Oly Pulse shows you where the crowd is right now. Find the 'Gushing' spots and never walk into an empty bar again." };
         case 2: return { title: "The Buzz Clock", text: "We track every Happy Hour in town. Deals ending soonest are always at the top." };
         case 3: return { title: "The League", text: "Clock In to venues and take Vibe Photos to earn points. Compete for the season champion trophy." };
         case 4: return { title: "Ask Artie", text: "Artie is your personal AI concierge. Ask for directions, food recommendations, or today's hottest deal." };
@@ -79,7 +79,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onClos
         // Guest Path
         if (userRole === 'guest') {
             switch (s) {
-                case 1: return { title: "Find the Vibe", text: "The Oly Pulse shows you where the crowd is real-time. Navigate by 'Chill', 'Buzzing', or 'Packed'." };
+                case 1: return { title: "Find the Vibe", text: "The Oly Pulse shows you where the crowd is real-time. Navigate by 'Trickle', 'Gushing', or 'Flooded'." };
                 case 2: return { title: "Happy Hour Tracker", text: "Never miss a deal. We track every special in Olympia and sort them by 'Ending Soonest'." };
                 case 3: return { title: "Curated Events", text: "From Karaoke to Trivia to Live Bands. Filter the map to find your scene tonight." };
                 case 4: return { title: "Artie the Concierge", text: "Not sure where to go? Ask Artie. He knows every tap list and food special in town." };

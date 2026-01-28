@@ -90,16 +90,24 @@ async function seedVenues() {
                     clockIns,
                     currentBuzz,
                     status,
-                    manualStatus, // If defined in master, we might want to respect it? Usually master doesn't have manualStatus.
+                    manualStatus,
                     ...staticData
                 } = validVenue as any;
 
-                // Also ensure we don't accidentally unset fields that are not in Schema but in DB?
-                // merge: true handles that.
+                const currentData = doc.data();
+                const currentStatus = currentData?.status;
+                const validStatuses = ["trickle", "flowing", "gushing", "flooded"];
 
-                // If ID is in staticData (it is), that's fine.
+                // [MIGRATION FIX] If current status is legacy (not in valid set), FORCE UPDATE it with new default
+                if (!validStatuses.includes(currentStatus)) {
+                    console.log(`⚠️  Migrating legacy status '${currentStatus}' to '${status}' for ${validVenue.name}`);
+                    // We include status in the update by NOT excluding it from a separate object, 
+                    // or just explicitly setting it.
+                    await docRef.set({ ...staticData, status }, { merge: true });
+                } else {
+                    await docRef.set(staticData, { merge: true });
+                }
 
-                await docRef.set(staticData, { merge: true });
                 console.log(`🔄 Updated: ${validVenue.name}`);
             } else {
                 // CREATE: Use full data (defaults included)

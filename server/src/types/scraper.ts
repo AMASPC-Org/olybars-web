@@ -31,6 +31,7 @@ export const RunStatus = z.enum([
   "NO_CHANGE", // Optimization: Content hash matched previous
   "FAILED",
   "BLOCKED", // Quota exceeded or robots
+  "REFUNDED_FAILURE", // System error, quota returned
 ]);
 
 // --- Purpose Configurations ---
@@ -96,19 +97,25 @@ export const ScraperRunSchema = z.object({
 
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
+  ended_at: z.number().optional(), // Legacy/Compat
 
   stats: z.object({
     pagescanned: z.number().default(0),
     itemsExtracted: z.number().default(0),
-    newItems: z.number().default(0),
-    aiTokensUsed: z.number().default(0),
+    newItems: z.number().default(0), // Kept from original, as instruction only showed a partial stats type
+    aiTokensUsed: z.number().default(0), // Kept from original
     durationMs: z.number().default(0)
   }).optional(),
 
   error: z.string().optional(),
+  base_error: z.string().optional(), // Legacy/Compat
+  logs: z.array(z.string()).optional(),
 
   // Hash for change detection
   contentHash: z.string().optional(),
+
+  // Refund status
+  quotaRefunded: z.boolean().optional(),
 
   createdAt: z.number(),
 });

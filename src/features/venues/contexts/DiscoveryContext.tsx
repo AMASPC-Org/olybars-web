@@ -184,7 +184,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                 });
                 if (hasActiveHH) return true;
                 // 4. Static Deal (Strict)
-                const hasValidDeal = v.deal && !["none", "draft", "false", "", "mellow", "chill", "flowing", "gushing", "flooded", "packed"].includes(v.deal.toLowerCase());
+                const hasValidDeal = v.deal && !["none", "draft", "false", "", "trickle", "flowing", "gushing", "flooded"].includes(v.deal.toLowerCase());
                 return !!hasValidDeal;
             });
         } else if (filterKind === "scene" && sceneFilter !== "all") {
@@ -193,7 +193,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                 if (sceneFilter === "dive" && v.venueType === "bar_pub") return true;
                 if (sceneFilter === "brewery" && (v.venueType === "brewery_taproom" || v.venueType === "brewpub")) return true;
                 if (sceneFilter === "sports" && v.sceneTags?.includes("sports")) return true;
-                return v.venueType.includes(sceneFilter);
+                return (v.venueType || "").includes(sceneFilter);
             });
         } else if (filterKind === "play" && playFilter !== "all") {
             result = result.filter((v) => {
@@ -225,10 +225,10 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
             const q = searchQuery.toLowerCase();
             result = result.filter(
                 (v) =>
-                    (v.name && v.name.toLowerCase().includes(q)) ||
-                    (v.address && v.address.toLowerCase().includes(q)) ||
-                    (v.venueType && v.venueType.replace(/_/g, " ").toLowerCase().includes(q)) ||
-                    (v.vibe && v.vibe.toLowerCase().includes(q)) ||
+                    (v.name && String(v.name).toLowerCase().includes(q)) ||
+                    (v.address && String(v.address).toLowerCase().includes(q)) ||
+                    (String(v.venueType || "").replace(/_/g, " ").toLowerCase().includes(q)) ||
+                    (v.vibe && String(v.vibe).toLowerCase().includes(q)) ||
                     // Keyword matches for amenities
                     (q.includes("dog") && v.isDogFriendly) ||
                     (q.includes("family") && v.isAllAges) ||
@@ -270,7 +270,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                         return currentMinutes >= start && currentMinutes < end;
                     });
                     if (hasActiveHH) return true;
-                    const hasValidDeal = v.deal && !["none", "draft", "false", "", "mellow", "chill", "flowing", "gushing", "flooded", "packed"].includes(v.deal.toLowerCase());
+                    const hasValidDeal = v.deal && !["none", "draft", "false", "", "trickle", "flowing", "gushing", "flooded"].includes(v.deal.toLowerCase());
                     return !!hasValidDeal;
                 });
             } else if (activeTag === "Makers") {
@@ -310,7 +310,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                 return distA - distB;
             }
             if (activeSort === "energy") {
-                const order: Record<VenueStatus, number> = { packed: 0, flooded: 1, gushing: 2, buzzing: 3, flowing: 4, trickle: 5 };
+                const order: Record<VenueStatus, number> = { flooded: 1, gushing: 2, flowing: 3, trickle: 4 };
                 return order[a.status] - order[b.status];
             }
             if (activeSort === "buzz") {
@@ -333,7 +333,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                     });
                     if (isHH) return 3;
                     if (v.flashBounties?.some((b) => (b as any).active && b.startTime > now)) return 2;
-                    if (v.deal && !["none", "draft", "false", "", "mellow", "chill", "flowing", "gushing", "flooded", "packed"].includes(v.deal.toLowerCase())) return 1;
+                    if (v.deal && !["none", "draft", "false", "", "trickle", "flowing", "gushing", "flooded"].includes(v.deal.toLowerCase())) return 1;
                     return 0;
                 };
 
@@ -347,7 +347,7 @@ export const DiscoveryProvider: React.FC<{ children: React.ReactNode; venues?: V
                     const bHash = b.id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
                     return ((aHash + rotationOffset) % 100) - ((bHash + rotationOffset) % 100);
                 }
-                const order: Record<VenueStatus, number> = { packed: 0, flooded: 1, gushing: 2, buzzing: 3, flowing: 4, trickle: 5 };
+                const order: Record<VenueStatus, number> = { flooded: 1, gushing: 2, flowing: 3, trickle: 4 };
                 return order[a.status] - order[b.status];
             }
             return 0;

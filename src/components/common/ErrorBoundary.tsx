@@ -56,6 +56,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                                 Artie hit a snag. Let's get things flowing again.
                             </p>
 
+                            {/* DEBUG: Stack Trace (Dev Only) */}
+                            <div className="mt-4 p-4 bg-black/50 rounded text-left overflow-auto max-h-64 w-full max-w-2xl">
+                                <pre className="text-[10px] text-red-300 font-mono whitespace-pre-wrap">
+                                    {this.state.error && this.state.error.stack}
+                                    {this.state.error && this.state.error.message}
+                                </pre>
+                            </div>
+
                             <div className="space-y-4">
                                 <button
                                     onClick={() => window.location.reload()}

@@ -109,7 +109,7 @@ export const VenueMap: React.FC<VenueMapProps> = ({
             if (venue.isCinderella && !isVenueOpen(venue)) return;
 
             const isLeagueAnchor = venue.tier_config?.is_league_eligible;
-            const isGushing = venue.status === 'buzzing' || venue.status === 'packed';
+            const isGushing = venue.status === 'gushing' || venue.status === 'flooded';
             const isPrivate = venue.membershipRequired;
 
             // Private clubs are desaturated

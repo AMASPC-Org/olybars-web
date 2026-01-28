@@ -181,7 +181,7 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({
         </div>
 
         {/* Bottom Row: Filter Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 px-4 -mx-4 scrollbar-hide">
           <button
             onClick={() => {
               handleInteraction();
@@ -205,8 +205,8 @@ export const DiscoveryControls: React.FC<DiscoveryControlsProps> = ({
                 setShowEventMenu(false);
               }}
               className={`${baseChipClasses} ${statusActive && filterKind !== "all"
-                  ? "bg-primary text-black border-primary"
-                  : "bg-transparent text-white border-primary shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+                ? "bg-primary text-black border-primary"
+                : "bg-transparent text-white border-primary shadow-[0_0_10px_rgba(251,191,36,0.2)]"
                 } flex items-center gap-1.5 border-2`}
             >
               <Sparkles className="w-3 h-3" /> Vibe{" "}

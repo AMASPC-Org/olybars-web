@@ -16,6 +16,10 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+    /* UX-05: Mobile App Feel */
+    touch-action: manipulation; /* Remove 300ms delay */
+    overscroll-behavior-y: none; /* No rubber banding */
+    -webkit-tap-highlight-color: transparent; /* No grey tap box */
   }
 
   body {
@@ -23,6 +27,11 @@
     font-family: 'Roboto Condensed', sans-serif;
     /* Cinematic Radial Spotlight: Top-down ambient light */
     background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 120%);
+  }
+
+  /* UX-05: Prevent iOS Auto-Zoom on inputs < 16px */
+  input, textarea, select {
+    @apply text-base; 
   }
 
   /* Smart Glass Utility V2: Premium "Stripe-Level" Frost */

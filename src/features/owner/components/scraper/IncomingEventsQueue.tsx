@@ -13,6 +13,7 @@ import {
   Filter,
 } from "lucide-react";
 import { LeagueEvent, AppEvent } from "../../../../types";
+import { EventCategory } from "../../../../types/taxonomy";
 import { EventService } from "../../../../services/eventService";
 import { useToast } from "../../../../components/ui/BrandedToast";
 import { EventEditModal } from "../EventEditModal";
@@ -53,7 +54,16 @@ export const IncomingEventsQueue: React.FC<IncomingEventsQueueProps> = ({
         id: doc.id,
         ...doc.data(),
       })) as LeagueEvent[];
-      events.sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+      events.sort((a, b) => {
+        // Prioritize startTime (numeric timestamp)
+        if (a.startTime && b.startTime) {
+          return a.startTime - b.startTime;
+        }
+        // Fallback to time string (HH:mm)
+        const timeA = a.time || "00:00";
+        const timeB = b.time || "00:00";
+        return timeA.localeCompare(timeB);
+      });
       setPendingEvents(events);
     });
 
@@ -110,7 +120,7 @@ export const IncomingEventsQueue: React.FC<IncomingEventsQueueProps> = ({
         venueId,
         venueName,
         title: event.title,
-        type: event.type as any,
+        type: event.type as EventCategory,
         date: event.date,
         time: event.time || "19:00",
         description: event.description || "",

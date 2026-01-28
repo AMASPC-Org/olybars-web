@@ -93,24 +93,19 @@ export const ScraperRunSchema = z.object({
   venueId: z.string(),
   status: RunStatus,
   trigger: z.enum(["SCHEDULED", "MANUAL", "RETRY"]),
-
+  createdAt: z.number(),
   startedAt: z.number().optional(),
   completedAt: z.number().optional(),
-
-  stats: z.object({
-    pagescanned: z.number().default(0),
-    itemsExtracted: z.number().default(0),
-    newItems: z.number().default(0),
-    aiTokensUsed: z.number().default(0),
-    durationMs: z.number().default(0)
-  }).optional(),
-
   error: z.string().optional(),
-
-  // Hash for change detection
+  base_error: z.string().optional(), // Legacy/Compat field
+  stats: z.object({
+    pagescanned: z.number(),
+    itemsExtracted: z.number(),
+    durationMs: z.number(),
+  }).optional(),
+  logs: z.array(z.string()).optional(),
   contentHash: z.string().optional(),
-
-  createdAt: z.number(),
+  quotaRefunded: z.boolean().optional(),
 });
 
 export type ScraperRun = z.infer<typeof ScraperRunSchema>;

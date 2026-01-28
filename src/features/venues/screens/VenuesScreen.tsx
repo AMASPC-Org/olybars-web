@@ -106,18 +106,20 @@ export const VenuesScreen: React.FC = () => {
             <p className="text-slate-400">Try adjusting your filters or search terms.</p>
           </div>
         ) : (
-          venues.map((venue) => (
-            <VenueFeatureCard
-              key={venue.id}
-              venue={venue}
-              userProfile={userProfile}
-              onVibeCheck={() => handleVibeCheck(venue)}
-              onClockIn={() => handleClockIn(venue)}
-              onToggleFavorite={toggleFavorite}
-              onOpenHomeBase={onOpenHomeBase}
-              onOpenSips={onOpenSips}
-            />
-          ))
+          <div className="space-y-4 pb-24">
+            {venues.map((venue) => (
+              <VenueFeatureCard
+                key={venue.id}
+                venue={venue}
+                userProfile={userProfile || { id: 'guest', role: 'guest', permissions: [] }}
+                onClockIn={() => handleClockIn(venue)}
+                onVibeCheck={() => handleVibeCheck(venue)}
+                onToggleFavorite={toggleFavorite}
+                onOpenHomeBase={onOpenHomeBase}
+                onOpenSips={onOpenSips}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

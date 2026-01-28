@@ -5,7 +5,7 @@ import { InfoRulesModal } from "../ui/InfoRulesModal";
 import { UserProfile } from "../../types";
 
 interface StickyHeaderProps {
-  userProfile: UserProfile;
+  userProfile: UserProfile | null;
   userRank?: number;
   onMenuClick: () => void;
   onProfileClick: () => void;
@@ -28,7 +28,7 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
 
   // Display handle if authenticated (even if still a guest role)
   const displayHandle = isAuthenticated
-    ? userProfile.handle
+    ? userProfile?.handle
       ? `#${userProfile.handle.slice(0, 10)}`
       : "ID"
     : null;
@@ -42,9 +42,8 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
 
   return (
     <div
-      className={`sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm border-b border-white/10 transition-all duration-300 ${
-        isScrolled ? "py-2 shadow-md" : "py-3 shadow-md"
-      }`}
+      className={`sticky top-0 z-50 bg-slate-950/95 backdrop-blur-sm border-b border-white/10 transition-all duration-300 ${isScrolled ? "py-2 shadow-md" : "py-3 shadow-md"
+        }`}
     >
       <div className="flex justify-between items-center px-4 max-w-md mx-auto">
         {/* Logo (Left) */}
@@ -72,11 +71,10 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
                 navigate("/profile");
               }
             }}
-            className={`p-2 rounded-xl border-2 transition-all active:scale-95 flex items-center gap-2 ${
-              !isLeagueMember
+            className={`p-3 rounded-xl border-2 transition-all active:scale-95 flex items-center gap-2 ${!isLeagueMember
                 ? "border-slate-800 text-slate-400 hover:border-slate-600"
                 : "border-primary text-primary shadow-[0_0_10px_rgba(251,191,36,0.2)] hover:bg-primary/10"
-            }`}
+              }`}
           >
             <ProfileIcon size={20} strokeWidth={2.5} />
             {displayHandle && (
@@ -88,7 +86,7 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
 
           <button
             onClick={() => setShowInfo(true)}
-            className="p-2 text-slate-400 hover:text-primary transition-all active:scale-95"
+            className="p-3 text-slate-400 hover:text-primary transition-all active:scale-95"
             title="Rules & Prizes"
           >
             <Info size={20} strokeWidth={2.5} />
@@ -96,7 +94,7 @@ export const StickyHeader: React.FC<StickyHeaderProps> = ({
 
           <button
             onClick={onMenuClick}
-            className="p-2 text-white hover:text-primary transition-colors active:scale-95"
+            className="p-3 text-white hover:text-primary transition-colors active:scale-95"
           >
             <Menu size={28} strokeWidth={3} />
           </button>

@@ -37,11 +37,25 @@ export default {
       },
       minHeight: {
         'touch': '44px',
+        // Dynamic Viewport Height for Mobile Browsers
+        'screen-safe': '100dvh',
       },
       minWidth: {
         'touch': '44px',
-      }
+      },
+      height: {
+        'screen-safe': '100dvh',
+      },
+      padding: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
     },
+  },
+  future: {
+    hoverOnlyWhenSupported: true,
   },
   plugins: [],
 }

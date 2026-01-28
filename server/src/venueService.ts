@@ -157,7 +157,7 @@ export const updateVenueBuzz = async (venueId: string) => {
     if (
       data.timestamp > consensusVibeWindow &&
       data.type === "vibe_report" &&
-      data.value?.status === "packed"
+      data.value?.status === "flooded"
     ) {
       consensusVibeReports.add(data.userId);
     }

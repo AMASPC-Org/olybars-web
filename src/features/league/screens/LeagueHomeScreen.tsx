@@ -80,7 +80,7 @@ export const LeagueHomeScreen: React.FC = () => {
             </div>
             <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
               <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">THE PIONEER CURVE</h3>
-              <p className="text-xs text-slate-400 font-bold font-body">Earn more for tapping the source first (Mellow: 100 Drops). Flow reduces as crowds arrive (Packed: 10 Drops).</p>
+              <p className="text-xs text-slate-400 font-bold font-body">Earn more for tapping the source first (Trickle: 100 Drops). Flow reduces as crowds arrive (Flooded: 10 Drops).</p>
             </div>
             <div className="bg-surface/50 border border-white/5 p-4 rounded-xl">
               <h3 className="text-primary font-black text-xs uppercase mb-1 font-league">CLOCK-IN LIMIT</h3>

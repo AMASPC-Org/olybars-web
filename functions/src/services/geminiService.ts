@@ -303,7 +303,7 @@ export class GeminiService {
         1. TITLE: Catchy, clear. Shorten if it's too long.
         2. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
         3. TIME: Convert to 24h format (HH:mm).
-        4. TYPE: One of: trivia, music, sports, comedy, happy_hour, other.
+        4. TYPE: One of: trivia, karaoke, live_music, dj_set, bingo, comedy, tournament, other.
         5. DESCRIPTION: 1-2 sentence high-energy pitch.
         
         LCB COMPLIANCE:
@@ -521,7 +521,7 @@ export class GeminiService {
       2. TITLE: Catchy, clear. Shorten if it's too long.
       3. DATE: Convert to ISO (YYYY-MM-DD). If "tonight", use the system date.
       4. TIME: Convert to 24h format (HH:mm). 
-      5. TYPE: trivia, karaoke, live_music, bingo, sports, comedy, happy_hour, other.
+      5. TYPE: trivia, karaoke, live_music, dj_set, bingo, comedy, tournament, other.
       6. DESCRIPTION: 1-2 sentence high-energy pitch.
       7. RECURRING LOGIC: 
          - If an event is "Every Tuesday", generate explicit instances for the NEXT 30 DAYS from ${currentTime}.

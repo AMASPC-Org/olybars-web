@@ -43,7 +43,7 @@ const AboutPage = () => {
     }, []);
 
     const buzzingVenues = useMemo(() =>
-        venues.filter(v => (v.status === 'buzzing' || v.status === 'packed') && v.isActive !== false).slice(0, 2),
+        venues.filter(v => (v.status === 'gushing' || v.status === 'flooded') && v.isActive !== false).slice(0, 2),
         [venues]);
 
     const activeHappyHours = useMemo(() =>

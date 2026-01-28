@@ -231,29 +231,34 @@ export const OwnerDashboardScreen: React.FC<OwnerDashboardProps> = ({
               <span className="text-[10px] font-black text-slate-500 uppercase">
                 Managing:
               </span>
-              <select
-                value={selectedVenueId || ""}
-                onChange={(e) => {
-                  const newId = e.target.value;
-                  setSelectedVenueId(newId);
-                  navigate(`/admin/brewhouse/${newId}/${dashboardView}`);
-                }}
-                className="bg-primary/10 text-primary text-sm font-black uppercase tracking-widest outline-none py-1 px-2 rounded border border-primary/20"
-              >
-                {accessibleVenues.map((v) => (
-                  <option key={v.id} value={v.id} className="bg-[#0f172a]">
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={selectedVenueId || ""}
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    setSelectedVenueId(newId);
+                    navigate(`/admin/brewhouse/${newId}/${dashboardView}`);
+                  }}
+                  className="bg-primary/10 text-primary text-sm font-black uppercase tracking-widest outline-none h-12 pl-4 pr-8 rounded-xl border border-primary/20 appearance-none min-w-[200px]"
+                >
+                  {accessibleVenues.map((v) => (
+                    <option key={v.id} value={v.id} className="bg-[#0f172a]">
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Beer className="w-4 h-4 text-primary opacity-50" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="text-slate-500 hover:text-white transition-colors"
+          className="text-slate-500 hover:text-white transition-colors p-4 -mr-4 active:scale-90"
         >
-          <X className="w-10 h-10" strokeWidth={4} />
+          <X className="w-8 h-8" strokeWidth={3} />
         </button>
       </div>
 

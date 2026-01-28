@@ -1,4 +1,4 @@
-export type VenueStatus = "trickle" | "flowing" | "gushing" | "flooded" | "buzzing" | "packed";
+export type VenueStatus = "trickle" | "flowing" | "gushing" | "flooded";
 
 export enum PartnerTier {
   LOCAL = "local",
@@ -12,6 +12,7 @@ import {
   TierFeatures,
 } from "../config/tiers.js";
 import { BrandDNA } from "./schemas.js";
+import { EventCategory } from "./taxonomy.js";
 
 export interface TierLimits extends TierFeatures { }
 
@@ -264,16 +265,7 @@ export interface LeagueEvent {
   venueId: string;
   title: string;
   description?: string;
-  type:
-  | "trivia"
-  | "karaoke"
-  | "live_music"
-  | "dj"
-  | "bingo"
-  | "sports"
-  | "comedy"
-  | "happy_hour"
-  | "other";
+  type: EventCategory;
   startTime: number; // UTC timestamp
   date: string; // [NEW] ISO YYYY-MM-DD
   time?: string; // [NEW] HH:mm

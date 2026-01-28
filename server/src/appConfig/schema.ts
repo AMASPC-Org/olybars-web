@@ -33,6 +33,10 @@ export const ConfigSchema = z.object({
     TWILIO_ACCOUNT_SID: z.string().optional(),
     TWILIO_AUTH_TOKEN: z.string().optional(),
     TWILIO_PHONE_NUMBER: z.string().optional(),
+
+    // Cloud Run / Tasks Identity
+    // The Service Account Email that this service runs as, or that invokes it (for OIDC checks)
+    SERVICE_ACCOUNT_EMAIL: z.string().optional(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

@@ -40,7 +40,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isBounty: true,
                     urgency: 'red',
                     clockIns: v.clockIns,
-                    status: v.status || 'buzzing', // Bounties imply buzz
+                    status: v.status || 'gushing', // Bounties imply buzz
                     lastUpdated: v.currentBuzz?.lastUpdated
                 });
             }
@@ -73,7 +73,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
             }
 
             // 3. Static Deal Tag (Matches BuzzScreen Logic)
-            if (v.deal && !['none', 'draft', 'false', '', 'mellow', 'chill', 'flowing', 'gushing', 'flooded', 'packed'].includes(v.deal.toLowerCase())) {
+            if (v.deal && !['none', 'draft', 'false', '', 'trickle', 'flowing', 'gushing', 'flooded'].includes(v.deal.toLowerCase())) {
                 items.push({
                     id: v.id,
                     name: v.name,
@@ -128,7 +128,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                     isBounty: true,
                     urgency: 'blue',
                     clockIns: v.clockIns,
-                    status: v.status || 'buzzing',
+                    status: v.status || 'gushing',
                     lastUpdated: v.currentBuzz?.lastUpdated
                 }];
             }
@@ -233,7 +233,7 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
                 isBounty: false,
                 urgency: 'blue',
                 clockIns: 0,
-                status: 'mellow',
+                status: 'trickle',
                 lastUpdated: Date.now()
             });
         }
@@ -262,11 +262,11 @@ export const BuzzClock: React.FC<BuzzClockProps> = ({ venues }) => {
     const getStatusDisplay = (status?: string) => {
         if (!status) return null;
         const s = status.toLowerCase();
-        // Project Toast: Mellow is now a soft indigo/slate to differentiate from Green "Active" deals
-        if (s === 'dead' || s === 'mellow' || s === 'trickle') return { text: 'MELLOW', color: 'text-slate-400', bg: 'bg-slate-500' };
-        if (s === 'chill' || s === 'flowing') return { text: 'CHILL', color: 'text-blue-400', bg: 'bg-blue-500' };
-        if (s === 'buzzing' || s === 'gushing') return { text: 'BUZZING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
-        if (s === 'packed' || s === 'flooded') return { text: 'PACKED', color: 'text-rose-400', bg: 'bg-rose-500' };
+
+        if (s === 'trickle') return { text: 'TRICKLE', color: 'text-slate-400', bg: 'bg-slate-500' };
+        if (s === 'flowing') return { text: 'FLOWING', color: 'text-blue-400', bg: 'bg-blue-500' };
+        if (s === 'gushing') return { text: 'GUSHING', color: 'text-[#FFD700]', bg: 'bg-[#FFD700]' };
+        if (s === 'flooded') return { text: 'FLOODED', color: 'text-rose-400', bg: 'bg-rose-500' };
         return null;
     };
 

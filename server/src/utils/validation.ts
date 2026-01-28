@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EventCategory } from "../../../src/types/taxonomy.js";
 
 export const ClockInSchema = z.object({
   venueId: z.string().min(1),
@@ -361,14 +362,7 @@ export const AppEventSchema = z.object({
   venueId: z.string().min(1),
   venueName: z.string().min(1),
   title: z.string().min(1).max(100),
-  type: z.enum([
-    "karaoke",
-    "trivia",
-    "live_music",
-    "bingo",
-    "openmic",
-    "other",
-  ]),
+  type: z.nativeEnum(EventCategory),
   date: z.string().min(1),
   time: z.string().min(1),
   description: z.string().max(500).optional(),
@@ -439,7 +433,7 @@ export const VenueSchema = z.object({
   activeFlashBounty: z.any().optional(),
   deal: z.string().optional(),
   dealEndsIn: z.number().optional(),
-  vibeDefault: z.string().optional(),
+  vibeDefault: z.enum(["trickle", "flowing", "gushing", "flooded"]).optional(),
   happyHourSpecials: z.string().optional(),
   happyHour: z
     .object({

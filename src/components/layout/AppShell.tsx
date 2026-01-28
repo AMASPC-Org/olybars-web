@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Menu,
@@ -14,6 +14,7 @@ import { useLayout, useUser, usePersona, useGamification } from '../../contexts'
 import { useDiscovery } from '../../features/venues/contexts/DiscoveryContext';
 import { OlyChatModal } from '../../components/artie/OlyChatModal';
 import { SchmidtChatModal } from '../../components/owner/SchmidtChatModal';
+import { useUIStore } from "../../store/uiStore"; // Bead 2.1
 import { ArtieHoverIcon } from '../../features/artie/components/ArtieHoverIcon';
 import { CookieBanner } from '../ui/CookieBanner';
 import { Footer } from './Footer';
@@ -32,22 +33,18 @@ export const AppShell: React.FC = () => {
   const searchQuery = searchParams.get('q');
 
   // --- Context Hooks (No more props) ---
+  // --- Context Hooks (No more props) ---
   const {
-    showMenu, setShowMenu,
     showInfo, setShowInfo,
     showArtie, setShowArtie,
-    openModal
+    // openModal - Migrated to useUIStore
   } = useLayout();
 
-  const { allVenues: venues } = useDiscovery();
+  const { allVenues: venues, isLoading } = useDiscovery();
   const { userProfile, isLeagueMember, toggleFavorite } = useUser();
+  const { openSidebar, viewMode, openModal } = useUIStore(); // Bead 2.1: Integrated openModal
   const { activePersona } = usePersona();
   const { userPoints, userRank, clockInHistory, vibeCheckHistory } = useGamification();
-
-  // --- Local State ---
-  const [viewMode, setViewMode] = useState<'player' | 'owner'>(() => {
-    return (localStorage.getItem('olybars_view_mode') as 'player' | 'owner') || 'player';
-  });
 
   const isMapPage = location.pathname === '/map';
   const persona = activePersona;
@@ -60,11 +57,6 @@ export const AppShell: React.FC = () => {
     mainContent.addEventListener('scroll', handleScroll, { passive: true });
     return () => mainContent.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // --- Sync View Mode ---
-  useEffect(() => {
-    localStorage.setItem('olybars_view_mode', viewMode);
-  }, [viewMode]);
 
   // --- Derived Data ---
   const getVenueIdFromPath = () => {
@@ -85,7 +77,7 @@ export const AppShell: React.FC = () => {
     .sort((a, b) => (a.dealEndsIn || 0) - (b.dealEndsIn || 0));
 
   const getPulseStatus = () => {
-    if (activeDeals.length > 0) return 'buzzing';
+    if (activeDeals.length > 0) return 'gushing';
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const nextHH = venues
@@ -112,7 +104,9 @@ export const AppShell: React.FC = () => {
     '/map', '/league-membership', '/admin', '/owner', '/venue-handover'
   ].includes(location.pathname);
 
-  const isDiscoveryFlow = location.pathname === '/' || location.pathname === '/bars' || location.pathname.startsWith('/bars/') || location.pathname === '/back-room';
+  // Only '/ ' uses DiscoveryLayout (which has its own StickyHeader). 
+  // Other routes like /bars need the detailed AppShell header.
+  const isDiscoveryFlow = location.pathname === '/';
 
   // --- Actions Shim ---
   const handleMemberLoginClick = (mode?: 'login' | 'signup') => openModal('LOGIN', { mode });
@@ -126,16 +120,16 @@ export const AppShell: React.FC = () => {
       : 'max-w-md border-x border-white/5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] rounded-none md:rounded-3xl md:my-8'
       }`}>
       {!isDiscoveryFlow && (
-        <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'buzzing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'}`}>
-          <div className={`relative border-b transition-colors duration-500 ${pulseStatus === 'buzzing' ? 'bg-black/80 border-primary' : 'bg-slate-950/80 border-white/5'}`}>
-            {pulseStatus === 'buzzing' && (
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
+        <div className={`sticky top-0 z-40 backdrop-blur-xl transition-all duration-300 ${pulseStatus === 'gushing' ? 'shadow-[0_4px_20px_-5px_rgba(251,191,36,0.5)]' : 'shadow-lg'}`}>
+          <div className={`relative border-b transition-colors duration-500 ${pulseStatus === 'gushing' ? 'bg-black/80 border-primary' : 'bg-slate-950/80 border-white/5'}`}>
+            {pulseStatus === 'gushing' && (
+              <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
             )}
             <div className={`p-3 flex justify-between items-center mx-auto transition-all ${isFullWidthPage ? 'max-w-[1600px] px-6' : ''}`}>
               <div onClick={() => navigate('/')} className="text-2xl md:text-3xl font-black tracking-tighter text-white flex items-center gap-3 cursor-pointer group">
                 <div className="relative flex-shrink-0">
-                  <Beer className={`w-10 h-10 md:w-12 md:h-12 ${pulseStatus === 'buzzing' ? 'text-primary' : 'text-slate-400'}`} />
-                  {pulseStatus === 'buzzing' && (
+                  <Beer className={`w-10 h-10 md:w-12 md:h-12 ${pulseStatus === 'gushing' ? 'text-primary' : 'text-slate-400'}`} />
+                  {pulseStatus === 'gushing' && (
                     <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-black animate-ping" />
                   )}
                 </div>
@@ -154,13 +148,17 @@ export const AppShell: React.FC = () => {
                 <button onClick={() => setShowInfo(true)} className="text-slate-400 hover:text-primary transition-all active:scale-97 ease-spring-smooth" title="Rules & Prizes">
                   <Info className="w-6 h-6" strokeWidth={2.5} />
                 </button>
-                <button onClick={() => setShowMenu(true)} className="text-white hover:text-primary transition-all active:scale-97 ease-spring-smooth">
-                  <Menu className="w-8 h-8" strokeWidth={3} />
+                <button
+                  onClick={openSidebar} // Bead 2.1: Trigger Global Store
+                  className="p-2 ml-2 text-slate-400 hover:text-primary transition-colors active:scale-95"
+                  aria-label="Open Menu"
+                >
+                  <Menu className="w-5 h-5 block md:hidden" />
                 </button>
               </div>
             </div>
           </div>
-          {!isMapPage && !searchQuery && !location.pathname.startsWith('/partners') && !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room', '/passport', '/league'].includes(location.pathname) && <BuzzClock venues={venues} />}
+          {!isMapPage && !searchQuery && location.pathname !== '/bars' && !location.pathname.startsWith('/partners') && !['/league-membership', '/profile', '/settings', '/owner', '/admin', '/back-room', '/passport', '/league'].includes(location.pathname) && <BuzzClock venues={venues} />}
         </div>
       )}
 
@@ -168,30 +166,35 @@ export const AppShell: React.FC = () => {
         <ErrorBoundary>
           <React.Suspense fallback={<RouteLoading />}>
             <Outlet context={{
-              venues, // Keep for now
+              venues: venues || [], // Bead 1.3: Hardening - Prevent null context crash
               userProfile,
               onAskArtie: (mode?: 'visitor' | 'ops') => {
                 if (mode === 'visitor') (window as any)._artie_force_guest = true;
                 else (window as any)._artie_force_guest = false;
                 setShowArtie(true);
               },
-              onToggleMenu: () => setShowMenu(true),
+              onToggleMenu: openSidebar, // Bead 2.1: Integrated
               onClockIn: handleClockIn,
               onVibeCheck: handleVibeCheck,
               clockedInVenue: null, // Deprecated? Need to check if accessible via context
               onToggleFavorite: toggleFavorite,
               onEditVenue: handleEditVenue,
-              isLoading: false, // Legacy
+              isLoading: isLoading, // Passed from DiscoveryContext -> AppShell -> Outlet
               onToggleWeeklyBuzz: () => { }, // Legacy
               clockInHistory,
               vibeCheckHistory,
               onMemberLoginClick: handleMemberLoginClick,
-              onOpenHomeBase: (venueId: string, venueName: string) => { }, // Placeholder
+              onOpenHomeBase: () => { }, // Placeholder
               onOpenSips: () => { } // Placeholder
             }} />
           </React.Suspense>
         </ErrorBoundary>
-        {location.pathname !== '/map' && <Footer />}
+        {/* Footer Logic: Only show for Guests (or Unauth) or specific Content Pages. Hide for Members. */}
+        {!isMapPage && (!userProfile || userProfile.role === 'guest' || ['/faq', '/glossary', '/terms', '/privacy'].some(p => location.pathname.includes(p))) && (
+          <div className="relative z-10 shrink-0 bg-black">
+            <Footer />
+          </div>
+        )}
       </main>
 
       <div className={`sticky bottom-0 w-full ${isFullWidthPage ? 'max-w-none' : 'max-w-md'} bg-black border-t-4 border-primary z-20 shadow-2xl transition-all`}>
@@ -224,13 +227,15 @@ export const AppShell: React.FC = () => {
       </div>
 
       <Sidebar
-        isOpen={showMenu}
-        onClose={() => setShowMenu(false)}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        onLogin={handleMemberLoginClick}
+        onLogin={(mode) => {
+          if (mode === 'signup') {
+            handleMemberLoginClick?.('signup');
+          } else {
+            handleMemberLoginClick?.('login');
+          }
+        }}
         onProfileClick={() => navigate('/profile')}
-        userPoints={userPoints}
+        userPoints={userPoints || 0}
       />
 
       <ArtieHoverIcon onClick={() => { (window as any)._artie_force_guest = false; setShowArtie(true); }} userProfile={userProfile} />

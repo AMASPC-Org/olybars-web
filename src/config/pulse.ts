@@ -41,7 +41,6 @@ export const PULSE_CONFIG = {
         GUSHING: 0.50,  // > 50% Capacity
         FLOWING: 0.15,    // > 15% Capacity
         TRICKLE: 0,      // < 15% Capacity
-        DEAD: 0,        // [DEPRECATED]
         FLASH_BOUNTY: 180, // < 180 mins remaining = Flash Bounty
         BUZZ_CLOCK_PRIORITY: 240 // < 240 mins = High priority in list
     },
@@ -61,7 +60,6 @@ export const PULSE_CONFIG = {
         FLOWING_MEANING: "Social hum. Steady stream. 15-50% cap.",
         GUSHING_MEANING: "High energy. Social peak. 51-85% cap.",
         FLOODED_MEANING: "Maximum depth. Party is here. > 85% cap.",
-        DEAD_MEANING: "[DEPRECATED] See Trickle.",
         FLASH_BOUNTY_MEANING: "Ending soon! High urgency."
     }
 };

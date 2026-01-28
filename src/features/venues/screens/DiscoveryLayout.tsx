@@ -26,7 +26,7 @@ export const DiscoveryLayout: React.FC = () => {
         onMemberLoginClick
     } = useOutletContext<{
         venues: Venue[],
-        userProfile: UserProfile,
+        userProfile: UserProfile | null, // Modified type to allow null
         onAskArtie: () => void,
         onToggleMenu: () => void,
         onClockIn: (venue: Venue) => void,
@@ -63,7 +63,7 @@ export const DiscoveryLayout: React.FC = () => {
 
 const DiscoveryLayoutContent: React.FC<{
     venues: Venue[],
-    userProfile: UserProfile,
+    userProfile: UserProfile | null,
     onAskArtie: () => void,
     onToggleMenu: () => void,
     onClockIn: (venue: Venue) => void,
@@ -106,7 +106,8 @@ const DiscoveryLayoutContent: React.FC<{
                     userProfile={userProfile}
                     onMenuClick={onToggleMenu}
                     onProfileClick={() => {
-                        if (userProfile.uid === 'guest' || !userProfile.uid) {
+                        // Safe Guard: Handle null or guest profile
+                        if (!userProfile?.uid || userProfile.uid === 'guest') {
                             onMemberLoginClick?.('login');
                         } else {
                             navigate('/profile');

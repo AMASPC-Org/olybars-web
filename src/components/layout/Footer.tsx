@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export const Footer = () => {
     return (
-        <footer className="w-full bg-black border-t border-primary/10 p-4 text-center mt-auto">
+        <footer className="w-full bg-black border-t border-primary/10 p-4 text-center mt-auto relative z-10">
             <div className="flex flex-col items-center gap-2">
                 <span className="text-xl font-black text-white tracking-widest font-league uppercase italic">
                     OLYBARS<span className="text-primary">.COM</span>
@@ -13,12 +13,12 @@ export const Footer = () => {
                 </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 my-3 type-label text-[7px] text-slate-500">
-                <Link to="/about" className="hover:text-primary transition-colors">About</Link>
-                <Link to="/terms" className="hover:text-primary transition-colors">Terms</Link>
-                <Link to="/privacy" className="hover:text-primary transition-colors">Privacy</Link>
-                <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
-                <Link to="/security" className="hover:text-primary transition-colors">Security</Link>
+            <div className="flex flex-wrap justify-center gap-x-2 gap-y-4 my-4">
+                <Link to="/about" className="p-3 text-[10px] text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-wider">About</Link>
+                <Link to="/terms" className="p-3 text-[10px] text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-wider">Terms</Link>
+                <Link to="/privacy" className="p-3 text-[10px] text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-wider">Privacy</Link>
+                <Link to="/cookies" className="p-3 text-[10px] text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-wider">Cookies</Link>
+                <Link to="/security" className="p-3 text-[10px] text-slate-500 hover:text-primary transition-colors font-bold uppercase tracking-wider">Security</Link>
             </div>
 
             <p className="type-label text-[7px] text-slate-600">

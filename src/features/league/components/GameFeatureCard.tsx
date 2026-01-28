@@ -14,8 +14,8 @@ export const GameFeatureCard: React.FC<GameFeatureCardProps> = ({
   onClockIn,
 }) => {
   const isBuzzing =
-    venue.status === "buzzing" ||
-    venue.status === "packed" ||
+    venue.status === "gushing" ||
+    venue.status === "flooded" ||
     (venue.currentBuzz?.score || 0) > 70;
 
   return (
@@ -27,11 +27,10 @@ export const GameFeatureCard: React.FC<GameFeatureCardProps> = ({
           </h3>
           <div className="flex items-center gap-2">
             <span
-              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${
-                isBuzzing
+              className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 ${isBuzzing
                   ? "bg-orange-500/20 text-orange-400"
                   : "bg-blue-500/20 text-blue-400"
-              }`}
+                }`}
             >
               {isBuzzing ? <Flame size={10} /> : <Snowflake size={10} />}
               {venue.status.toUpperCase()}

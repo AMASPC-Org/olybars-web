@@ -17,7 +17,7 @@ import {
 import { vibeNormalizer } from "./middleware/vibeNormalizer.js";
 import { RequestContext } from "./utils/context.js";
 import { logger } from "./utils/logger.js";
-import { ScraperService } from "./services/scraperService.js";
+import { ScraperService } from "./services/ScraperService.js";
 import { WorkerService } from "./services/workerService.js";
 import { SchedulerService } from "./services/schedulerService.js";
 import { enqueueScraperRun } from "./utils/cloudTasks.js";
@@ -2063,18 +2063,51 @@ partnersRouter.post("/scrapers/:id/run", verifyToken, requireVenueAccess("manage
   }
 });
 
-// --- INTERNAL WORKER & SCHEDULER API ---
+// --- INTERNAL SERVICES (Worker / Scheduler) ---
 const internalRouter = express.Router();
-app.use("/internal", internalRouter);
+internalRouter.use(express.json());
 
-internalRouter.post("/tasks/run", async (req, res) => {
-  const { runId } = req.body;
+// [SECURITY] Lock down internal routes to OIDC-authenticated service accounts only
+import { verifyInternalOidc } from "./middleware/verifyInternalOidc.js";
+internalRouter.use(verifyInternalOidc);
+
+// 1. Cloud Scheduler Tick (Every 15 min)
+internalRouter.get("/scheduler/tick", async (req, res) => {
   try {
-    if (!runId) return res.status(400).json({ error: "Missing runId" });
-    await WorkerService.executeRun(runId);
+    await SchedulerService.tick();
     res.json({ success: true });
   } catch (e: any) {
-    log("ERROR", "Worker Task Failed", { error: e?.message });
+    log("ERROR", "Scheduler Tick Failed", { error: e?.message });
+    res.status(500).json({ error: e?.message });
+  }
+});
+
+// 2. Cloud Task Worker (Scraper Run Execution)
+internalRouter.post("/tasks/run", async (req, res) => {
+  const { runId } = req.body;
+  const retryCount = parseInt((req.headers["x-cloudtasks-taskretrycount"] as string) || "0");
+
+  try {
+    if (!runId) return res.status(400).json({ error: "Missing runId" });
+
+    const result = await WorkerService.executeRun(runId, retryCount);
+
+    if (result.status === "SUCCESS") {
+      res.json({ success: true });
+    } else if (result.status === "RETRYABLE_ERROR") {
+      // Signal Cloud Tasks to retry (HTTP 429 or 503)
+      // We can also check retryAfter logic if we want to enforce backoff, 
+      // but Cloud Tasks queue config handles basic backoff.
+      log("WARN", "Worker Retryable Error", { runId, reason: result.reason });
+      res.status(429).json({ error: result.reason, retry: true });
+    } else {
+      // Terminal Error - Acknowledge task to stop retries
+      log("ERROR", "Worker Terminal Error", { runId, reason: result.reason });
+      res.status(200).json({ success: false, error: result.reason }); // 200 to ACK and stop retry
+    }
+  } catch (e: any) {
+    log("ERROR", "Worker Uncaught Failed", { error: e?.message });
+    // If it's an unexpected crash, return 500 so Cloud Tasks retries it as a 'system failure'
     res.status(500).json({ error: e?.message });
   }
 });

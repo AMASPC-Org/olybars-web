@@ -498,13 +498,19 @@ export const VenueProfileScreen: React.FC = () => {
         jsonLd={getLDSchema()}
       />
 
-      {/* Simple Back Button */}
-      <div className="px-6 pt-6">
+      {/* Simple Back Button (Drunk Thumb Optimized) */}
+      <div className="px-6 pt-6 relative z-10 text-shadow-md">
         <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-primary mb-4 hover:opacity-80 active:scale-95 transition-all uppercase font-black tracking-widest text-xs"
+          onClick={() => {
+            if (window.history.length > 2) {
+              navigate(-1);
+            } else {
+              navigate("/");
+            }
+          }}
+          className="flex items-center gap-2 text-white/90 hover:text-primary mb-4 active:scale-95 transition-all uppercase font-black tracking-widest text-xs bg-black/20 backdrop-blur-md p-3 rounded-xl border border-white/10 hover:bg-black/40"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="w-5 h-5" />
           Back
         </button>
       </div>
@@ -1108,36 +1114,36 @@ export const VenueProfileScreen: React.FC = () => {
                 clockedInVenue === venue.id ||
                 (venue.membershipRequired && !isMembershipVerified)
               }
-              className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all shadow-xl shadow-primary/10 ${clockedInVenue === venue.id ||
+              className={`flex-1 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl shadow-primary/10 active:scale-95 ${clockedInVenue === venue.id ||
                 (venue.membershipRequired && !isMembershipVerified)
                 ? "bg-slate-800 text-slate-500 border border-slate-700"
-                : "bg-primary text-black hover:scale-[1.02] active:scale-95"
+                : "bg-primary text-black hover:scale-[1.02] hover:bg-white"
                 }`}
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-5 h-5" />
               {clockedInVenue === venue.id ? "Clocked In" : "Clock In (+10)"}
             </button>
             <button
               onClick={() => handleVibeCheck(venue)}
               disabled={venue.membershipRequired && !isMembershipVerified}
-              className={`flex-1 py-4 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${venue.membershipRequired && !isMembershipVerified
+              className={`flex-1 py-5 bg-surface border-2 border-slate-700 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex flex-col items-center justify-center text-slate-100 hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-95 shadow-xl ${venue.membershipRequired && !isMembershipVerified
                 ? "opacity-50 grayscale cursor-not-allowed"
                 : ""
                 }`}
             >
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" />
+                <Zap className="w-5 h-5 text-primary" />
                 <span>Vibe Check (+5)</span>
               </div>
-              <span className="text-[7px] text-primary/60 mt-1">
-                REPORT FROM THE FIELD
+              <span className="text-[9px] text-primary/60 mt-1">
+                REPORT STATUS
               </span>
             </button>
             <button
               onClick={handleDirectionsClick}
-              className="bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl text-slate-100 hover:border-primary/50 transition-all active:scale-95"
+              className="bg-slate-900 border-2 border-slate-700 w-16 rounded-2xl text-slate-100 hover:border-primary/50 transition-all active:scale-95 flex items-center justify-center"
             >
-              <Navigation className="w-5 h-5 text-primary" />
+              <Navigation className="w-6 h-6 text-primary" />
             </button>
           </div>
         ) : (

@@ -13,7 +13,7 @@ interface VenueCardProps {
   onToggleFavorite: (venueId: string) => void;
 }
 
-export const VenueCard: React.FC<VenueCardProps> = ({
+export const VenueCard: React.FC<VenueCardProps> = React.memo(({
   venue,
   userProfile,
   onClockIn,
@@ -64,4 +64,4 @@ export const VenueCard: React.FC<VenueCardProps> = ({
       </div>
     </div>
   );
-};
+});

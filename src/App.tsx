@@ -11,6 +11,8 @@ import { AppShell } from "./components/layout/AppShell";
 import { GlobalModals } from "./components/layout/GlobalModals";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 // import { InfoPopup } from "./components/ui/InfoPopup";
+import { RouteGuard } from "./components/common/RouteGuard";
+import { NotFoundScreen } from "./features/marketing/screens/NotFoundScreen";
 
 // --- CONTEXT PROCESSORS ---
 import { DiscoveryProvider } from "./features/venues/contexts/DiscoveryContext";
@@ -35,6 +37,12 @@ const LiveMusicScreen = lazy(() => import("./features/league/screens/LiveMusicSc
 const LeagueHQScreen = lazy(() => import("./features/league/screens/LeagueHQScreen").then(m => ({ default: m.LeagueHQScreen })));
 const SmartOwnerRoute = lazy(() => import("./features/owner/routes/SmartOwnerRoute").then(m => ({ default: m.SmartOwnerRoute })));
 const BackRoomScreen = lazy(() => import("./features/venues/screens/BackRoomScreen").then(m => ({ default: m.BackRoomScreen })));
+const GlossaryScreen = lazy(() => import("./features/marketing/screens/GlossaryScreen"));
+const FAQScreen = lazy(() => import("./features/marketing/screens/FAQScreen"));
+
+// --- LAYOUTS ---
+import { DiscoveryLayout } from "./features/venues/screens/DiscoveryLayout";
+import { BuzzScreen } from "./features/venues/screens/BuzzScreen";
 
 // --- APP COMPONENT ---
 export default function App() {
@@ -60,10 +68,20 @@ export default function App() {
 
               {/* Main App Shell */}
               <Route element={<AppShell />}>
-                {/* Public Routes */}
-                <Route path="/" element={<VenuesScreen />} />
+
+                {/* HOMEPAGE: Buzz Clock View */}
+                <Route element={<DiscoveryLayout />}>
+                  <Route path="/" element={<BuzzScreen />} />
+                </Route>
+
+                {/* DIRECTORY: Just Bars - Wrapped with RouteGuard */}
                 <Route path="/bars" element={<VenuesScreen />} />
-                <Route path="/bars/:id" element={<VenueProfileScreen />} />
+                <Route path="/bars/:id" element={
+                  <RouteGuard entityType="venue">
+                    <VenueProfileScreen />
+                  </RouteGuard>
+                } />
+
                 <Route path="/map" element={<MapScreen />} />
                 <Route path="/events" element={<EventsScreen />} />
                 <Route path="/karaoke" element={<KaraokeScreen />} />
@@ -85,6 +103,13 @@ export default function App() {
                 {/* Admin */}
                 <Route path="/admin" element={<AdminDashboard userProfile={userProfile} />} />
                 <Route path="/admin/extract" element={<FlyerExtractor />} />
+
+                {/* Marketing Pages */}
+                <Route path="/glossary" element={<GlossaryScreen />} />
+                <Route path="/faq" element={<FAQScreen />} />
+
+                {/* Catch-All 404 (Must be last) */}
+                <Route path="*" element={<NotFoundScreen />} />
               </Route>
 
             </Routes>
@@ -97,6 +122,6 @@ export default function App() {
           </Suspense>
         </LayoutProvider>
       </DiscoveryProvider>
-    </ErrorBoundary>
+    </ErrorBoundary >
   );
 }

@@ -354,7 +354,7 @@ export default function ClaimVenuePage() {
                                     </div>
                                     <h3 className="text-xl font-black uppercase font-league text-white italic">The Buzz Clock</h3>
                                     <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase">
-                                        Let the city see your energy levels. From "Chill" to "Packed", we sync your real-time vibe to the map.
+                                        Let the city see your energy levels. From "Trickle" to "Flooded", we sync your real-time vibe to the map.
                                     </p>
                                 </div>
 
@@ -785,7 +785,7 @@ export default function ClaimVenuePage() {
                                             <span className={vibe === 'trickle' ? 'text-slate-400' : ''}>TRICKLE (Quiet)</span>
                                             <span className={vibe === 'flowing' ? 'text-primary' : ''}>FLOWING (Steady)</span>
                                             <span className={vibe === 'gushing' ? 'text-primary' : ''}>GUSHING (Active)</span>
-                                            <span className={vibe === 'flooded' ? 'text-primary' : ''}>FLOODED (Packed)</span>
+                                            <span className={vibe === 'flooded' ? 'text-primary' : ''}>FLOODED (Crowded)</span>
                                         </div>
                                     </div>
                                 </div>

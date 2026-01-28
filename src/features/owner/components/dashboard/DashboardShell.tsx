@@ -514,7 +514,13 @@ export function DashboardShell({
             <ReportsTab venue={myVenue} />
           )}
           {myVenue && dashboardView === "qr" && <QrAssetsTab venue={myVenue} />}
-          {myVenue && dashboardView === "manual" && <PartnerManualTab />}
+          {myVenue && dashboardView === "manual" && (
+            <PartnerManualTab
+              venue={myVenue}
+              privateData={privateData}
+              onUpdate={(updates: any) => updateVenue(myVenue.id, updates)}
+            />
+          )}
           {myVenue && dashboardView === "notifications" && (
             <NotificationsTab
               venueId={myVenue.id}

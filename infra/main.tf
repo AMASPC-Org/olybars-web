@@ -85,3 +85,21 @@ resource "google_cloud_scheduler_job" "scraper_tick" {
     }
   }
 }
+
+# 3. Dead Letter Queue (DLQ) Topic
+resource "google_pubsub_topic" "scraper_dlq" {
+  name = "scraper-dlq"
+}
+
+# 4. IAM Bindings for Internal Invocation
+# Allow the Default Compute SA (used by Scheduler & Tasks) to invoke the Backend Service
+resource "google_cloud_run_v2_service_iam_binding" "invoker" {
+  project  = google_cloud_run_v2_service.backend.project
+  location = google_cloud_run_v2_service.backend.location
+  name     = google_cloud_run_v2_service.backend.name
+  role     = "roles/run.invoker"
+
+  members = [
+    "serviceAccount:${data.google_compute_default_service_account.default.email}"
+  ]
+}
