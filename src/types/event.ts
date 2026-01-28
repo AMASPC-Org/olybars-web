@@ -11,7 +11,7 @@ export interface AppEvent {
     venueId: string;
     venueName: string;
     title: string;
-    type: 'karaoke' | 'trivia' | 'live_music' | 'bingo' | 'openmic' | 'other';
+    type: 'karaoke' | 'trivia' | 'live_music' | 'bingo' | 'openmic' | 'comedy' | 'sports' | 'happy_hour' | 'other';
     date: string;
     time: string;
     description?: string;
@@ -30,4 +30,7 @@ export interface AppEvent {
     howItWorks?: string[];
     cluesUrl?: string;
     secondaryImage?: string;
+    startTime?: string;
+    endTime?: string;
+    sponsorshipPackages?: any[];
 }
